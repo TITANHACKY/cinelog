@@ -7,6 +7,9 @@ import {
   seasons,
   series,
   seriesToGenres,
+  userMovies,
+  userSeasonProgress,
+  userSeries,
 } from "@/db/schema";
 import type { LibraryQueryInput } from "@/lib/validations/library";
 
@@ -104,11 +107,11 @@ export async function listLibraryRows(
   const movieSelect = {
     id: movies.id,
     tmdbId: movies.tmdbId,
-    watchStatus: movies.watchStatus,
-    impression: movies.impression,
-    createdAt: movies.createdAt,
-    updatedAt: movies.updatedAt,
-    completedAt: movies.completedAt,
+    watchStatus: userMovies.watchStatus,
+    impression: userMovies.impression,
+    createdAt: userMovies.createdAt,
+    updatedAt: userMovies.updatedAt,
+    completedAt: userMovies.completedAt,
     title: movies.title,
     posterPath: movies.posterPath,
     releaseDate: movies.releaseDate,
@@ -122,19 +125,19 @@ export async function listLibraryRows(
   const seriesSelect = {
     id: series.id,
     tmdbId: series.tmdbId,
-    watchStatus: series.watchStatus,
-    impression: series.impression,
-    createdAt: series.createdAt,
-    updatedAt: series.updatedAt,
-    lastWatchedAt: series.lastWatchedAt,
-    completedAt: series.completedAt,
+    watchStatus: userSeries.watchStatus,
+    impression: userSeries.impression,
+    createdAt: userSeries.createdAt,
+    updatedAt: userSeries.updatedAt,
+    lastWatchedAt: userSeries.lastWatchedAt,
+    completedAt: userSeries.completedAt,
     name: series.name,
     firstAirDate: series.firstAirDate,
     lastAirDate: series.lastAirDate,
     totalNumberOfEpisodes: series.totalNumberOfEpisodes,
     totalNumberOfSeasons: series.totalNumberOfSeasons,
-    totalNumberOfSeasonsWatched: series.totalNumberOfSeasonsWatched,
-    totalNumberOfEpisodesWatched: series.totalNumberOfEpisodesWatched,
+    totalNumberOfSeasonsWatched: userSeries.totalNumberOfSeasonsWatched,
+    totalNumberOfEpisodesWatched: userSeries.totalNumberOfEpisodesWatched,
     posterPath: series.posterPath,
     voteAverage: series.voteAverage,
     status: series.status,
@@ -146,21 +149,22 @@ export async function listLibraryRows(
   const pageQueries: SqliteBatchQuery[] = [
     db
       .select({ value: count() })
-      .from(movies)
-      .where(eq(movies.userId, userId)),
+      .from(userMovies)
+      .where(eq(userMovies.userId, userId)),
     db
       .select({ value: count() })
-      .from(series)
-      .where(eq(series.userId, userId)),
+      .from(userSeries)
+      .where(eq(userSeries.userId, userId)),
   ];
 
   if (includeMovies) {
     pageQueries.push(
       db
         .select(movieSelect)
-        .from(movies)
-        .where(eq(movies.userId, userId))
-        .orderBy(desc(movies.createdAt))
+        .from(userMovies)
+        .innerJoin(movies, eq(userMovies.movieId, movies.id))
+        .where(eq(userMovies.userId, userId))
+        .orderBy(desc(userMovies.createdAt))
         .limit(query.limit)
         .offset(query.offset),
     );
@@ -170,9 +174,10 @@ export async function listLibraryRows(
     pageQueries.push(
       db
         .select(seriesSelect)
-        .from(series)
-        .where(eq(series.userId, userId))
-        .orderBy(desc(series.createdAt))
+        .from(userSeries)
+        .innerJoin(series, eq(userSeries.seriesId, series.id))
+        .where(eq(userSeries.userId, userId))
+        .orderBy(desc(userSeries.createdAt))
         .limit(query.limit)
         .offset(query.offset),
     );
@@ -182,18 +187,18 @@ export async function listLibraryRows(
   const movieCount = asCount(pageResults[0] as { value: number }[]);
   const seriesCount = asCount(pageResults[1] as { value: number }[]);
 
-  const userMovies = includeMovies
+  const userMovieRows = includeMovies
     ? (pageResults[2] as MoviePageRow[])
     : [];
-  const userSeries = includeSeries
-    ? (pageResults[2] as SeriesPageRow[])
+  const userSeriesRows = includeSeries
+    ? (pageResults[includeMovies ? 3 : 2] as SeriesPageRow[])
     : [];
 
-  const movieIds = userMovies.map((movie) => movie.id);
-  const seriesIds = userSeries.map((show) => show.id);
+  const catalogMovieIds = userMovieRows.map((movie) => movie.id);
+  const catalogSeriesIds = userSeriesRows.map((show) => show.id);
   const followUp: SqliteBatchQuery[] = [];
 
-  if (movieIds.length > 0) {
+  if (catalogMovieIds.length > 0) {
     followUp.push(
       db
         .select({
@@ -202,11 +207,11 @@ export async function listLibraryRows(
         })
         .from(moviesToGenres)
         .innerJoin(genres, eq(moviesToGenres.genreId, genres.id))
-        .where(inArray(moviesToGenres.movieId, movieIds)),
+        .where(inArray(moviesToGenres.movieId, catalogMovieIds)),
     );
   }
 
-  if (seriesIds.length > 0) {
+  if (catalogSeriesIds.length > 0) {
     followUp.push(
       db
         .select({
@@ -215,7 +220,7 @@ export async function listLibraryRows(
         })
         .from(seriesToGenres)
         .innerJoin(genres, eq(seriesToGenres.genreId, genres.id))
-        .where(inArray(seriesToGenres.seriesId, seriesIds)),
+        .where(inArray(seriesToGenres.seriesId, catalogSeriesIds)),
     );
     followUp.push(
       db
@@ -223,12 +228,25 @@ export async function listLibraryRows(
           tmdbId: series.tmdbId,
           seasonNumber: seasons.seasonNumber,
           episodeCount: seasons.episodeCount,
-          episodesWatched: seasons.episodesWatched,
+          episodesWatched: userSeasonProgress.episodesWatched,
           airDate: seasons.airDate,
         })
-        .from(seasons)
-        .innerJoin(series, eq(seasons.seriesId, series.id))
-        .where(and(eq(series.userId, userId), inArray(series.id, seriesIds)))
+        .from(userSeries)
+        .innerJoin(series, eq(userSeries.seriesId, series.id))
+        .innerJoin(seasons, eq(seasons.seriesId, series.id))
+        .leftJoin(
+          userSeasonProgress,
+          and(
+            eq(userSeasonProgress.userSeriesId, userSeries.id),
+            eq(userSeasonProgress.seasonId, seasons.id),
+          ),
+        )
+        .where(
+          and(
+            eq(userSeries.userId, userId),
+            inArray(series.id, catalogSeriesIds),
+          ),
+        )
         .orderBy(asc(series.tmdbId), asc(seasons.seasonNumber)),
     );
   }
@@ -241,21 +259,26 @@ export async function listLibraryRows(
     const followResults = await db.batch(asBatch(followUp));
     let followIndex = 0;
 
-    if (movieIds.length > 0) {
+    if (catalogMovieIds.length > 0) {
       movieGenres = followResults[followIndex] as GenreRow[];
       followIndex += 1;
     }
 
-    if (seriesIds.length > 0) {
+    if (catalogSeriesIds.length > 0) {
       seriesGenres = followResults[followIndex] as GenreRow[];
       followIndex += 1;
-      seasonRows = followResults[followIndex] as UserSeasonRow[];
+      seasonRows = (followResults[followIndex] as UserSeasonRow[]).map(
+        (row) => ({
+          ...row,
+          episodesWatched: row.episodesWatched ?? 0,
+        }),
+      );
     }
   }
 
   return {
-    movies: attachGenres(userMovies, movieGenres),
-    series: attachGenres(userSeries, seriesGenres),
+    movies: attachGenres(userMovieRows, movieGenres),
+    series: attachGenres(userSeriesRows, seriesGenres),
     seasons: seasonRows,
     movieCount,
     seriesCount,

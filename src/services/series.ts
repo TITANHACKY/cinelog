@@ -13,21 +13,28 @@ import type { SeriesPatchInput } from "@/lib/validations/library";
 import {
   applySeriesWatchUpdates,
   deleteUserSeries,
+  ensureAllUserSeasonProgress,
+  ensureUserSeasonProgress,
   findUserSeriesAndSeasons,
   insertUserSeries,
+  type UserSeasonWithCatalog,
+  type UserSeriesWithCatalog,
 } from "@/repositories/series";
 import { isUniqueConstraintError } from "@/lib/db/unique-constraint";
-import type { NewSeries, Season, Series } from "@/db/schema";
+import type { NewUserSeries } from "@/db/schema";
 
 type UserSeriesLibrary = {
   userSeries?: Pick<
-    Series,
+    UserSeriesWithCatalog,
     | "impression"
     | "watchStatus"
     | "totalNumberOfEpisodesWatched"
     | "totalNumberOfSeasonsWatched"
   >;
-  userSeasons: Pick<Season, "seasonNumber" | "episodeCount" | "episodesWatched">[];
+  userSeasons: Pick<
+    UserSeasonWithCatalog,
+    "seasonNumber" | "episodeCount" | "episodesWatched"
+  >[];
 };
 
 export type SeriesLibraryFields = {
@@ -236,7 +243,7 @@ export async function updateSeriesInLibrary(
   let didProgressUpdate = false;
   let seasonUpdate:
     | {
-        seasonId: number;
+        progressId: number;
         values: {
           episodesWatched: number;
           lastWatchedAt: string;
@@ -277,8 +284,15 @@ export async function updateSeriesInLibrary(
     const seasonCompletedAt =
       epsWatched === targetSeason.episodeCount && epsWatched > 0 ? now : null;
 
+    const progressId =
+      targetSeason.progressId ??
+      (await ensureUserSeasonProgress(
+        existingSeries.id,
+        targetSeason.seasonId,
+      ));
+
     seasonUpdate = {
-      seasonId: targetSeason.id,
+      progressId,
       values: {
         episodesWatched: epsWatched,
         lastWatchedAt: now,
@@ -308,6 +322,10 @@ export async function updateSeriesInLibrary(
       finalTotalSeasonsWatched = 0;
       finalCompletedAt = null;
       finalLastWatchedAt = null;
+      await ensureAllUserSeasonProgress(
+        existingSeries.id,
+        existingSeries.seriesId,
+      );
       resetAllSeasons = {
         episodesWatched: 0,
         completedAt: null,
@@ -319,6 +337,10 @@ export async function updateSeriesInLibrary(
       finalLastWatchedAt = now;
       finalTotalEpsWatched = existingSeries.totalNumberOfEpisodes || 0;
       finalTotalSeasonsWatched = existingSeries.totalNumberOfSeasons || 0;
+      await ensureAllUserSeasonProgress(
+        existingSeries.id,
+        existingSeries.seriesId,
+      );
       completeAllSeasonsAt = now;
     } else {
       finalCompletedAt = null;
@@ -351,7 +373,7 @@ export async function updateSeriesInLibrary(
     }
   }
 
-  const seriesUpdate: Partial<NewSeries> = {
+  const seriesUpdate: Partial<NewUserSeries> = {
     watchStatus: finalWatchStatus,
     completedAt: finalCompletedAt,
     lastWatchedAt: finalLastWatchedAt,
@@ -365,7 +387,8 @@ export async function updateSeriesInLibrary(
   }
 
   await applySeriesWatchUpdates({
-    seriesId: existingSeries.id,
+    userSeriesId: existingSeries.id,
+    catalogSeriesId: existingSeries.seriesId,
     seriesValues: seriesUpdate,
     seasonUpdate,
     resetAllSeasons,

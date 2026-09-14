@@ -1,89 +1,199 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { asBatch, getDb, type SqliteBatchQuery } from "@/db";
 import {
-  creators,
-  credits,
-  genres,
-  productionCompanies,
   seasons,
   series,
-  seriesToCreators,
-  seriesToCredits,
-  seriesToGenres,
-  seriesToProductionCompanies,
+  userSeasonProgress,
+  userSeries,
 } from "@/db/schema";
-import type { NewSeries, Season, Series } from "@/db/schema";
-import { normalizeSeriesStatus } from "@/lib/media/status";
+import type { NewUserSeries, Season, UserSeasonProgress, UserSeries } from "@/db/schema";
 import type { TmdbSeries } from "@/lib/types";
+import {
+  listCatalogSeasons,
+  upsertCatalogSeriesWithGenresAndSeasons,
+} from "@/repositories/catalog";
 
-function parentSeriesIdSql(tmdbId: number, userId: number) {
-  return sql`(select ${series.id} from ${series} where ${series.tmdbId} = ${tmdbId} and ${series.userId} = ${userId})`;
-}
+export type UserSeriesWithCatalog = UserSeries & {
+  status: string | null;
+  totalNumberOfEpisodes: number | null;
+  totalNumberOfSeasons: number | null;
+};
+
+export type UserSeasonWithCatalog = {
+  progressId: number | null;
+  seasonId: number;
+  seasonNumber: number;
+  episodeCount: number;
+  airDate: string | null;
+  episodesWatched: number;
+  lastWatchedAt: string | null;
+  completedAt: string | null;
+};
 
 export async function findUserSeriesAndSeasons(
   tmdbId: number,
   userId: number,
-): Promise<{ userSeries?: Series; userSeasons: Season[] }> {
+): Promise<{
+  userSeries?: UserSeriesWithCatalog;
+  userSeasons: UserSeasonWithCatalog[];
+}> {
   const db = getDb();
-  const [seriesRows, seasonRows] = await db.batch([
-    db
-      .select()
-      .from(series)
-      .where(and(eq(series.tmdbId, tmdbId), eq(series.userId, userId))),
-    db
-      .select({
-        id: seasons.id,
-        tmdbId: seasons.tmdbId,
-        seriesId: seasons.seriesId,
-        name: seasons.name,
-        seasonNumber: seasons.seasonNumber,
-        episodeCount: seasons.episodeCount,
-        airDate: seasons.airDate,
-        episodesWatched: seasons.episodesWatched,
-        lastWatchedAt: seasons.lastWatchedAt,
-        completedAt: seasons.completedAt,
-        createdAt: seasons.createdAt,
-        updatedAt: seasons.updatedAt,
-      })
-      .from(seasons)
-      .innerJoin(series, eq(seasons.seriesId, series.id))
-      .where(and(eq(series.tmdbId, tmdbId), eq(series.userId, userId))),
-  ]);
+  const userSeriesRow = await db
+    .select({
+      id: userSeries.id,
+      userId: userSeries.userId,
+      seriesId: userSeries.seriesId,
+      watchStatus: userSeries.watchStatus,
+      impression: userSeries.impression,
+      lastWatchedAt: userSeries.lastWatchedAt,
+      completedAt: userSeries.completedAt,
+      totalNumberOfEpisodesWatched: userSeries.totalNumberOfEpisodesWatched,
+      totalNumberOfSeasonsWatched: userSeries.totalNumberOfSeasonsWatched,
+      createdAt: userSeries.createdAt,
+      updatedAt: userSeries.updatedAt,
+      status: series.status,
+      totalNumberOfEpisodes: series.totalNumberOfEpisodes,
+      totalNumberOfSeasons: series.totalNumberOfSeasons,
+    })
+    .from(userSeries)
+    .innerJoin(series, eq(userSeries.seriesId, series.id))
+    .where(and(eq(series.tmdbId, tmdbId), eq(userSeries.userId, userId)))
+    .get();
+
+  if (!userSeriesRow) {
+    return { userSeries: undefined, userSeasons: [] };
+  }
+
+  const seasonRows = await db
+    .select({
+      progressId: userSeasonProgress.id,
+      seasonId: seasons.id,
+      seasonNumber: seasons.seasonNumber,
+      episodeCount: seasons.episodeCount,
+      airDate: seasons.airDate,
+      episodesWatched: userSeasonProgress.episodesWatched,
+      lastWatchedAt: userSeasonProgress.lastWatchedAt,
+      completedAt: userSeasonProgress.completedAt,
+    })
+    .from(seasons)
+    .leftJoin(
+      userSeasonProgress,
+      and(
+        eq(userSeasonProgress.seasonId, seasons.id),
+        eq(userSeasonProgress.userSeriesId, userSeriesRow.id),
+      ),
+    )
+    .where(eq(seasons.seriesId, userSeriesRow.seriesId))
+    .orderBy(seasons.seasonNumber);
 
   return {
-    userSeries: seriesRows[0],
-    userSeasons: seasonRows,
+    userSeries: userSeriesRow,
+    userSeasons: seasonRows.map((row) => ({
+      progressId: row.progressId ?? null,
+      seasonId: row.seasonId,
+      seasonNumber: row.seasonNumber,
+      episodeCount: row.episodeCount,
+      airDate: row.airDate,
+      episodesWatched: row.episodesWatched ?? 0,
+      lastWatchedAt: row.lastWatchedAt,
+      completedAt: row.completedAt,
+    })),
   };
 }
 
+export async function ensureUserSeasonProgress(
+  userSeriesId: number,
+  seasonId: number,
+) {
+  const db = getDb();
+  const existing = await db
+    .select({ id: userSeasonProgress.id })
+    .from(userSeasonProgress)
+    .where(
+      and(
+        eq(userSeasonProgress.userSeriesId, userSeriesId),
+        eq(userSeasonProgress.seasonId, seasonId),
+      ),
+    )
+    .get();
+
+  if (existing) {
+    return existing.id;
+  }
+
+  const inserted = await db
+    .insert(userSeasonProgress)
+    .values({
+      userSeriesId,
+      seasonId,
+      episodesWatched: 0,
+    })
+    .returning({ id: userSeasonProgress.id });
+
+  const progressId = inserted[0]?.id;
+  if (!progressId) {
+    throw new Error("Failed to create season progress");
+  }
+
+  return progressId;
+}
+
+export async function ensureAllUserSeasonProgress(
+  userSeriesId: number,
+  catalogSeriesId: number,
+) {
+  const catalogSeasons = await listCatalogSeasons(catalogSeriesId);
+  const db = getDb();
+  const existing = await db
+    .select({ seasonId: userSeasonProgress.seasonId })
+    .from(userSeasonProgress)
+    .where(eq(userSeasonProgress.userSeriesId, userSeriesId));
+
+  const existingIds = new Set(existing.map((row) => row.seasonId));
+  const missing = catalogSeasons.filter((season) => !existingIds.has(season.id));
+
+  if (missing.length === 0) {
+    return;
+  }
+
+  await db.insert(userSeasonProgress).values(
+    missing.map((season) => ({
+      userSeriesId,
+      seasonId: season.id,
+      episodesWatched: 0,
+    })),
+  );
+}
+
 export async function applySeriesWatchUpdates(input: {
-  seriesId: number;
-  seriesValues: Partial<NewSeries>;
+  userSeriesId: number;
+  catalogSeriesId: number;
+  seriesValues: Partial<NewUserSeries>;
   seasonUpdate?: {
-    seasonId: number;
-    values: Partial<typeof seasons.$inferInsert>;
+    progressId: number;
+    values: Partial<typeof userSeasonProgress.$inferInsert>;
   };
-  resetAllSeasons?: Partial<typeof seasons.$inferInsert>;
+  resetAllSeasons?: Partial<typeof userSeasonProgress.$inferInsert>;
   completeAllSeasonsAt?: string;
-}): Promise<Series> {
+}): Promise<UserSeriesWithCatalog> {
   const db = getDb();
   const queries: SqliteBatchQuery[] = [];
 
   if (input.seasonUpdate) {
     queries.push(
       db
-        .update(seasons)
+        .update(userSeasonProgress)
         .set(input.seasonUpdate.values)
-        .where(eq(seasons.id, input.seasonUpdate.seasonId)),
+        .where(eq(userSeasonProgress.id, input.seasonUpdate.progressId)),
     );
   }
 
   if (input.resetAllSeasons) {
     queries.push(
       db
-        .update(seasons)
+        .update(userSeasonProgress)
         .set(input.resetAllSeasons)
-        .where(eq(seasons.seriesId, input.seriesId)),
+        .where(eq(userSeasonProgress.userSeriesId, input.userSeriesId)),
     );
   }
 
@@ -91,32 +201,48 @@ export async function applySeriesWatchUpdates(input: {
     const completedAt = input.completeAllSeasonsAt;
     queries.push(
       db
-        .update(seasons)
+        .update(userSeasonProgress)
         .set({
-          episodesWatched: seasons.episodeCount,
+          episodesWatched: sql`(select ${seasons.episodeCount} from ${seasons} where ${seasons.id} = ${userSeasonProgress.seasonId})`,
           completedAt,
           lastWatchedAt: completedAt,
           updatedAt: completedAt,
         })
-        .where(eq(seasons.seriesId, input.seriesId)),
+        .where(eq(userSeasonProgress.userSeriesId, input.userSeriesId)),
     );
   }
 
   queries.push(
     db
-      .update(series)
+      .update(userSeries)
       .set(input.seriesValues)
-      .where(eq(series.id, input.seriesId))
+      .where(eq(userSeries.id, input.userSeriesId))
       .returning(),
   );
 
   const results = await db.batch(asBatch(queries));
-  const updatedSeries = results[results.length - 1] as Series[];
-  const seriesRow = updatedSeries[0];
-  if (!seriesRow) {
-    throw new Error("Failed to update series");
+  const updatedUserSeries = results[results.length - 1] as UserSeries[];
+  const userSeriesRow = updatedUserSeries[0];
+  if (!userSeriesRow) {
+    throw new Error("Failed to update user series");
   }
-  return seriesRow;
+
+  const catalogRow = await db
+    .select({
+      status: series.status,
+      totalNumberOfEpisodes: series.totalNumberOfEpisodes,
+      totalNumberOfSeasons: series.totalNumberOfSeasons,
+    })
+    .from(series)
+    .where(eq(series.id, input.catalogSeriesId))
+    .get();
+
+  return {
+    ...userSeriesRow,
+    status: catalogRow?.status ?? null,
+    totalNumberOfEpisodes: catalogRow?.totalNumberOfEpisodes ?? null,
+    totalNumberOfSeasons: catalogRow?.totalNumberOfSeasons ?? null,
+  };
 }
 
 export async function insertUserSeries(
@@ -124,245 +250,51 @@ export async function insertUserSeries(
   userId: number,
   body: TmdbSeries,
 ) {
+  const catalogSeries = await upsertCatalogSeriesWithGenresAndSeasons(
+    tmdbId,
+    body,
+  );
+  const catalogSeasons = await listCatalogSeasons(catalogSeries.id);
+
   const db = getDb();
-  const seriesId = parentSeriesIdSql(tmdbId, userId);
-
-  let certificate = null;
-  if (body.content_ratings?.results) {
-    const ratingCountry =
-      body.content_ratings.results.find((r) => r.iso_3166_1 === "IN") ??
-      body.content_ratings.results.find(
-        (r) => r.iso_3166_1 === body.origin_country?.[0],
-      );
-    certificate = ratingCountry?.rating ?? null;
-  }
-
-  const voteAvg =
-    typeof body.vote_average === "number" ? body.vote_average : null;
-  const numEpisodes = body.number_of_episodes || null;
-  const numSeasons = body.number_of_seasons || null;
-
-  const queries: SqliteBatchQuery[] = [
-    db.insert(series).values({
-      tmdbId,
+  const inserted = await db
+    .insert(userSeries)
+    .values({
       userId,
-      name: body.name || "Unknown",
-      posterPath: body.poster_path || null,
-      firstAirDate: body.first_air_date || null,
-      lastAirDate: body.last_air_date || null,
-      totalNumberOfEpisodes: numEpisodes,
-      totalNumberOfSeasons: numSeasons,
-      voteAverage: voteAvg,
-      status: normalizeSeriesStatus(body.status),
-      originalLanguage: body.original_language || null,
-      originCountry: Array.isArray(body.origin_country)
-        ? body.origin_country[0]
-        : null,
-      certificate: certificate || null,
-      type: body.type || null,
-    }),
-  ];
+      seriesId: catalogSeries.id,
+    })
+    .returning();
 
-  const genreTmdbIds = (body.genres ?? [])
-    .map((genre) => genre.id)
-    .filter((id): id is number => typeof id === "number");
+  const userSeriesRow = inserted[0];
+  if (!userSeriesRow) {
+    throw new Error("Failed to insert user series");
+  }
 
-  if (genreTmdbIds.length > 0) {
-    queries.push(
-      db.insert(seriesToGenres).select(
-        db
-          .select({
-            id: sql<number | null>`null`.as("id"),
-            seriesId: series.id,
-            genreId: genres.id,
-            createdAt: sql`(unixepoch())`.as("createdAt"),
-          })
-          .from(series)
-          .innerJoin(genres, inArray(genres.tmdbId, genreTmdbIds))
-          .where(and(eq(series.tmdbId, tmdbId), eq(series.userId, userId))),
-      ),
+  if (catalogSeasons.length > 0) {
+    await db.insert(userSeasonProgress).values(
+      catalogSeasons.map((season) => ({
+        userSeriesId: userSeriesRow.id,
+        seasonId: season.id,
+        episodesWatched: 0,
+      })),
     );
   }
-
-  if (body.seasons && Array.isArray(body.seasons)) {
-    const nowString = String(Math.floor(Date.now() / 1000));
-    const seasonsToInsert = body.seasons.filter(
-      (
-        season,
-      ): season is typeof season & { id: number; season_number: number } =>
-        season.id !== undefined && season.season_number !== undefined,
-    );
-
-    if (seasonsToInsert.length > 0) {
-      queries.push(
-        db.insert(seasons).values(
-          seasonsToInsert.map((season) => ({
-            seriesId,
-            tmdbId: season.id,
-            name: season.name || null,
-            seasonNumber: season.season_number,
-            episodeCount: season.episode_count || 0,
-            airDate: season.air_date || null,
-            createdAt: nowString,
-          })),
-        ),
-      );
-    }
-  }
-
-  if (body.created_by && Array.isArray(body.created_by)) {
-    const uniqueCreatorsMap = new Map<number, { id: number; name: string }>();
-    for (const creator of body.created_by) {
-      if (creator?.id && creator?.name && !uniqueCreatorsMap.has(creator.id)) {
-        uniqueCreatorsMap.set(creator.id, {
-          id: creator.id,
-          name: creator.name,
-        });
-      }
-    }
-    const creatorsToInsert = Array.from(uniqueCreatorsMap.values());
-    const creatorTmdbIds = creatorsToInsert.map((c) => c.id);
-
-    if (creatorsToInsert.length > 0) {
-      queries.push(
-        db
-          .insert(creators)
-          .values(
-            creatorsToInsert.map((creator) => ({
-              tmdbId: creator.id,
-              name: creator.name,
-            })),
-          )
-          .onConflictDoNothing(),
-      );
-
-      queries.push(
-        db.insert(seriesToCreators).select(
-          db
-            .select({
-              id: sql<number | null>`null`.as("id"),
-              seriesId: series.id,
-              creatorId: creators.id,
-              createdAt: sql`(unixepoch())`.as("createdAt"),
-            })
-            .from(series)
-            .innerJoin(creators, inArray(creators.tmdbId, creatorTmdbIds))
-            .where(and(eq(series.tmdbId, tmdbId), eq(series.userId, userId))),
-        ),
-      );
-    }
-  }
-
-  const rawCredits =
-    body.credits && Array.isArray(body.credits)
-      ? body.credits
-      : [...(body.credits?.cast || []), ...(body.credits?.crew || [])];
-
-  const uniqueCreditsMap = new Map<
-    number,
-    { id: number; name: string; known_for_department?: string }
-  >();
-  for (const credit of rawCredits) {
-    if (credit?.id && credit?.name && !uniqueCreditsMap.has(credit.id)) {
-      uniqueCreditsMap.set(credit.id, {
-        id: credit.id,
-        name: credit.name,
-        known_for_department: credit.known_for_department,
-      });
-    }
-  }
-  const creditsToInsert = Array.from(uniqueCreditsMap.values());
-  const creditTmdbIds = creditsToInsert.map((c) => c.id);
-
-  if (creditsToInsert.length > 0) {
-    queries.push(
-      db
-        .insert(credits)
-        .values(
-          creditsToInsert.map((credit) => ({
-            tmdbId: credit.id,
-            name: credit.name,
-            knownForDepartment: credit.known_for_department || "Acting",
-          })),
-        )
-        .onConflictDoNothing(),
-    );
-
-    queries.push(
-      db.insert(seriesToCredits).select(
-        db
-          .select({
-            id: sql<number | null>`null`.as("id"),
-            seriesId: series.id,
-            creditId: credits.id,
-            createdAt: sql`(unixepoch())`.as("createdAt"),
-          })
-          .from(series)
-          .innerJoin(credits, inArray(credits.tmdbId, creditTmdbIds))
-          .where(and(eq(series.tmdbId, tmdbId), eq(series.userId, userId))),
-      ),
-    );
-  }
-
-  if (body.production_companies && Array.isArray(body.production_companies)) {
-    const uniqueCompaniesMap = new Map<
-      number,
-      { id: number; name: string; origin_country?: string }
-    >();
-    for (const company of body.production_companies) {
-      if (company?.id && company?.name && !uniqueCompaniesMap.has(company.id)) {
-        uniqueCompaniesMap.set(company.id, {
-          id: company.id,
-          name: company.name,
-          origin_country: company.origin_country,
-        });
-      }
-    }
-    const companiesToInsert = Array.from(uniqueCompaniesMap.values());
-    const companyTmdbIds = companiesToInsert.map((c) => c.id);
-
-    if (companiesToInsert.length > 0) {
-      queries.push(
-        db
-          .insert(productionCompanies)
-          .values(
-            companiesToInsert.map((company) => ({
-              tmdbId: company.id,
-              name: company.name,
-              originCountry: company.origin_country || null,
-            })),
-          )
-          .onConflictDoNothing(),
-      );
-
-      queries.push(
-        db.insert(seriesToProductionCompanies).select(
-          db
-            .select({
-              id: sql<number | null>`null`.as("id"),
-              seriesId: series.id,
-              companyId: productionCompanies.id,
-              createdAt: sql`(unixepoch())`.as("createdAt"),
-            })
-            .from(series)
-            .innerJoin(
-              productionCompanies,
-              inArray(productionCompanies.tmdbId, companyTmdbIds),
-            )
-            .where(and(eq(series.tmdbId, tmdbId), eq(series.userId, userId))),
-        ),
-      );
-    }
-  }
-
-  await db.batch(asBatch(queries));
 }
 
 export async function deleteUserSeries(tmdbId: number, userId: number) {
-  return getDb()
-    .delete(series)
-    .where(and(eq(series.tmdbId, tmdbId), eq(series.userId, userId)))
-    .returning();
+  const db = getDb();
+  const row = await db
+    .select({ id: userSeries.id })
+    .from(userSeries)
+    .innerJoin(series, eq(userSeries.seriesId, series.id))
+    .where(and(eq(series.tmdbId, tmdbId), eq(userSeries.userId, userId)))
+    .get();
+
+  if (!row) {
+    return [];
+  }
+
+  return db.delete(userSeries).where(eq(userSeries.id, row.id)).returning();
 }
 
-export type { Season, Series };
+export type { Season, UserSeasonProgress, UserSeries };

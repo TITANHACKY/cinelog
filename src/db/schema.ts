@@ -46,16 +46,6 @@ export const movies = sqliteTable(
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     tmdbId: integer("tmdb_id").notNull(),
-    userId: integer("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    watchStatus: integer("watch_status").notNull().default(0),
-    impression: integer("impression"),
-    createdAt: numeric("created_at")
-      .notNull()
-      .default(sql`(unixepoch())`),
-    updatedAt: numeric("updated_at"),
-    completedAt: numeric("completed_at"),
     title: text("title").notNull(),
     posterPath: text("poster_path"),
     releaseDate: text("release_date"),
@@ -64,19 +54,61 @@ export const movies = sqliteTable(
     originalLanguage: text("original_language"),
     originCountry: text("origin_country"),
     certificate: text("certificate"),
+    createdAt: numeric("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: numeric("updated_at"),
   },
   (table) => [
-    check(
-      "movies_watch_status_check",
-      sql`${table.watchStatus} IN (0, 1, 2, 3)`,
-    ),
-    check("movies_impression_check", sql`${table.impression} IN (0, 1, 2)`),
     check(
       "movies_status_check",
       sql`${table.status} IS NULL OR ${table.status} IN (${movieStatusValues})`,
     ),
-    index("movies_tmdb_id_index").on(table.tmdbId),
-    uniqueIndex("movies_user_id_tmdb_id_unique").on(table.userId, table.tmdbId),
+    check(
+      "movies_vote_average_check",
+      sql`${table.voteAverage} IS NULL OR (${table.voteAverage} >= 0 AND ${table.voteAverage} <= 10)`,
+    ),
+    uniqueIndex("movies_tmdb_id_unique").on(table.tmdbId),
+    index("movies_status_index").on(table.status),
+  ],
+);
+
+export const userMovies = sqliteTable(
+  "user_movies",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    movieId: integer("movie_id")
+      .notNull()
+      .references(() => movies.id, { onDelete: "restrict" }),
+    watchStatus: integer("watch_status").notNull().default(0),
+    impression: integer("impression"),
+    createdAt: numeric("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: numeric("updated_at"),
+    completedAt: numeric("completed_at"),
+  },
+  (table) => [
+    check(
+      "user_movies_watch_status_check",
+      sql`${table.watchStatus} IN (0, 1, 2, 3)`,
+    ),
+    check(
+      "user_movies_impression_check",
+      sql`${table.impression} IS NULL OR ${table.impression} IN (0, 1, 2)`,
+    ),
+    uniqueIndex("user_movies_user_id_movie_id_unique").on(
+      table.userId,
+      table.movieId,
+    ),
+    index("user_movies_user_id_index").on(table.userId),
+    index("user_movies_user_id_created_at_index").on(
+      table.userId,
+      table.createdAt,
+    ),
   ],
 );
 
@@ -107,44 +139,96 @@ export const series = sqliteTable(
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     tmdbId: integer("tmdb_id").notNull(),
-    userId: integer("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    watchStatus: integer("watch_status").notNull().default(0),
-    impression: integer("impression"),
-    updatedAt: numeric("updated_at"),
-    createdAt: numeric("created_at")
-      .notNull()
-      .default(sql`(unixepoch())`),
-    lastWatchedAt: numeric("last_watched_at"),
-    completedAt: numeric("completed_at"),
     name: text("name").notNull(),
+    posterPath: text("poster_path"),
     firstAirDate: text("first_air_date"),
     lastAirDate: text("last_air_date"),
     totalNumberOfEpisodes: integer("total_number_of_episodes"),
     totalNumberOfSeasons: integer("total_number_of_seasons"),
-    totalNumberOfEpisodesWatched: integer("total_number_of_episodes_watched"),
-    totalNumberOfSeasonsWatched: integer("total_number_of_seasons_watched"),
-    posterPath: text("poster_path"),
     voteAverage: real("vote_average"),
     status: text("status"),
     originalLanguage: text("original_language"),
     originCountry: text("origin_country"),
     certificate: text("certificate"),
     type: text("type"),
+    createdAt: numeric("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: numeric("updated_at"),
   },
   (table) => [
-    check(
-      "series_watch_status_check",
-      sql`${table.watchStatus} IN (0, 1, 2, 3)`,
-    ),
-    check("series_impression_check", sql`${table.impression} IN (0, 1, 2)`),
     check(
       "series_status_check",
       sql`${table.status} IS NULL OR ${table.status} IN (${seriesStatusValues})`,
     ),
-    index("series_tmdb_id_index").on(table.tmdbId),
-    uniqueIndex("series_user_id_tmdb_id_unique").on(table.userId, table.tmdbId),
+    check(
+      "series_total_episodes_check",
+      sql`${table.totalNumberOfEpisodes} IS NULL OR ${table.totalNumberOfEpisodes} >= 0`,
+    ),
+    check(
+      "series_total_seasons_check",
+      sql`${table.totalNumberOfSeasons} IS NULL OR ${table.totalNumberOfSeasons} >= 0`,
+    ),
+    check(
+      "series_vote_average_check",
+      sql`${table.voteAverage} IS NULL OR (${table.voteAverage} >= 0 AND ${table.voteAverage} <= 10)`,
+    ),
+    uniqueIndex("series_tmdb_id_unique").on(table.tmdbId),
+    index("series_status_index").on(table.status),
+  ],
+);
+
+export const userSeries = sqliteTable(
+  "user_series",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    seriesId: integer("series_id")
+      .notNull()
+      .references(() => series.id, { onDelete: "restrict" }),
+    watchStatus: integer("watch_status").notNull().default(0),
+    impression: integer("impression"),
+    lastWatchedAt: numeric("last_watched_at"),
+    completedAt: numeric("completed_at"),
+    totalNumberOfEpisodesWatched: integer("total_number_of_episodes_watched")
+      .notNull()
+      .default(0),
+    totalNumberOfSeasonsWatched: integer("total_number_of_seasons_watched")
+      .notNull()
+      .default(0),
+    createdAt: numeric("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: numeric("updated_at"),
+  },
+  (table) => [
+    check(
+      "user_series_watch_status_check",
+      sql`${table.watchStatus} IN (0, 1, 2, 3)`,
+    ),
+    check(
+      "user_series_impression_check",
+      sql`${table.impression} IS NULL OR ${table.impression} IN (0, 1, 2)`,
+    ),
+    check(
+      "user_series_total_episodes_watched_check",
+      sql`${table.totalNumberOfEpisodesWatched} >= 0`,
+    ),
+    check(
+      "user_series_total_seasons_watched_check",
+      sql`${table.totalNumberOfSeasonsWatched} >= 0`,
+    ),
+    uniqueIndex("user_series_user_id_series_id_unique").on(
+      table.userId,
+      table.seriesId,
+    ),
+    index("user_series_user_id_index").on(table.userId),
+    index("user_series_user_id_created_at_index").on(
+      table.userId,
+      table.createdAt,
+    ),
   ],
 );
 
@@ -160,24 +244,51 @@ export const seasons = sqliteTable(
     seasonNumber: integer("season_number").notNull(),
     episodeCount: integer("episode_count").notNull(),
     airDate: text("air_date"),
-    episodesWatched: integer("episodes_watched").notNull().default(0),
-    lastWatchedAt: numeric("last_watched_at"),
-    completedAt: numeric("completed_at"),
-    createdAt: numeric("created_at").notNull(),
+    createdAt: numeric("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
     updatedAt: numeric("updated_at"),
   },
   (table) => [
+    check("seasons_season_number_check", sql`${table.seasonNumber} >= 0`),
     check("seasons_episode_count_check", sql`${table.episodeCount} >= 0`),
-    check(
-      "seasons_episodes_watched_check",
-      sql`${table.episodesWatched} >= 0 AND ${table.episodesWatched} <= ${table.episodeCount}`,
-    ),
-    index("seasons_tmdb_id_index").on(table.tmdbId),
-    index("seasons_series_id_index").on(table.seriesId),
+    index("seasons_catalog_tmdb_id_index").on(table.tmdbId),
+    index("seasons_catalog_series_id_index").on(table.seriesId),
     uniqueIndex("seasons_series_season_number_unique").on(
       table.seriesId,
       table.seasonNumber,
     ),
+  ],
+);
+
+export const userSeasonProgress = sqliteTable(
+  "user_season_progress",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userSeriesId: integer("user_series_id")
+      .notNull()
+      .references(() => userSeries.id, { onDelete: "cascade" }),
+    seasonId: integer("season_id")
+      .notNull()
+      .references(() => seasons.id, { onDelete: "cascade" }),
+    episodesWatched: integer("episodes_watched").notNull().default(0),
+    lastWatchedAt: numeric("last_watched_at"),
+    completedAt: numeric("completed_at"),
+    createdAt: numeric("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: numeric("updated_at"),
+  },
+  (table) => [
+    check(
+      "user_season_progress_episodes_watched_check",
+      sql`${table.episodesWatched} >= 0`,
+    ),
+    uniqueIndex("user_season_progress_user_series_season_unique").on(
+      table.userSeriesId,
+      table.seasonId,
+    ),
+    index("user_season_progress_user_series_id_index").on(table.userSeriesId),
   ],
 );
 
@@ -200,155 +311,6 @@ export const seriesToGenres = sqliteTable(
       table.seriesId,
       table.genreId,
     ),
-  ],
-);
-
-export const creators = sqliteTable("creators", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  tmdbId: integer("tmdb_id").notNull().unique(),
-  name: text("name").notNull(),
-  createdAt: numeric("created_at")
-    .notNull()
-    .default(sql`(unixepoch())`),
-});
-
-export const seriesToCreators = sqliteTable(
-  "series_to_creators",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    seriesId: integer("series_id")
-      .notNull()
-      .references(() => series.id, { onDelete: "cascade" }),
-    creatorId: integer("creator_id")
-      .notNull()
-      .references(() => creators.id, { onDelete: "cascade" }),
-    createdAt: numeric("created_at")
-      .notNull()
-      .default(sql`(unixepoch())`),
-  },
-  (table) => [
-    uniqueIndex("series_to_creators_unique").on(
-      table.seriesId,
-      table.creatorId,
-    ),
-    index("series_to_creators_series_id_index").on(table.seriesId),
-    index("series_to_creators_creator_id_index").on(table.creatorId),
-  ],
-);
-
-export const credits = sqliteTable("credits", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  tmdbId: integer("tmdb_id").notNull().unique(),
-  name: text("name").notNull(),
-  knownForDepartment: text("known_for_department").notNull(),
-  createdAt: numeric("created_at")
-    .notNull()
-    .default(sql`(unixepoch())`),
-});
-
-export const moviesToCredits = sqliteTable(
-  "movies_to_credits",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    movieId: integer("movie_id")
-      .notNull()
-      .references(() => movies.id, { onDelete: "cascade" }),
-    creditId: integer("credit_id")
-      .notNull()
-      .references(() => credits.id, { onDelete: "cascade" }),
-    createdAt: numeric("created_at")
-      .notNull()
-      .default(sql`(unixepoch())`),
-  },
-  (table) => [
-    uniqueIndex("movies_to_credits_unique").on(
-      table.movieId,
-      table.creditId,
-    ),
-    index("movies_to_credits_movie_id_index").on(table.movieId),
-    index("movies_to_credits_credit_id_index").on(table.creditId),
-  ],
-);
-
-export const seriesToCredits = sqliteTable(
-  "series_to_credits",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    seriesId: integer("series_id")
-      .notNull()
-      .references(() => series.id, { onDelete: "cascade" }),
-    creditId: integer("credit_id")
-      .notNull()
-      .references(() => credits.id, { onDelete: "cascade" }),
-    createdAt: numeric("created_at")
-      .notNull()
-      .default(sql`(unixepoch())`),
-  },
-  (table) => [
-    uniqueIndex("series_to_credits_unique").on(
-      table.seriesId,
-      table.creditId,
-    ),
-    index("series_to_credits_series_id_index").on(table.seriesId),
-    index("series_to_credits_credit_id_index").on(table.creditId),
-  ],
-);
-
-export const productionCompanies = sqliteTable("production_companies", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  tmdbId: integer("tmdb_id").notNull().unique(),
-  name: text("name").notNull(),
-  originCountry: text("origin_country"),
-  createdAt: numeric("created_at")
-    .notNull()
-    .default(sql`(unixepoch())`),
-});
-
-export const moviesToProductionCompanies = sqliteTable(
-  "movies_to_production_companies",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    movieId: integer("movie_id")
-      .notNull()
-      .references(() => movies.id, { onDelete: "cascade" }),
-    companyId: integer("company_id")
-      .notNull()
-      .references(() => productionCompanies.id, { onDelete: "cascade" }),
-    createdAt: numeric("created_at")
-      .notNull()
-      .default(sql`(unixepoch())`),
-  },
-  (table) => [
-    uniqueIndex("movies_to_production_companies_unique").on(
-      table.movieId,
-      table.companyId,
-    ),
-    index("movies_to_production_companies_movie_id_index").on(table.movieId),
-    index("movies_to_production_companies_company_id_index").on(table.companyId),
-  ],
-);
-
-export const seriesToProductionCompanies = sqliteTable(
-  "series_to_production_companies",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    seriesId: integer("series_id")
-      .notNull()
-      .references(() => series.id, { onDelete: "cascade" }),
-    companyId: integer("company_id")
-      .notNull()
-      .references(() => productionCompanies.id, { onDelete: "cascade" }),
-    createdAt: numeric("created_at")
-      .notNull()
-      .default(sql`(unixepoch())`),
-  },
-  (table) => [
-    uniqueIndex("series_to_production_companies_unique").on(
-      table.seriesId,
-      table.companyId,
-    ),
-    index("series_to_production_companies_series_id_index").on(table.seriesId),
-    index("series_to_production_companies_company_id_index").on(table.companyId),
   ],
 );
 
@@ -380,8 +342,16 @@ export const customCollections = sqliteTable(
       sql`${table.groupBy} IS NULL OR (${table.showInDashboard} = 0 AND ${table.showInLibrary} = 1)`,
     ),
     check(
+      "custom_collections_group_by_values_check",
+      sql`${table.groupBy} IS NULL OR ${table.groupBy} IN (0, 1, 2)`,
+    ),
+    check(
       "custom_collections_media_type_check",
       sql`${table.mediaType} IN (0, 1)`,
+    ),
+    check(
+      "custom_collections_name_length_check",
+      sql`length(${table.name}) <= 100`,
     ),
     index("custom_collections_user_id_index").on(table.userId),
   ],
@@ -399,6 +369,10 @@ export const customCollectionFilters = sqliteTable(
     value: text("value").notNull(),
   },
   (table) => [
+    check(
+      "custom_collection_filters_operator_check",
+      sql`${table.operator} BETWEEN 0 AND 5`,
+    ),
     index("custom_collection_filters_collection_id_index").on(
       table.customCollectionId,
     ),
@@ -417,6 +391,10 @@ export const customCollectionSorts = sqliteTable(
     priority: integer("priority").notNull(),
   },
   (table) => [
+    check(
+      "custom_collection_sorts_direction_check",
+      sql`${table.direction} IN (0, 1)`,
+    ),
     index("custom_collection_sorts_collection_id_index").on(
       table.customCollectionId,
     ),
@@ -429,34 +407,20 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Movie = typeof movies.$inferSelect;
 export type NewMovie = typeof movies.$inferInsert;
+export type UserMovie = typeof userMovies.$inferSelect;
+export type NewUserMovie = typeof userMovies.$inferInsert;
 export type MovieToGenre = typeof moviesToGenres.$inferSelect;
 export type NewMovieToGenre = typeof moviesToGenres.$inferInsert;
 export type Series = typeof series.$inferSelect;
 export type NewSeries = typeof series.$inferInsert;
+export type UserSeries = typeof userSeries.$inferSelect;
+export type NewUserSeries = typeof userSeries.$inferInsert;
 export type Season = typeof seasons.$inferSelect;
 export type NewSeason = typeof seasons.$inferInsert;
+export type UserSeasonProgress = typeof userSeasonProgress.$inferSelect;
+export type NewUserSeasonProgress = typeof userSeasonProgress.$inferInsert;
 export type SeriesToGenre = typeof seriesToGenres.$inferSelect;
 export type NewSeriesToGenre = typeof seriesToGenres.$inferInsert;
-export type Creator = typeof creators.$inferSelect;
-export type NewCreator = typeof creators.$inferInsert;
-export type SeriesToCreator = typeof seriesToCreators.$inferSelect;
-export type NewSeriesToCreator = typeof seriesToCreators.$inferInsert;
-export type Credit = typeof credits.$inferSelect;
-export type NewCredit = typeof credits.$inferInsert;
-export type MovieToCredit = typeof moviesToCredits.$inferSelect;
-export type NewMovieToCredit = typeof moviesToCredits.$inferInsert;
-export type SeriesToCredit = typeof seriesToCredits.$inferSelect;
-export type NewSeriesToCredit = typeof seriesToCredits.$inferInsert;
-export type ProductionCompany = typeof productionCompanies.$inferSelect;
-export type NewProductionCompany = typeof productionCompanies.$inferInsert;
-export type MovieToProductionCompany =
-  typeof moviesToProductionCompanies.$inferSelect;
-export type NewMovieToProductionCompany =
-  typeof moviesToProductionCompanies.$inferInsert;
-export type SeriesToProductionCompany =
-  typeof seriesToProductionCompanies.$inferSelect;
-export type NewSeriesToProductionCompany =
-  typeof seriesToProductionCompanies.$inferInsert;
 export type CustomCollection = typeof customCollections.$inferSelect;
 export type NewCustomCollection = typeof customCollections.$inferInsert;
 export type CustomCollectionFilter =
