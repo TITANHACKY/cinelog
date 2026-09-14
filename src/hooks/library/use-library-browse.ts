@@ -11,12 +11,14 @@ export function useLibraryBrowse(mediaType: LibraryMediaType) {
   const dispatch = useAppDispatch();
   const query = useAppSelector((state) => state.library.query);
   const [draftQ, setDraftQ] = useState(query.q);
+  const [syncedQ, setSyncedQ] = useState(query.q);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDraft, setDialogDraft] = useState(query);
 
-  useEffect(() => {
+  if (query.q !== syncedQ) {
+    setSyncedQ(query.q);
     setDraftQ(query.q);
-  }, [query.q]);
+  }
 
   const applyQuery = useCallback(
     (next: LibraryBrowseQuery) => {
