@@ -10,7 +10,9 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "next typegen && tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "catalog:sync": "tsx scripts/sync-catalog.ts --mode dry-run",
+    "catalog:sync:execute": "tsx scripts/sync-catalog.ts --mode execute"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

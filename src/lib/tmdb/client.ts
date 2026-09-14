@@ -29,10 +29,21 @@ export async function tmdbFetch<T>(
     });
 
     if (!response.ok) {
-      throw new AppError(
-        failedMessage,
-        response.status === 404 ? 404 : 502,
-      );
+      if (response.status === 404) {
+        throw new AppError(failedMessage, 404);
+      }
+
+      if (response.status === 429) {
+        const retryAfter = response.headers.get("retry-after");
+        const retryAfterSeconds = retryAfter ? Number(retryAfter) : undefined;
+        throw new AppError(failedMessage, 429, {
+          retryAfterSeconds: Number.isFinite(retryAfterSeconds)
+            ? retryAfterSeconds
+            : undefined,
+        });
+      }
+
+      throw new AppError(failedMessage, 502);
     }
 
     return (await response.json()) as T;

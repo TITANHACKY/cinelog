@@ -5,6 +5,7 @@ import {
   canUpdateMovieWatchActivity,
   toMovieStatusDisplay,
 } from "@/lib/media/status";
+import { pickMovieCertification } from "@/lib/tmdb/catalog-fields";
 import { pickCastAndDirectors } from "@/lib/tmdb/credits";
 import { tmdbFetch } from "@/lib/tmdb/client";
 import type { MoviePayload, TmdbMovie } from "@/lib/types";
@@ -40,17 +41,6 @@ async function fetchTmdbMovie(tmdbId: number) {
     searchParams: queryParams,
     failedMessage: "TMDB movie request failed",
   });
-}
-
-function pickMovieCertification(movie: TmdbMovie) {
-  const releaseResults = movie.release_dates?.results ?? [];
-  const releaseCountry =
-    releaseResults.find((release) => release.iso_3166_1 === "IN") ??
-    releaseResults.find(
-      (release) => release.iso_3166_1 === movie.origin_country?.[0],
-    );
-
-  return releaseCountry?.release_dates?.[0] ?? null;
 }
 
 function toMovieLibraryFields(

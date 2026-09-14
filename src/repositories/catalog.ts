@@ -8,22 +8,13 @@ import {
   series,
   seriesToGenres,
 } from "@/db/schema";
-import { normalizeMovieStatus, normalizeSeriesStatus } from "@/lib/media/status";
+import {
+  catalogSeasonsFromTmdb,
+  genreTmdbIds as tmdbGenreIds,
+  mapTmdbMovieToCatalog,
+  mapTmdbSeriesToCatalog,
+} from "@/lib/tmdb/catalog-fields";
 import type { MoviePayload, TmdbSeries } from "@/lib/types";
-
-function pickSeriesCertificate(body: TmdbSeries) {
-  if (!body.content_ratings?.results) {
-    return null;
-  }
-
-  const ratingCountry =
-    body.content_ratings.results.find((r) => r.iso_3166_1 === "IN") ??
-    body.content_ratings.results.find(
-      (r) => r.iso_3166_1 === body.origin_country?.[0],
-    );
-
-  return ratingCountry?.rating ?? null;
-}
 
 export async function findCatalogMovieByTmdbId(tmdbId: number) {
   return getDb()
@@ -43,22 +34,13 @@ export async function findCatalogSeriesByTmdbId(tmdbId: number) {
 
 export async function upsertCatalogMovie(tmdbId: number, body: MoviePayload) {
   const db = getDb();
-  const certificate = body.certification?.certification || null;
-  const voteAvg =
-    typeof body.vote_average === "number" ? body.vote_average : null;
+  const fields = mapTmdbMovieToCatalog(body);
 
   await db
     .insert(movies)
     .values({
       tmdbId,
-      title: body.title || "Unknown",
-      posterPath: body.poster_path || null,
-      releaseDate: body.release_date || null,
-      voteAverage: voteAvg,
-      status: normalizeMovieStatus(body.status),
-      originalLanguage: body.original_language || null,
-      originCountry: body.origin_country?.[0] || null,
-      certificate: certificate || null,
+      ...fields,
     })
     .onConflictDoNothing();
 
@@ -72,27 +54,13 @@ export async function upsertCatalogMovie(tmdbId: number, body: MoviePayload) {
 
 export async function upsertCatalogSeries(tmdbId: number, body: TmdbSeries) {
   const db = getDb();
-  const voteAvg =
-    typeof body.vote_average === "number" ? body.vote_average : null;
+  const fields = mapTmdbSeriesToCatalog(body);
 
   await db
     .insert(series)
     .values({
       tmdbId,
-      name: body.name || "Unknown",
-      posterPath: body.poster_path || null,
-      firstAirDate: body.first_air_date || null,
-      lastAirDate: body.last_air_date || null,
-      totalNumberOfEpisodes: body.number_of_episodes || null,
-      totalNumberOfSeasons: body.number_of_seasons || null,
-      voteAverage: voteAvg,
-      status: normalizeSeriesStatus(body.status),
-      originalLanguage: body.original_language || null,
-      originCountry: Array.isArray(body.origin_country)
-        ? body.origin_country[0]
-        : null,
-      certificate: pickSeriesCertificate(body),
-      type: body.type || null,
+      ...fields,
     })
     .onConflictDoNothing();
 
@@ -108,16 +76,7 @@ export async function upsertCatalogSeasons(
   catalogSeriesId: number,
   seasonPayloads: TmdbSeries["seasons"],
 ) {
-  if (!seasonPayloads || !Array.isArray(seasonPayloads)) {
-    return;
-  }
-
-  const seasonsToInsert = seasonPayloads.filter(
-    (
-      season,
-    ): season is typeof season & { id: number; season_number: number } =>
-      season.id !== undefined && season.season_number !== undefined,
-  );
+  const seasonsToInsert = catalogSeasonsFromTmdb(seasonPayloads);
 
   if (seasonsToInsert.length === 0) {
     return;
@@ -129,11 +88,11 @@ export async function upsertCatalogSeasons(
     .values(
       seasonsToInsert.map((season) => ({
         seriesId: catalogSeriesId,
-        tmdbId: season.id,
-        name: season.name || null,
-        seasonNumber: season.season_number,
-        episodeCount: season.episode_count || 0,
-        airDate: season.air_date || null,
+        tmdbId: season.tmdbId,
+        name: season.name,
+        seasonNumber: season.seasonNumber,
+        episodeCount: season.episodeCount,
+        airDate: season.airDate,
       })),
     )
     .onConflictDoNothing();
@@ -192,10 +151,7 @@ export async function upsertCatalogMovieWithGenres(
   const movie = catalogMovie ?? (await upsertCatalogMovie(tmdbId, body));
 
   if (isNew) {
-    const genreTmdbIds = (body.genres ?? [])
-      .map((genre) => genre.id)
-      .filter((id): id is number => typeof id === "number");
-    await linkMovieGenres(movie.id, genreTmdbIds);
+    await linkMovieGenres(movie.id, tmdbGenreIds(body.genres));
   }
 
   return movie;
@@ -213,11 +169,9 @@ export async function upsertCatalogSeriesWithGenresAndSeasons(
   const queries: SqliteBatchQuery[] = [];
 
   if (isNew) {
-    const genreTmdbIds = (body.genres ?? [])
-      .map((genre) => genre.id)
-      .filter((id): id is number => typeof id === "number");
+    const seriesGenreIds = tmdbGenreIds(body.genres);
 
-    if (genreTmdbIds.length > 0) {
+    if (seriesGenreIds.length > 0) {
       queries.push(
         getDb()
           .insert(seriesToGenres)
@@ -230,7 +184,7 @@ export async function upsertCatalogSeriesWithGenresAndSeasons(
                 createdAt: sql`(unixepoch())`.as("createdAt"),
               })
               .from(genres)
-              .where(inArray(genres.tmdbId, genreTmdbIds)),
+              .where(inArray(genres.tmdbId, seriesGenreIds)),
           ),
       );
     }
