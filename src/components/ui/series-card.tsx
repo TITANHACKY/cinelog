@@ -86,9 +86,9 @@ export function SeriesCard({ series }: { series: LibrarySeries }) {
               <Check className="size-3.5" />
             )}
             <span className="truncate">
-              {nextEpisode
-                ? `Mark Ep ${nextEpisode.episodeNumber}`
-                : "All Watched"}
+              {nextEpisode ?
+                `Ep ${nextEpisode.episodeNumber}` :
+                !canUpdateWatchActivity ? null : `Completed`}
             </span>
           </Button>
         </>
