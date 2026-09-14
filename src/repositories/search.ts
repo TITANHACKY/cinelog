@@ -1,6 +1,12 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import { genres, movies, series } from "@/db/schema";
+import {
+  genres,
+  movies,
+  series,
+  userMovies,
+  userSeries,
+} from "@/db/schema";
 import type { SearchType } from "@/lib/types";
 
 const emptyLookups = {
@@ -33,17 +39,28 @@ export async function findSearchLookups(
   const watchlistQuery =
     type === "movie"
       ? db
-          .select({ tmdbId: movies.tmdbId, watchStatus: movies.watchStatus })
-          .from(movies)
-          .where(
-            and(eq(movies.userId, userId ?? 0), inArray(movies.tmdbId, tmdbIds)),
-          )
-      : db
-          .select({ tmdbId: series.tmdbId, watchStatus: series.watchStatus })
-          .from(series)
+          .select({
+            tmdbId: movies.tmdbId,
+            watchStatus: userMovies.watchStatus,
+          })
+          .from(userMovies)
+          .innerJoin(movies, eq(userMovies.movieId, movies.id))
           .where(
             and(
-              eq(series.userId, userId ?? 0),
+              eq(userMovies.userId, userId ?? 0),
+              inArray(movies.tmdbId, tmdbIds),
+            ),
+          )
+      : db
+          .select({
+            tmdbId: series.tmdbId,
+            watchStatus: userSeries.watchStatus,
+          })
+          .from(userSeries)
+          .innerJoin(series, eq(userSeries.seriesId, series.id))
+          .where(
+            and(
+              eq(userSeries.userId, userId ?? 0),
               inArray(series.tmdbId, tmdbIds),
             ),
           );

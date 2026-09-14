@@ -22,6 +22,20 @@
       "when": 1789130125108,
       "tag": "0002_flowery_bastion",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789200000000,
+      "tag": "0003_normalize_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789200000001,
+      "tag": "0004_drop_legacy_schema",
+      "breakpoints": true
     }
   ]
 }

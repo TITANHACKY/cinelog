@@ -9,7 +9,7 @@ import { pickCastAndDirectors } from "@/lib/tmdb/credits";
 import { tmdbFetch } from "@/lib/tmdb/client";
 import type { MoviePayload, TmdbMovie } from "@/lib/types";
 import type { MoviePatchInput } from "@/lib/validations/library";
-import type { NewMovie } from "@/db/schema";
+import type { NewUserMovie } from "@/db/schema";
 import {
   deleteUserMovie,
   findUserMovie,
@@ -147,7 +147,7 @@ export async function updateMovieInLibrary(
     );
   }
 
-  const updateData: Partial<NewMovie> = {};
+  const updateData: Partial<NewUserMovie> = {};
   const now = nowUnixSeconds();
   updateData.updatedAt = now;
 
