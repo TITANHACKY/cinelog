@@ -53,7 +53,27 @@ GET /api/search/series?query={{query}}&year=2024&page=1
 
 ### Get library
 # Requires cookie
-# Query: type=movie|series (required), offset=0, limit=20 (max 50)
+# Query:
+#   type=movie|series (required)
+#   offset=0
+#   limit=20 (max 50)
+#   q (optional title/name)
+#   filter_field + filter_operator + filter_value (all three together)
+#   sort_field (default created_at)
+#   sort_direction=0|1 (default 1 desc)
+#   group_by=0|1|2 (watch_status, year, status)
+#   group_key (optional; only with group_by — page that group)
+#
+# filter_field: watch_status, impression, vote_average, release_year,
+#   status, genre, original_language, origin_country
+# filter_operator: 0 eq, 1 neq, 2 gt, 3 lt, 4 in
+#   watch_status/impression: 0, 1, 4
+#   vote_average/release_year: 0, 1, 2, 3
+#   status/genre/original_language/origin_country: 0, 1, 4
+# sort_field: created_at, release_date, title, vote_average,
+#   last_watched_at, completed_at
+# in values are comma-separated.
+#
 # Response: {
 #   "movies": LibraryMovie[],
 #   "series": LibrarySeries[],
@@ -61,11 +81,15 @@ GET /api/search/series?query={{query}}&year=2024&page=1
 #     "count": { "movies": number, "series": number },
 #     "offset": number,
 #     "limit": number,
-#     "hasMore": boolean
+#     "hasMore": boolean,
+#     "groups": [{ "key": string, "label": string, "count": number, "hasMore": boolean }]
 #   }
 # }
 #
-# Only the requested type's array is populated. metadata.count always has both totals.
+# Only the requested type's array is populated. metadata.count is filtered
+# for both media types. metadata.groups is present only when group_by is set.
+# Without group_key, items are the first limit rows per group.
+# With group_key, items are that group's offset/limit page.
 #
 # LibraryMovie: tmdb_id, watch_status, impression, created_at, updated_at,
 #   completed_at, title, poster_path, release_date, vote_average, status,
@@ -80,11 +104,23 @@ GET /api/search/series?query={{query}}&year=2024&page=1
 #
 # seasons_info[]: season_number, episode_count, episodes_watched, air_date
 # genres is a string array of genre names.
-# vote_average is stored as the TMDB rating times 10 (84 means 8.4).
+# vote_average is Rating on a 0–10 scale.
 GET /api/library?type=movie
 
 ### Get library page (series)
 GET /api/library?type=series&offset=20&limit=20
+
+### Search library titles
+GET /api/library?type=movie&q=batman
+
+### Filter library
+GET /api/library?type=movie&filter_field=watch_status&filter_operator=0&filter_value=2
+
+### Sort and group library
+GET /api/library?type=series&sort_field=vote_average&sort_direction=1&group_by=0
+
+### Page one library group
+GET /api/library?type=series&group_by=0&group_key=2&offset=20&limit=20
 
 ### Get movie details
 # Optional cookie. `movieId` is the TMDB id.
@@ -229,7 +265,7 @@ Content-Type: application/json
 #
 # mediaType: 0 Movie, 1 Series
 # groupBy: 0 Watch Status, 1 Year, 2 Status (or null)
-# filter operator: 0 eq, 1 neq, 2 gt, 3 lt, 4 in, 5 contains
+# filter operator: 0 eq, 1 neq, 2 gt, 3 lt, 4 in
 # sort direction: 0 asc, 1 desc
 GET /api/collections
 

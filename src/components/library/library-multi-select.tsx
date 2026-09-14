@@ -15,44 +15,47 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { OPTION_HEIGHT_PX, VISIBLE_OPTIONS } from "@/lib/constants";
+import type { SearchFilterOption } from "@/components/search-popup/search-filter-select";
 
-export type SearchFilterOption = {
-  value: string;
-  label: string;
-};
-
-type SearchFilterSelectProps = {
+type LibraryMultiSelectProps = {
   "aria-label"?: string;
   heading: string;
   menuMinWidth?: number;
-  onChange: (value: string) => void;
+  onChange: (values: string[]) => void;
   options: SearchFilterOption[];
   placeholder: string;
   searchable?: boolean;
   searchPlaceholder?: string;
   triggerClassName?: string;
-  value: string;
+  values: string[];
 };
 
-export function SearchFilterSelect({
+export function LibraryMultiSelect({
   "aria-label": ariaLabel,
   heading,
-  menuMinWidth,
+  menuMinWidth = 224,
   onChange,
   options,
   placeholder,
   searchable = false,
   searchPlaceholder = "Filter",
   triggerClassName,
-  value,
-}: SearchFilterSelectProps) {
+  values,
+}: LibraryMultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
   const triggerRef = useRef<HTMLSpanElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const selected = options.find((option) => option.value === value);
+  const selected = options.filter((option) => values.includes(option.value));
+  const triggerLabel =
+    selected.length === 0
+      ? placeholder
+      : selected.length === 1
+        ? selected[0].label
+        : `${selected[0].label} +${selected.length - 1}`;
+
   const filteredOptions = useMemo(() => {
     const normalized = filter.trim().toLowerCase();
     if (!normalized) {
@@ -81,13 +84,10 @@ export function SearchFilterSelect({
       position: "fixed",
       top: rect.bottom + 8,
       left: rect.left,
-      width: Math.max(
-        rect.width,
-        menuMinWidth ?? (searchable ? 176 : rect.width),
-      ),
+      width: Math.max(rect.width, menuMinWidth),
       zIndex: 80,
     });
-  }, [isOpen, menuMinWidth, searchable]);
+  }, [isOpen, menuMinWidth]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -129,7 +129,7 @@ export function SearchFilterSelect({
           aria-haspopup="listbox"
           aria-label={ariaLabel ?? placeholder}
           className={cn(
-            "px-2.5 py-1 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm",
+            "min-w-36 px-2.5 py-1 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm",
             triggerClassName,
           )}
           onClick={() => {
@@ -140,17 +140,10 @@ export function SearchFilterSelect({
             setIsOpen(true);
           }}
           type="button"
-          variant={isOpen || value ? "primaryFilled" : "darkFilled"}
+          variant={isOpen || values.length > 0 ? "primaryFilled" : "darkFilled"}
         >
           <span>{heading}</span>
-          <span
-            className={cn(
-              "truncate",
-              triggerClassName ? "max-w-40" : "max-w-24 sm:max-w-28",
-            )}
-          >
-            {selected?.label ?? placeholder}
-          </span>
+          <span className="max-w-40 truncate">{triggerLabel}</span>
           <ChevronDown
             className={cn(
               "size-3.5 shrink-0 transition-transform duration-200",
@@ -189,7 +182,7 @@ export function SearchFilterSelect({
                   </p>
                 ) : (
                   filteredOptions.map((option) => {
-                    const isSelected = option.value === value;
+                    const isSelected = values.includes(option.value);
                     return (
                       <button
                         aria-selected={isSelected}
@@ -197,10 +190,13 @@ export function SearchFilterSelect({
                           "inline-flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-on-surface transition-colors hover:bg-surface-container-high",
                           isSelected && "bg-surface-container-high",
                         )}
-                        key={option.value || "any"}
+                        key={option.value}
                         onClick={() => {
-                          onChange(option.value);
-                          closeMenu();
+                          onChange(
+                            isSelected
+                              ? values.filter((value) => value !== option.value)
+                              : [...values, option.value],
+                          );
                         }}
                         role="option"
                         type="button"

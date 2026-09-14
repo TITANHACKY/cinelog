@@ -11,14 +11,13 @@ export const OPERATOR_OPTIONS = [
   { value: 1, label: "!=" },
   { value: 2, label: ">" },
   { value: 3, label: "<" },
-  { value: 4, label: "in" },
-  { value: 5, label: "contains" },
+  { value: 4, label: "in" }
 ];
 
 export const SORT_OPTIONS = [
   { field: "release_date", direction: 1, label: "Release Date (Newest)" },
   { field: "release_date", direction: 0, label: "Release Date (Oldest)" },
-  { field: "vote_average", direction: 1, label: "TMDB Rating (Highest)" },
+  { field: "vote_average", direction: 1, label: "Rating (Highest)" },
   { field: "title", direction: 0, label: "Title (A-Z)" },
   { field: "created_at", direction: 1, label: "Recently Added" },
 ];

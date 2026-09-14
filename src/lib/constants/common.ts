@@ -93,8 +93,7 @@ export const OPERATOR_SYMBOLS: Record<number, string> = {
   1: "!=",
   2: ">",
   3: "<",
-  4: "in",
-  5: "contains",
+  4: "in"
 };
 
 export const FIELD_LABELS: Record<string, string> = {

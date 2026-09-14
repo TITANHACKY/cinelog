@@ -30,8 +30,7 @@ export const CUSTOM_COLLECTIONS = {
     1: { value: "neq", display_value: "Not Equals" },
     2: { value: "gt", display_value: "Greater Than" },
     3: { value: "lt", display_value: "Less Than" },
-    4: { value: "in", display_value: "In" },
-    5: { value: "contains", display_value: "Contains" },
+    4: { value: "in", display_value: "In" }
   },
   direction: {
     0: { value: "asc", display_value: "Ascending" },
@@ -40,7 +39,7 @@ export const CUSTOM_COLLECTIONS = {
   filter_field: {
     watch_status: { value: "watch_status", display_value: "Watch Status" },
     impression: { value: "impression", display_value: "User Impression" },
-    vote_average: { value: "vote_average", display_value: "TMDB Rating" },
+    vote_average: { value: "vote_average", display_value: "Rating" },
     release_year: { value: "release_year", display_value: "Release Year" },
     status: { value: "status", display_value: "Status" },
     genre: { value: "genre", display_value: "Genre" },
@@ -57,7 +56,7 @@ export const CUSTOM_COLLECTIONS = {
     created_at: { value: "created_at", display_value: "Date Added" },
     release_date: { value: "release_date", display_value: "Release Date" },
     title: { value: "title", display_value: "Title (A-Z)" },
-    vote_average: { value: "vote_average", display_value: "TMDB Rating" },
+    vote_average: { value: "vote_average", display_value: "Rating" },
     last_watched_at: {
       value: "last_watched_at",
       display_value: "Last Watched",

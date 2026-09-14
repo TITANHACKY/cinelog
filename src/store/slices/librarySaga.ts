@@ -3,13 +3,18 @@ import { call, put, select, takeEvery, takeLatest } from "redux-saga/effects";
 
 import { LIBRARY_PAGE_SIZE } from "@/lib/constants";
 import { apiFetch } from "@/lib/http/client";
+import { toLibrarySearchParams } from "@/lib/media/library-browse";
 import type {
   LibraryMetadata,
   LibraryMovie,
   LibrarySeries,
 } from "@/lib/types";
+import { showToast } from "./toastSlice";
 import {
   libraryFailed,
+  libraryGroupPageFailed,
+  libraryGroupPageRequested,
+  libraryGroupPageSucceeded,
   libraryItemMutationFailed,
   libraryItemMutationRequested,
   libraryItemMutationSucceeded,
@@ -44,7 +49,6 @@ const emptyMetadata = (offset: number): LibraryMetadata => ({
 
 const activePageFetches = new Set<string>();
 const activeLibraryMutations = new Set<string>();
-const activeTypeFetches = new Set<string>();
 
 function isLibraryFetchRoute() {
   if (typeof window === "undefined") return false;
@@ -57,8 +61,6 @@ function* fetchLibrary(
   if (!isLibraryFetchRoute()) return;
 
   const mediaType = action.payload.type;
-  if (activeTypeFetches.has(mediaType)) return;
-
   const library: LibraryState = yield select(
     (state: LibraryRoot) => state.library,
   );
@@ -66,13 +68,13 @@ function* fetchLibrary(
     mediaType === "movie" ? library.moviesLoaded : library.seriesLoaded;
   if (alreadyLoaded) return;
 
-  activeTypeFetches.add(mediaType);
-
-  const params = new URLSearchParams({
-    type: mediaType,
-    offset: "0",
-    limit: String(LIBRARY_PAGE_SIZE),
-  });
+  const requestNonce = library.queryNonce;
+  const params = toLibrarySearchParams(
+    mediaType,
+    0,
+    LIBRARY_PAGE_SIZE,
+    library.query,
+  );
 
   try {
     const response: Response = yield call(
@@ -86,6 +88,11 @@ function* fetchLibrary(
       throw new Error(data.error ?? "Library request failed");
     }
 
+    const current: LibraryState = yield select(
+      (state: LibraryRoot) => state.library,
+    );
+    if (current.queryNonce !== requestNonce) return;
+
     yield put(
       librarySucceeded({
         type: mediaType,
@@ -95,13 +102,15 @@ function* fetchLibrary(
       }),
     );
   } catch (error) {
-    yield put(
-      libraryFailed(
-        error instanceof Error ? error.message : "Library request failed",
-      ),
+    const current: LibraryState = yield select(
+      (state: LibraryRoot) => state.library,
     );
-  } finally {
-    activeTypeFetches.delete(mediaType);
+    if (current.queryNonce !== requestNonce) return;
+
+    const message =
+      error instanceof Error ? error.message : "Library request failed";
+    yield put(showToast({ message, variant: "error" }));
+    yield put(libraryFailed(message));
   }
 }
 
@@ -123,13 +132,15 @@ function* fetchLibraryPage(
     return;
   }
 
+  const requestNonce = library.queryNonce;
   const offset =
     mediaType === "movie" ? library.movies.length : library.series.length;
-  const params = new URLSearchParams({
-    type: mediaType,
-    offset: String(offset),
-    limit: String(LIBRARY_PAGE_SIZE),
-  });
+  const params = toLibrarySearchParams(
+    mediaType,
+    offset,
+    LIBRARY_PAGE_SIZE,
+    library.query,
+  );
 
   try {
     const response: Response = yield call(
@@ -143,6 +154,11 @@ function* fetchLibraryPage(
       throw new Error(data.error ?? "Library request failed");
     }
 
+    const current: LibraryState = yield select(
+      (state: LibraryRoot) => state.library,
+    );
+    if (current.queryNonce !== requestNonce) return;
+
     yield put(
       libraryPageSucceeded({
         type: mediaType,
@@ -152,15 +168,98 @@ function* fetchLibraryPage(
       }),
     );
   } catch (error) {
+    const current: LibraryState = yield select(
+      (state: LibraryRoot) => state.library,
+    );
+    if (current.queryNonce !== requestNonce) return;
+
+    const message =
+      error instanceof Error ? error.message : "Library request failed";
+    yield put(showToast({ message, variant: "error" }));
     yield put(
       libraryPageFailed({
         type: mediaType,
-        error:
-          error instanceof Error ? error.message : "Library request failed",
+        error: message,
       }),
     );
   } finally {
     activePageFetches.delete(mediaType);
+  }
+}
+
+function* fetchLibraryGroupPage(
+  action: ReturnType<typeof libraryGroupPageRequested>,
+): SagaIterator {
+  const { type: mediaType, groupKey } = action.payload;
+  const fetchKey = `${mediaType}:${groupKey}`;
+  if (activePageFetches.has(fetchKey)) return;
+  activePageFetches.add(fetchKey);
+
+  const library: LibraryState = yield select(
+    (state: LibraryRoot) => state.library,
+  );
+  const pages =
+    mediaType === "movie" ? library.movieGroupPages : library.seriesGroupPages;
+  const page = pages[groupKey];
+
+  if (!page?.hasMore || library.status !== "succeeded") {
+    activePageFetches.delete(fetchKey);
+    return;
+  }
+
+  const requestNonce = library.queryNonce;
+  const params = toLibrarySearchParams(
+    mediaType,
+    page.items.length,
+    LIBRARY_PAGE_SIZE,
+    library.query,
+    groupKey,
+  );
+
+  try {
+    const response: Response = yield call(
+      fetch,
+      `/api/library?${params.toString()}`,
+      { cache: "no-store" },
+    );
+    const data: LibraryResponse = yield call([response, "json"]);
+
+    if (!response.ok) {
+      throw new Error(data.error ?? "Library request failed");
+    }
+
+    const current: LibraryState = yield select(
+      (state: LibraryRoot) => state.library,
+    );
+    if (current.queryNonce !== requestNonce) return;
+
+    yield put(
+      libraryGroupPageSucceeded({
+        type: mediaType,
+        groupKey,
+        movies: data.movies ?? [],
+        series: data.series ?? [],
+        metadata: data.metadata ?? emptyMetadata(page.items.length),
+      }),
+    );
+  } catch (error) {
+    const current: LibraryState = yield select(
+      (state: LibraryRoot) => state.library,
+    );
+    if (current.queryNonce !== requestNonce) return;
+
+    const message =
+      error instanceof Error ? error.message : "Library request failed";
+    yield put(showToast({ message, variant: "error" }));
+    yield put(
+      libraryGroupPageFailed({
+        type: mediaType,
+        groupKey,
+        error: message,
+      }),
+    );
+  } finally {
+    activePageFetches.delete(fetchKey);
   }
 }
 
@@ -231,5 +330,6 @@ function* mutateLibraryItem(
 export function* librarySaga(): SagaIterator {
   yield takeLatest(libraryRequested.type, fetchLibrary);
   yield takeEvery(libraryPageRequested.type, fetchLibraryPage);
+  yield takeEvery(libraryGroupPageRequested.type, fetchLibraryGroupPage);
   yield takeEvery(libraryItemMutationRequested.type, mutateLibraryItem);
 }

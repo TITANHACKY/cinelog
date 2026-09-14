@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, count, eq, inArray, type SQL } from "drizzle-orm";
 import { asBatch, getDb, type SqliteBatchQuery } from "@/db";
 import {
   genres,
@@ -12,6 +12,13 @@ import {
   userSeries,
 } from "@/db/schema";
 import type { LibraryQueryInput } from "@/lib/validations/library";
+import {
+  libraryGroupKey,
+  libraryGroupMatch,
+  libraryOrderBy,
+  librarySortOrder,
+  libraryWhere,
+} from "@/repositories/library-filters";
 
 export type UserMovieRow = {
   id: number;
@@ -90,6 +97,22 @@ function asCount(rows: { value: number }[] | undefined) {
   return Number(rows?.[0]?.value ?? 0);
 }
 
+function scopedWhere(
+  base: SQL | undefined,
+  mediaType: "movie" | "series",
+  query: LibraryQueryInput,
+  groupKey?: string,
+) {
+  const match = libraryGroupMatch(mediaType, query, groupKey);
+  if (!match) {
+    return base;
+  }
+
+  return and(base, match);
+}
+
+export type LibraryGroupRow = { key: string; value: number };
+
 export async function listLibraryRows(
   userId: number,
   query: LibraryQueryInput,
@@ -99,10 +122,19 @@ export async function listLibraryRows(
   seasons: UserSeasonRow[];
   movieCount: number;
   seriesCount: number;
+  groups: LibraryGroupRow[];
 }> {
   const db = getDb();
   const includeMovies = query.type === "movie";
   const includeSeries = query.type === "series";
+  const movieWhere = libraryWhere("movie", userId, query);
+  const seriesWhere = libraryWhere("series", userId, query);
+  const movieOrder = libraryOrderBy("movie", query);
+  const seriesOrder = libraryOrderBy("series", query);
+  const movieSort = librarySortOrder("movie", query);
+  const seriesSort = librarySortOrder("series", query);
+  const groupKey = libraryGroupKey(query.type, query);
+  const isGroupedOverview = query.group_by !== undefined && !query.group_key;
 
   const movieSelect = {
     id: movies.id,
@@ -150,49 +182,135 @@ export async function listLibraryRows(
     db
       .select({ value: count() })
       .from(userMovies)
-      .where(eq(userMovies.userId, userId)),
+      .innerJoin(movies, eq(userMovies.movieId, movies.id))
+      .where(movieWhere),
     db
       .select({ value: count() })
       .from(userSeries)
-      .where(eq(userSeries.userId, userId)),
+      .innerJoin(series, eq(userSeries.seriesId, series.id))
+      .where(seriesWhere),
   ];
 
-  if (includeMovies) {
-    pageQueries.push(
-      db
-        .select(movieSelect)
-        .from(userMovies)
-        .innerJoin(movies, eq(userMovies.movieId, movies.id))
-        .where(eq(userMovies.userId, userId))
-        .orderBy(desc(userMovies.createdAt))
-        .limit(query.limit)
-        .offset(query.offset),
-    );
-  }
-
-  if (includeSeries) {
-    pageQueries.push(
-      db
-        .select(seriesSelect)
-        .from(userSeries)
-        .innerJoin(series, eq(userSeries.seriesId, series.id))
-        .where(eq(userSeries.userId, userId))
-        .orderBy(desc(userSeries.createdAt))
-        .limit(query.limit)
-        .offset(query.offset),
-    );
+  if (groupKey) {
+    if (includeMovies) {
+      pageQueries.push(
+        db
+          .select({ key: groupKey, value: count() })
+          .from(userMovies)
+          .innerJoin(movies, eq(userMovies.movieId, movies.id))
+          .where(scopedWhere(movieWhere, "movie", query))
+          .groupBy(groupKey),
+      );
+    } else {
+      pageQueries.push(
+        db
+          .select({ key: groupKey, value: count() })
+          .from(userSeries)
+          .innerJoin(series, eq(userSeries.seriesId, series.id))
+          .where(scopedWhere(seriesWhere, "series", query))
+          .groupBy(groupKey),
+      );
+    }
   }
 
   const pageResults = await db.batch(asBatch(pageQueries));
   const movieCount = asCount(pageResults[0] as { value: number }[]);
   const seriesCount = asCount(pageResults[1] as { value: number }[]);
 
-  const userMovieRows = includeMovies
-    ? (pageResults[2] as MoviePageRow[])
+  let resultIndex = 2;
+  const groups = groupKey
+    ? ((pageResults[resultIndex++] as LibraryGroupRow[]) ?? []).map((row) => ({
+        key: String(row.key),
+        value: Number(row.value),
+      }))
     : [];
-  const userSeriesRows = includeSeries
-    ? (pageResults[includeMovies ? 3 : 2] as SeriesPageRow[])
-    : [];
+
+  const itemQueries: SqliteBatchQuery[] = [];
+
+  if (includeMovies) {
+    if (isGroupedOverview) {
+      for (const group of groups) {
+        itemQueries.push(
+          db
+            .select(movieSelect)
+            .from(userMovies)
+            .innerJoin(movies, eq(userMovies.movieId, movies.id))
+            .where(scopedWhere(movieWhere, "movie", query, group.key))
+            .orderBy(...movieSort)
+            .limit(query.limit),
+        );
+      }
+    } else {
+      itemQueries.push(
+        db
+          .select(movieSelect)
+          .from(userMovies)
+          .innerJoin(movies, eq(userMovies.movieId, movies.id))
+          .where(scopedWhere(movieWhere, "movie", query))
+          .orderBy(...(query.group_key ? movieSort : movieOrder))
+          .limit(query.limit)
+          .offset(query.offset),
+      );
+    }
+  }
+
+  if (includeSeries) {
+    if (isGroupedOverview) {
+      for (const group of groups) {
+        itemQueries.push(
+          db
+            .select(seriesSelect)
+            .from(userSeries)
+            .innerJoin(series, eq(userSeries.seriesId, series.id))
+            .where(scopedWhere(seriesWhere, "series", query, group.key))
+            .orderBy(...seriesSort)
+            .limit(query.limit),
+        );
+      }
+    } else {
+      itemQueries.push(
+        db
+          .select(seriesSelect)
+          .from(userSeries)
+          .innerJoin(series, eq(userSeries.seriesId, series.id))
+          .where(scopedWhere(seriesWhere, "series", query))
+          .orderBy(...(query.group_key ? seriesSort : seriesOrder))
+          .limit(query.limit)
+          .offset(query.offset),
+      );
+    }
+  }
+
+  const itemResults =
+    itemQueries.length > 0 ? await db.batch(asBatch(itemQueries)) : [];
+
+  let userMovieRows: MoviePageRow[] = [];
+  let userSeriesRows: SeriesPageRow[] = [];
+  let itemIndex = 0;
+
+  if (includeMovies) {
+    if (isGroupedOverview) {
+      for (let index = 0; index < groups.length; index += 1) {
+        userMovieRows = userMovieRows.concat(
+          itemResults[itemIndex++] as MoviePageRow[],
+        );
+      }
+    } else {
+      userMovieRows = itemResults[itemIndex++] as MoviePageRow[];
+    }
+  }
+
+  if (includeSeries) {
+    if (isGroupedOverview) {
+      for (let index = 0; index < groups.length; index += 1) {
+        userSeriesRows = userSeriesRows.concat(
+          itemResults[itemIndex++] as SeriesPageRow[],
+        );
+      }
+    } else {
+      userSeriesRows = itemResults[itemIndex] as SeriesPageRow[];
+    }
+  }
 
   const catalogMovieIds = userMovieRows.map((movie) => movie.id);
   const catalogSeriesIds = userSeriesRows.map((show) => show.id);
@@ -282,5 +400,6 @@ export async function listLibraryRows(
     seasons: seasonRows,
     movieCount,
     seriesCount,
+    groups,
   };
 }

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 type EmptyStateProps = {
   icon?: ReactNode;
   title?: string;
+  titleClassName?: string;
   description: string;
   action?: ReactNode;
   className?: string;
@@ -12,6 +13,7 @@ type EmptyStateProps = {
 export function EmptyState({
   icon,
   title,
+  titleClassName,
   description,
   action,
   className,
@@ -29,7 +31,12 @@ export function EmptyState({
         </div>
       ) : null}
       {title ? (
-        <h3 className="font-heading text-lg font-medium text-on-surface">
+        <h3
+          className={cn(
+            "font-heading text-lg font-medium text-on-surface",
+            titleClassName,
+          )}
+        >
           {title}
         </h3>
       ) : null}

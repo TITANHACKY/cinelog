@@ -1,6 +1,11 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
+import { DEFAULT_LIBRARY_BROWSE_QUERY } from "@/lib/constants";
+import { libraryGroupKey } from "@/lib/media/library-browse";
 import type {
+  LibraryBrowseQuery,
+  LibraryGroup,
+  LibraryGroupBy,
   LibraryMediaType,
   LibraryMetadata,
   LibraryMovie,
@@ -11,6 +16,12 @@ import type {
 export type { LibraryMediaType };
 
 export type LibraryStatus = "idle" | "loading" | "succeeded" | "failed";
+
+export type LibraryGroupPage<T extends LibraryMovie | LibrarySeries> = {
+  items: T[];
+  hasMore: boolean;
+  loadingMore: boolean;
+};
 
 export type LibraryItemMutation = {
   tmdbId: number;
@@ -52,6 +63,12 @@ export type LibraryState = {
   seriesLoaded: boolean;
   moviesLoadingMore: boolean;
   seriesLoadingMore: boolean;
+  movieGroups: LibraryGroup[] | undefined;
+  seriesGroups: LibraryGroup[] | undefined;
+  movieGroupPages: Record<string, LibraryGroupPage<LibraryMovie>>;
+  seriesGroupPages: Record<string, LibraryGroupPage<LibrarySeries>>;
+  query: LibraryBrowseQuery;
+  queryNonce: number;
   status: LibraryStatus;
   error: string | null;
   /** Pre-mutation values for in-flight items, keyed by `libraryItemKey`. */
@@ -69,6 +86,12 @@ const initialState: LibraryState = {
   seriesLoaded: false,
   moviesLoadingMore: false,
   seriesLoadingMore: false,
+  movieGroups: undefined,
+  seriesGroups: undefined,
+  movieGroupPages: {},
+  seriesGroupPages: {},
+  query: DEFAULT_LIBRARY_BROWSE_QUERY,
+  queryNonce: 0,
   status: "idle",
   error: null,
   pending: {},
@@ -83,9 +106,66 @@ function findItem(
   mediaType: LibraryMediaType,
   tmdbId: number,
 ) {
-  return mediaType === "movie"
-    ? state.movies.find((movie) => movie.tmdb_id === tmdbId)
-    : state.series.find((show) => show.tmdb_id === tmdbId);
+  const fromList =
+    mediaType === "movie"
+      ? state.movies.find((movie) => movie.tmdb_id === tmdbId)
+      : state.series.find((show) => show.tmdb_id === tmdbId);
+  if (fromList) {
+    return fromList;
+  }
+
+  if (mediaType === "movie") {
+    for (const page of Object.values(state.movieGroupPages)) {
+      const found = page.items.find((movie) => movie.tmdb_id === tmdbId);
+      if (found) {
+        return found;
+      }
+    }
+    return undefined;
+  }
+
+  for (const page of Object.values(state.seriesGroupPages)) {
+    const found = page.items.find((show) => show.tmdb_id === tmdbId);
+    if (found) {
+      return found;
+    }
+  }
+
+  return undefined;
+}
+
+function buildGroupPages<T extends LibraryMovie | LibrarySeries>(
+  items: T[],
+  groups: LibraryGroup[] | undefined,
+  groupBy: LibraryGroupBy | undefined,
+  mediaType: LibraryMediaType,
+): Record<string, LibraryGroupPage<T>> {
+  if (groupBy === undefined || !groups?.length) {
+    return {};
+  }
+
+  const pages: Record<string, LibraryGroupPage<T>> = {};
+  for (const group of groups) {
+    const groupItems = items.filter(
+      (item) => libraryGroupKey(item, groupBy, mediaType) === group.key,
+    );
+    pages[group.key] = {
+      items: groupItems,
+      hasMore: group.hasMore ?? groupItems.length < group.count,
+      loadingMore: false,
+    };
+  }
+
+  return pages;
+}
+
+function clearGroupLoading(state: LibraryState) {
+  for (const page of Object.values(state.movieGroupPages)) {
+    page.loadingMore = false;
+  }
+  for (const page of Object.values(state.seriesGroupPages)) {
+    page.loadingMore = false;
+  }
 }
 
 function appendUnique<T extends { tmdb_id: number }>(
@@ -97,9 +177,18 @@ function appendUnique<T extends { tmdb_id: number }>(
   return next.length === 0 ? existing : [...existing, ...next];
 }
 
-function applyCounts(state: LibraryState, metadata: LibraryMetadata) {
+function applyCounts(
+  state: LibraryState,
+  metadata: LibraryMetadata,
+  type: LibraryMediaType,
+) {
   state.movieCount = metadata.count.movies;
   state.seriesCount = metadata.count.series;
+  if (type === "movie") {
+    state.movieGroups = metadata.groups;
+  } else {
+    state.seriesGroups = metadata.groups;
+  }
 }
 
 function applySeriesProgress(
@@ -157,21 +246,55 @@ const librarySlice = createSlice({
       }>,
     ) => {
       const { type, movies, series, metadata } = action.payload;
-      applyCounts(state, metadata);
+      applyCounts(state, metadata, type);
+
+      const isGrouped = state.query.groupBy !== undefined;
 
       if (type === "movie") {
         state.movies = movies;
-        state.moviesHasMore = metadata.hasMore;
+        state.moviesHasMore = !isGrouped && metadata.hasMore;
         state.moviesLoaded = true;
         state.moviesLoadingMore = false;
+        state.movieGroupPages = buildGroupPages(
+          movies,
+          metadata.groups,
+          state.query.groupBy,
+          "movie",
+        );
       } else {
         state.series = series;
-        state.seriesHasMore = metadata.hasMore;
+        state.seriesHasMore = !isGrouped && metadata.hasMore;
         state.seriesLoaded = true;
         state.seriesLoadingMore = false;
+        state.seriesGroupPages = buildGroupPages(
+          series,
+          metadata.groups,
+          state.query.groupBy,
+          "series",
+        );
       }
 
       state.status = "succeeded";
+      state.error = null;
+    },
+    libraryQueryUpdated: (
+      state,
+      action: PayloadAction<LibraryBrowseQuery>,
+    ) => {
+      state.query = action.payload;
+      state.queryNonce += 1;
+      state.movies = [];
+      state.series = [];
+      state.movieGroups = undefined;
+      state.seriesGroups = undefined;
+      state.movieGroupPages = {};
+      state.seriesGroupPages = {};
+      state.moviesLoaded = false;
+      state.seriesLoaded = false;
+      state.moviesHasMore = false;
+      state.seriesHasMore = false;
+      state.moviesLoadingMore = false;
+      state.seriesLoadingMore = false;
       state.error = null;
     },
     libraryFailed: (state, action: PayloadAction<string>) => {
@@ -179,6 +302,7 @@ const librarySlice = createSlice({
       state.error = action.payload;
       state.moviesLoadingMore = false;
       state.seriesLoadingMore = false;
+      clearGroupLoading(state);
     },
     libraryPageRequested: (
       state,
@@ -203,7 +327,7 @@ const librarySlice = createSlice({
       }>,
     ) => {
       const { type, movies, series, metadata } = action.payload;
-      applyCounts(state, metadata);
+      applyCounts(state, metadata, type);
 
       if (type === "movie") {
         state.movies = appendUnique(state.movies, movies);
@@ -223,6 +347,69 @@ const librarySlice = createSlice({
         state.moviesLoadingMore = false;
       } else {
         state.seriesLoadingMore = false;
+      }
+      state.error = action.payload.error;
+    },
+    libraryGroupPageRequested: (
+      state,
+      action: PayloadAction<{ type: LibraryMediaType; groupKey: string }>,
+    ) => {
+      const pages =
+        action.payload.type === "movie"
+          ? state.movieGroupPages
+          : state.seriesGroupPages;
+      const page = pages[action.payload.groupKey];
+      if (!page || !page.hasMore || page.loadingMore) return;
+      page.loadingMore = true;
+      state.error = null;
+    },
+    libraryGroupPageSucceeded: (
+      state,
+      action: PayloadAction<{
+        type: LibraryMediaType;
+        groupKey: string;
+        movies: LibraryMovie[];
+        series: LibrarySeries[];
+        metadata: LibraryMetadata;
+      }>,
+    ) => {
+      const { type, groupKey, movies, series, metadata } = action.payload;
+      const pageHasMore =
+        metadata.groups?.[0]?.hasMore ?? metadata.hasMore;
+
+      if (type === "movie") {
+        const page = state.movieGroupPages[groupKey];
+        if (page) {
+          page.items = appendUnique(page.items, movies);
+          page.hasMore = pageHasMore;
+          page.loadingMore = false;
+        }
+        state.movies = appendUnique(state.movies, movies);
+      } else {
+        const page = state.seriesGroupPages[groupKey];
+        if (page) {
+          page.items = appendUnique(page.items, series);
+          page.hasMore = pageHasMore;
+          page.loadingMore = false;
+        }
+        state.series = appendUnique(state.series, series);
+      }
+    },
+    libraryGroupPageFailed: (
+      state,
+      action: PayloadAction<{
+        type: LibraryMediaType;
+        groupKey: string;
+        error: string;
+      }>,
+    ) => {
+      const pages =
+        action.payload.type === "movie"
+          ? state.movieGroupPages
+          : state.seriesGroupPages;
+      const page = pages[action.payload.groupKey];
+      if (page) {
+        page.loadingMore = false;
       }
       state.error = action.payload.error;
     },
@@ -269,8 +456,8 @@ const librarySlice = createSlice({
       delete state.pending[libraryItemKey(mediaType, tmdbId)];
 
       if (mediaType === "series" && seriesUpdate) {
-        const item = state.series.find((show) => show.tmdb_id === tmdbId);
-        if (item) {
+        const item = findItem(state, "series", tmdbId);
+        if (item && "seasons_info" in item) {
           applySeriesProgress(item, seriesUpdate);
         }
       }
@@ -301,12 +488,16 @@ const librarySlice = createSlice({
 
 export const {
   libraryFailed,
+  libraryGroupPageFailed,
+  libraryGroupPageRequested,
+  libraryGroupPageSucceeded,
   libraryItemMutationFailed,
   libraryItemMutationRequested,
   libraryItemMutationSucceeded,
   libraryPageFailed,
   libraryPageRequested,
   libraryPageSucceeded,
+  libraryQueryUpdated,
   libraryRequested,
   librarySucceeded,
 } = librarySlice.actions;
