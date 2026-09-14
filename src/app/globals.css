@@ -12,6 +12,7 @@
   .movie-lists-scrollbar::-webkit-scrollbar,
   .custom-scrollbar::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
   }
 
   .movie-lists-scrollbar::-webkit-scrollbar-track,

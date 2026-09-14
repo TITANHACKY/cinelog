@@ -116,11 +116,19 @@ type LibraryCount = {
   series: number;
 };
 
+type LibraryGroup = {
+  key: string;
+  label: string;
+  count: number;
+  hasMore?: boolean;
+};
+
 type LibraryMetadata = {
   count: LibraryCount;
   offset: number;
   limit: number;
   hasMore: boolean;
+  groups?: LibraryGroup[];
 };
 
 type LibrarySeriesSeason = {
@@ -192,6 +200,7 @@ export type {
   CreditMember,
   CustomCollectionWithFilters,
   LibraryCount,
+  LibraryGroup,
   LibraryMetadata,
   LibraryMovie,
   LibrarySeries,

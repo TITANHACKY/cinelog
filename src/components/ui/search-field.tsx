@@ -27,7 +27,7 @@ function SearchField({
   return (
     <div
       className={cn(
-        "relative flex h-11 w-full min-w-0 items-center rounded-xl border border-outline-alt bg-surface shadow-[0_0_0_2px_rgb(51_102_204/30%)] transition-colors sm:h-12.5",
+        "relative flex h-10 w-full min-w-0 items-center rounded-xl border border-outline-alt bg-surface shadow-[0_0_0_2px_rgb(51_102_204/30%)] transition-colors sm:h-10",
         className,
       )}
     >

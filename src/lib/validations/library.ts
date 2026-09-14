@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
+  CUSTOM_COLLECTIONS,
   IMPRESSION,
+  LIBRARY_OPERATORS_BY_FIELD,
   LIBRARY_PAGE_SIZE,
   LIBRARY_PAGE_SIZE_MAX,
   WATCH_STATUS,
@@ -88,17 +90,106 @@ function parsePageInt(value: unknown, fallback: number) {
   return Number(value);
 }
 
-export const libraryQuerySchema = z.object({
-  type: z.enum(["movie", "series"]),
-  offset: z.preprocess(
-    (value) => parsePageInt(value, 0),
-    z.number().int().min(0),
-  ),
-  limit: z.preprocess(
-    (value) => parsePageInt(value, LIBRARY_PAGE_SIZE),
-    z.number().int().min(1).max(LIBRARY_PAGE_SIZE_MAX),
-  ),
-});
+function emptyToUndefined(value: unknown) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  return value;
+}
+
+const filterFields = Object.keys(CUSTOM_COLLECTIONS.filter_field) as [
+  keyof typeof CUSTOM_COLLECTIONS.filter_field,
+  ...(keyof typeof CUSTOM_COLLECTIONS.filter_field)[],
+];
+const sortFields = Object.keys(CUSTOM_COLLECTIONS.sort_field) as [
+  keyof typeof CUSTOM_COLLECTIONS.sort_field,
+  ...(keyof typeof CUSTOM_COLLECTIONS.sort_field)[],
+];
+
+export const libraryQuerySchema = z
+  .object({
+    type: z.enum(["movie", "series"]),
+    offset: z.preprocess(
+      (value) => parsePageInt(value, 0),
+      z.number().int().min(0),
+    ),
+    limit: z.preprocess(
+      (value) => parsePageInt(value, LIBRARY_PAGE_SIZE),
+      z.number().int().min(1).max(LIBRARY_PAGE_SIZE_MAX),
+    ),
+    q: z.preprocess(
+      emptyToUndefined,
+      z.string().trim().min(1).max(100).optional(),
+    ),
+    filter_field: z.preprocess(emptyToUndefined, z.enum(filterFields).optional()),
+    filter_operator: z.preprocess(
+      (value) => {
+        const next = emptyToUndefined(value);
+        return next === undefined ? undefined : Number(next);
+      },
+      z.number().int().min(0).max(4).optional(),
+    ),
+    filter_value: z.preprocess(
+      emptyToUndefined,
+      z.string().trim().min(1).max(1000).optional(),
+    ),
+    sort_field: z.preprocess(
+      (value) => emptyToUndefined(value) ?? "created_at",
+      z.enum(sortFields),
+    ),
+    sort_direction: z.preprocess(
+      (value) => (emptyToUndefined(value) === undefined ? 1 : Number(value)),
+      z.union([z.literal(0), z.literal(1)]),
+    ),
+    group_by: z.preprocess(
+      (value) => {
+        const next = emptyToUndefined(value);
+        return next === undefined ? undefined : Number(next);
+      },
+      z.union([z.literal(0), z.literal(1), z.literal(2)]).optional(),
+    ),
+    group_key: z.preprocess(emptyToUndefined, z.string().min(1).max(64).optional()),
+  })
+  .superRefine((data, context) => {
+    const hasFilterPart =
+      data.filter_field !== undefined ||
+      data.filter_operator !== undefined ||
+      data.filter_value !== undefined;
+    const hasFullFilter =
+      data.filter_field !== undefined &&
+      data.filter_operator !== undefined &&
+      data.filter_value !== undefined;
+
+    if (data.group_key && data.group_by === undefined) {
+      context.addIssue({
+        code: "custom",
+        message: "Validation failed",
+      });
+    }
+
+    if (hasFilterPart && !hasFullFilter) {
+      context.addIssue({
+        code: "custom",
+        message: "Validation failed",
+      });
+      return;
+    }
+
+    if (
+      hasFullFilter &&
+      data.filter_field &&
+      data.filter_operator !== undefined &&
+      !LIBRARY_OPERATORS_BY_FIELD[data.filter_field].includes(
+        data.filter_operator as 0 | 1 | 2 | 3 | 4,
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Validation failed",
+      });
+    }
+  });
 
 export type MoviePatchInput = z.infer<typeof moviePatchSchema>;
 export type SeriesPatchInput = z.infer<typeof seriesPatchSchema>;

@@ -9,7 +9,7 @@ export const collectionFilterInputSchema = z.object({
     "origin_country",
     "genre",
   ]),
-  operator: z.number().int().min(0).max(5),
+  operator: z.number().int().min(0).max(4),
   value: z.string().min(1, "Filter value is required"),
 });
 

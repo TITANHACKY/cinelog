@@ -1,14 +1,24 @@
 "use client";
 
 import { useEffect } from "react";
+import { AlertCircle, Clapperboard, TvMinimal } from "lucide-react";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { MovieCard } from "@/components/ui/movie-card";
 import { SeriesCard } from "@/components/ui/series-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LibraryFilterControls } from "@/components/library/library-filter-controls";
+import { LibraryGroupCarousel } from "@/components/library/library-group-carousel";
 import { LibrarySection } from "@/components/library/library-section";
+import {
+  LIBRARY_EMPTY_DESCRIPTION,
+  LIBRARY_EMPTY_TITLE,
+  LIBRARY_ERROR_DESCRIPTION,
+  LIBRARY_ERROR_TITLE,
+} from "@/lib/constants";
 import type { LibraryMediaType } from "@/lib/types";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
+  libraryGroupPageRequested,
   libraryPageRequested,
   libraryRequested,
 } from "@/store/slices/librarySlice";
@@ -30,8 +40,12 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     seriesLoaded,
     moviesLoadingMore,
     seriesLoadingMore,
+    movieGroups,
+    seriesGroups,
+    movieGroupPages,
+    seriesGroupPages,
+    query,
     status,
-    error,
   } = useAppSelector((state) => state.library);
 
   useEffect(() => {
@@ -42,6 +56,21 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
   const isMovies = mediaType === "movie";
   const isLoaded = isMovies ? moviesLoaded : seriesLoaded;
   const isLoading = !isLoaded && status !== "failed";
+  const currentCount = isMovies ? movieCount : seriesCount;
+  const hasMore = isMovies ? moviesHasMore : seriesHasMore;
+  const loadingMore = isMovies ? moviesLoadingMore : seriesLoadingMore;
+  const emptyIcon = isMovies ? (
+    <Clapperboard className="h-6 w-6" />
+  ) : (
+    <TvMinimal className="h-6 w-6" />
+  );
+  const groups = isMovies ? movieGroups : seriesGroups;
+  const groupPages = isMovies ? movieGroupPages : seriesGroupPages;
+  const isGrouped = isLoaded && query.groupBy !== undefined && Boolean(groups?.length);
+  const hasActiveBrowse =
+    Boolean(query.q.trim()) ||
+    Boolean(query.filterField) ||
+    query.groupBy !== undefined;
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 py-6 sm:px-8 lg:py-10">
@@ -59,7 +88,9 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
             <p className="mt-1 font-public-sans text-xs text-secondary sm:mt-2">
               {isLoading
                 ? "Loading your watchlist"
-                : `${total} titles in your watchlist`}
+                : hasActiveBrowse
+                  ? `${total} matching ${total === 1 ? "title" : "titles"}`
+                  : `${total} titles in your watchlist`}
             </p>
           </div>
 
@@ -70,46 +101,63 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
           />
         </header>
 
-        {status === "failed" ? (
-          <div className="rounded-lg border border-status-error/30 bg-surface-container-low px-4 py-8 text-center font-public-sans text-sm text-status-error">
-            {error ?? "Failed to load your watchlist."}
-          </div>
+        {status === "failed" && !isLoaded ? (
+          <EmptyState
+            description={LIBRARY_ERROR_DESCRIPTION}
+            icon={<AlertCircle className="h-6 w-6 text-status-error" />}
+            title={LIBRARY_ERROR_TITLE}
+            titleClassName="text-status-error"
+          />
+        ) : !isLoaded ? null : currentCount === 0 ? (
+          <EmptyState
+            description={LIBRARY_EMPTY_DESCRIPTION}
+            icon={emptyIcon}
+            title={LIBRARY_EMPTY_TITLE}
+          />
+        ) : isGrouped && groups ? (
+          groups.map((group) => {
+            const page = groupPages[group.key];
+            return (
+              <LibraryGroupCarousel
+                group={group}
+                hasMore={page?.hasMore ?? Boolean(group.hasMore)}
+                items={page?.items ?? []}
+                key={group.key}
+                loadingMore={page?.loadingMore ?? false}
+                mediaType={mediaType}
+                onLoadMore={() =>
+                  dispatch(
+                    libraryGroupPageRequested({
+                      type: mediaType,
+                      groupKey: group.key,
+                    }),
+                  )
+                }
+              />
+            );
+          })
         ) : (
-          <>
-            {isMovies ? (
-              <LibrarySection
-                title="Movies"
-                count={movieCount}
-                hasMore={moviesHasMore}
-                loadingMore={moviesLoadingMore}
-                onLoadMore={() =>
-                  dispatch(libraryPageRequested({ type: "movie" }))
-                }
-              >
-                {movies.map((movie) => (
+          <LibrarySection
+            count={currentCount}
+            emptyIcon={emptyIcon}
+            hasMore={hasMore}
+            loadingMore={loadingMore}
+            onLoadMore={() =>
+              dispatch(libraryPageRequested({ type: mediaType }))
+            }
+            title={isMovies ? "Movies" : "Series"}
+          >
+            {isMovies
+              ? movies.map((movie) => (
                   <MovieCard key={movie.tmdb_id} movie={movie} />
-                ))}
-              </LibrarySection>
-            ) : (
-              <LibrarySection
-                title="Series"
-                count={seriesCount}
-                hasMore={seriesHasMore}
-                loadingMore={seriesLoadingMore}
-                onLoadMore={() =>
-                  dispatch(libraryPageRequested({ type: "series" }))
-                }
-              >
-                {series.map((show) => (
+                ))
+              : series.map((show) => (
                   <SeriesCard key={show.tmdb_id} series={show} />
                 ))}
-              </LibrarySection>
-            )}
-          </>
+          </LibrarySection>
         )}
       </div>
       {isLoading && <LoadingOverlay />}
     </main>
   );
 }
-

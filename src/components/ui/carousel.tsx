@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { Children, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useHorizontalScroll } from "@/hooks/use-horizontal-scroll";
@@ -15,6 +17,7 @@ type CarouselProps = {
   empty?: ReactNode;
   children?: ReactNode;
   className?: string;
+  onNearEnd?: () => void;
 };
 
 export function Carousel({
@@ -28,8 +31,13 @@ export function Carousel({
   empty,
   children,
   className,
+  onNearEnd,
 }: CarouselProps) {
-  const { ref, scroll } = useHorizontalScroll();
+  const { ref, scroll } = useHorizontalScroll(
+    400,
+    onNearEnd,
+    Children.count(children),
+  );
 
   return (
     <section
@@ -86,7 +94,7 @@ export function Carousel({
 
       {children ? (
         <div
-          className="movie-lists-scrollbar -mx-1 flex gap-3 overflow-x-auto scroll-smooth overscroll-contain px-1 pb-2 sm:gap-4"
+          className="movie-lists-scrollbar -mx-1 flex gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain [touch-action:pan-x_pan-y] px-1 pb-2 sm:gap-4"
           ref={ref}
         >
           {children}

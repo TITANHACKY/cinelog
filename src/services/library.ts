@@ -1,3 +1,7 @@
+import {
+  mapLibraryGroups,
+  withGroupHasMore,
+} from "@/lib/media/library-browse";
 import type { LibraryMetadata, LibraryMovie, LibrarySeries } from "@/lib/types";
 import type { LibraryQueryInput } from "@/lib/validations/library";
 import { listLibraryRows } from "@/repositories/library";
@@ -9,6 +13,7 @@ export async function getLibrary(userId: number, query: LibraryQueryInput) {
     seasons: seasonRows,
     movieCount,
     seriesCount,
+    groups,
   } = await listLibraryRows(userId, query);
 
   const seasonsBySeries = new Map<number, LibrarySeries["seasons_info"]>();
@@ -66,7 +71,20 @@ export async function getLibrary(userId: number, query: LibraryQueryInput) {
     seasons_info: seasonsBySeries.get(show.tmdbId) ?? [],
   }));
 
-  const pageLength = query.type === "movie" ? movies.length : series.length;
+  const pageItems = query.type === "movie" ? movies : series;
+  const pageLength = pageItems.length;
+  const totalForType = query.type === "movie" ? movieCount : seriesCount;
+  const mappedGroups = withGroupHasMore(
+    mapLibraryGroups(groups, query.group_by, query.type),
+    pageItems,
+    query.group_by,
+    query.type,
+    {
+      groupKey: query.group_key,
+      offset: query.offset,
+    },
+  );
+
   const metadata: LibraryMetadata = {
     count: {
       movies: movieCount,
@@ -74,7 +92,15 @@ export async function getLibrary(userId: number, query: LibraryQueryInput) {
     },
     offset: query.offset,
     limit: query.limit,
-    hasMore: query.offset + pageLength < (query.type === "movie" ? movieCount : seriesCount),
+    hasMore:
+      query.group_by === undefined
+        ? query.offset + pageLength < totalForType
+        : Boolean(
+            query.group_key
+              ? mappedGroups?.[0]?.hasMore
+              : mappedGroups?.some((group) => group.hasMore),
+          ),
+    groups: mappedGroups,
   };
 
   return { movies, series, metadata };

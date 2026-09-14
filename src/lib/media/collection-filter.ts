@@ -57,7 +57,6 @@ export function matchesFilter(
         case 1: // neq
           return cert !== targetValue;
         case 4: // in
-        case 5: // contains
           return cert.includes(targetValue);
         default:
           return false;
@@ -74,7 +73,6 @@ export function matchesFilter(
         case 1: // neq
           return lang !== targetValue;
         case 4: // in
-        case 5: // contains
           return lang.includes(targetValue);
         default:
           return false;
@@ -91,7 +89,6 @@ export function matchesFilter(
         case 1: // neq
           return country !== targetValue;
         case 4: // in
-        case 5: // contains
           return country.includes(targetValue);
         default:
           return false;
@@ -105,7 +102,6 @@ export function matchesFilter(
       switch (operator) {
         case 0: // eq
         case 4: // in
-        case 5: // contains
           return genres.some(
             (g) => g === targetValue || g.includes(targetValue),
           );

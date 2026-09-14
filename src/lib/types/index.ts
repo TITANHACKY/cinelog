@@ -18,6 +18,7 @@ export type {
   CreditMember,
   CustomCollectionWithFilters,
   LibraryCount,
+  LibraryGroup,
   LibraryMetadata,
   LibraryMovie,
   LibrarySeries,
@@ -27,6 +28,14 @@ export type {
   SeriesSeason,
 } from "./common";
 
-export type { LibraryMediaType } from "./library";
+export type {
+  LibraryBrowseQuery,
+  LibraryDirection,
+  LibraryFilterField,
+  LibraryGroupBy,
+  LibraryMediaType,
+  LibraryOperator,
+  LibrarySortField,
+} from "./library";
 
 export type { BadgeIndicator, ToastProps } from "./ui";
