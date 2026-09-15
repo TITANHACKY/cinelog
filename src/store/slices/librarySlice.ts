@@ -213,7 +213,6 @@ function updateImpressionGroupMeta(
   groups: LibraryGroup[] | undefined,
   fromKey: string,
   toKey: string,
-  mediaType: LibraryMediaType,
 ) {
   if (fromKey === toKey) {
     return groups;
@@ -270,7 +269,6 @@ function rebuildGroupPagesFromFlat(
       state.movies,
       state.movieGroups,
       groupBy,
-      "movie",
     );
     preserveGroupPageMeta(state.movieGroupPages, previous);
     return;
@@ -281,7 +279,6 @@ function rebuildGroupPagesFromFlat(
     state.series,
     state.seriesGroups,
     groupBy,
-    "series",
   );
   preserveGroupPageMeta(state.seriesGroupPages, previous);
 }
@@ -338,14 +335,12 @@ function syncGroupedLibraryAfterPatch(
           state.movieGroups,
           fromKey,
           toKey,
-          "movie",
         );
       } else {
         state.seriesGroups = updateImpressionGroupMeta(
           state.seriesGroups,
           fromKey,
           toKey,
-          "series",
         );
       }
     }
@@ -358,7 +353,6 @@ function buildGroupPages<T extends LibraryMovie | LibrarySeries>(
   items: T[],
   groups: LibraryGroup[] | undefined,
   groupBy: LibraryGroupBy | undefined,
-  mediaType: LibraryMediaType,
 ): Record<string, LibraryGroupPage<T>> {
   if (groupBy === undefined || !groups?.length) {
     return {};
@@ -367,7 +361,7 @@ function buildGroupPages<T extends LibraryMovie | LibrarySeries>(
   const pages: Record<string, LibraryGroupPage<T>> = {};
   for (const group of groups) {
     const groupItems = items.filter(
-      (item) => libraryGroupKey(item, groupBy, mediaType) === group.key,
+      (item) => libraryGroupKey(item, groupBy) === group.key,
     );
     pages[group.key] = {
       items: groupItems,
@@ -507,7 +501,6 @@ const librarySlice = createSlice({
           movies,
           metadata.groups,
           state.query.groupBy,
-          "movie",
         );
       } else {
         state.series = series;
@@ -518,7 +511,6 @@ const librarySlice = createSlice({
           series,
           metadata.groups,
           state.query.groupBy,
-          "series",
         );
       }
 

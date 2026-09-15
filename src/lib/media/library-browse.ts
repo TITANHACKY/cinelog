@@ -100,7 +100,6 @@ export function compareImpressionGroupKeys(left: string, right: string) {
 export function libraryGroupKey(
   item: LibraryMovie | LibrarySeries,
   groupBy: LibraryGroupBy,
-  mediaType: LibraryMediaType,
 ) {
   if (groupBy === 0) {
     return String(item.watch_status);
@@ -175,7 +174,7 @@ export function withGroupHasMore(
 
   const loadedByKey = new Map<string, number>();
   for (const item of items) {
-    const key = libraryGroupKey(item, groupBy, mediaType);
+    const key = libraryGroupKey(item, groupBy);
     loadedByKey.set(key, (loadedByKey.get(key) ?? 0) + 1);
   }
 
