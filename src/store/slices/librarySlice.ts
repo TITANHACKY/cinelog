@@ -1,7 +1,13 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import { DEFAULT_LIBRARY_BROWSE_QUERY } from "@/lib/constants";
-import { libraryGroupKey } from "@/lib/media/library-browse";
+import {
+  compareImpressionGroupKeys,
+  libraryGroupKey,
+  libraryGroupLabel,
+  libraryImpressionGroupKey,
+  libraryImpressionGroupLabel,
+} from "@/lib/media/library-browse";
 import type {
   LibraryBrowseQuery,
   LibraryGroup,
@@ -134,6 +140,220 @@ function findItem(
   return undefined;
 }
 
+function patchItemCopies(
+  state: LibraryState,
+  mediaType: LibraryMediaType,
+  tmdbId: number,
+  patch: (item: LibraryMovie | LibrarySeries) => void,
+) {
+  if (mediaType === "movie") {
+    for (const movie of state.movies) {
+      if (movie.tmdb_id === tmdbId) {
+        patch(movie);
+      }
+    }
+    for (const page of Object.values(state.movieGroupPages)) {
+      for (const movie of page.items) {
+        if (movie.tmdb_id === tmdbId) {
+          patch(movie);
+        }
+      }
+    }
+    return;
+  }
+
+  for (const show of state.series) {
+    if (show.tmdb_id === tmdbId) {
+      patch(show);
+    }
+  }
+  for (const page of Object.values(state.seriesGroupPages)) {
+    for (const show of page.items) {
+      if (show.tmdb_id === tmdbId) {
+        patch(show);
+      }
+    }
+  }
+}
+
+function updateWatchStatusGroupMeta(
+  groups: LibraryGroup[] | undefined,
+  fromKey: string,
+  toKey: string,
+  mediaType: LibraryMediaType,
+) {
+  if (fromKey === toKey) {
+    return groups;
+  }
+
+  const nextGroups = groups ? [...groups] : [];
+  const fromGroup = nextGroups.find((group) => group.key === fromKey);
+  if (fromGroup) {
+    fromGroup.count = Math.max(0, fromGroup.count - 1);
+  }
+
+  const toGroup = nextGroups.find((group) => group.key === toKey);
+  if (toGroup) {
+    toGroup.count += 1;
+  } else {
+    nextGroups.push({
+      key: toKey,
+      label: libraryGroupLabel(0, toKey, mediaType),
+      count: 1,
+      hasMore: false,
+    });
+  }
+
+  return nextGroups
+    .filter((group) => group.count > 0)
+    .sort((left, right) => Number(left.key) - Number(right.key));
+}
+
+function updateImpressionGroupMeta(
+  groups: LibraryGroup[] | undefined,
+  fromKey: string,
+  toKey: string,
+  mediaType: LibraryMediaType,
+) {
+  if (fromKey === toKey) {
+    return groups;
+  }
+
+  const nextGroups = groups ? [...groups] : [];
+  const fromGroup = nextGroups.find((group) => group.key === fromKey);
+  if (fromGroup) {
+    fromGroup.count = Math.max(0, fromGroup.count - 1);
+  }
+
+  const toGroup = nextGroups.find((group) => group.key === toKey);
+  if (toGroup) {
+    toGroup.count += 1;
+  } else {
+    nextGroups.push({
+      key: toKey,
+      label: libraryImpressionGroupLabel(toKey),
+      count: 1,
+      hasMore: false,
+    });
+  }
+
+  return nextGroups
+    .filter((group) => group.count > 0)
+    .sort((left, right) => compareImpressionGroupKeys(left.key, right.key));
+}
+
+function preserveGroupPageMeta<T extends LibraryMovie | LibrarySeries>(
+  next: Record<string, LibraryGroupPage<T>>,
+  previous: Record<string, LibraryGroupPage<T>>,
+) {
+  for (const key of Object.keys(next)) {
+    const prev = previous[key];
+    if (prev) {
+      next[key].hasMore = prev.hasMore;
+      next[key].loadingMore = prev.loadingMore;
+    }
+  }
+}
+
+function rebuildGroupPagesFromFlat(
+  state: LibraryState,
+  mediaType: LibraryMediaType,
+) {
+  const groupBy = state.query.groupBy;
+  if (groupBy === undefined) {
+    return;
+  }
+
+  if (mediaType === "movie") {
+    const previous = state.movieGroupPages;
+    state.movieGroupPages = buildGroupPages(
+      state.movies,
+      state.movieGroups,
+      groupBy,
+      "movie",
+    );
+    preserveGroupPageMeta(state.movieGroupPages, previous);
+    return;
+  }
+
+  const previous = state.seriesGroupPages;
+  state.seriesGroupPages = buildGroupPages(
+    state.series,
+    state.seriesGroups,
+    groupBy,
+    "series",
+  );
+  preserveGroupPageMeta(state.seriesGroupPages, previous);
+}
+
+function syncGroupedLibraryAfterPatch(
+  state: LibraryState,
+  mediaType: LibraryMediaType,
+  options?: {
+    fromStatus?: number;
+    toStatus?: number;
+    fromImpression?: number | null;
+    toImpression?: number | null;
+  },
+) {
+  if (state.query.groupBy === undefined) {
+    return;
+  }
+
+  if (
+    state.query.groupBy === 0 &&
+    options?.fromStatus !== undefined &&
+    options.toStatus !== undefined &&
+    options.fromStatus !== options.toStatus
+  ) {
+    const fromKey = String(options.fromStatus);
+    const toKey = String(options.toStatus);
+    if (mediaType === "movie") {
+      state.movieGroups = updateWatchStatusGroupMeta(
+        state.movieGroups,
+        fromKey,
+        toKey,
+        "movie",
+      );
+    } else {
+      state.seriesGroups = updateWatchStatusGroupMeta(
+        state.seriesGroups,
+        fromKey,
+        toKey,
+        "series",
+      );
+    }
+  }
+
+  if (
+    state.query.groupBy === 1 &&
+    options?.fromImpression !== undefined &&
+    options.toImpression !== undefined
+  ) {
+    const fromKey = libraryImpressionGroupKey(options.fromImpression);
+    const toKey = libraryImpressionGroupKey(options.toImpression);
+    if (fromKey !== toKey) {
+      if (mediaType === "movie") {
+        state.movieGroups = updateImpressionGroupMeta(
+          state.movieGroups,
+          fromKey,
+          toKey,
+          "movie",
+        );
+      } else {
+        state.seriesGroups = updateImpressionGroupMeta(
+          state.seriesGroups,
+          fromKey,
+          toKey,
+          "series",
+        );
+      }
+    }
+  }
+
+  rebuildGroupPagesFromFlat(state, mediaType);
+}
+
 function buildGroupPages<T extends LibraryMovie | LibrarySeries>(
   items: T[],
   groups: LibraryGroup[] | undefined,
@@ -177,6 +397,29 @@ function appendUnique<T extends { tmdb_id: number }>(
   return next.length === 0 ? existing : [...existing, ...next];
 }
 
+function normalizeLibraryGroups(
+  groups: LibraryGroup[] | undefined,
+  groupBy: LibraryGroupBy | undefined,
+  mediaType: LibraryMediaType,
+) {
+  if (!groups || groupBy === undefined) {
+    return groups;
+  }
+
+  const normalized = groups.map((group) => ({
+    ...group,
+    label: libraryGroupLabel(groupBy, group.key, mediaType),
+  }));
+
+  if (groupBy === 1) {
+    return [...normalized].sort((left, right) =>
+      compareImpressionGroupKeys(left.key, right.key),
+    );
+  }
+
+  return normalized;
+}
+
 function applyCounts(
   state: LibraryState,
   metadata: LibraryMetadata,
@@ -184,10 +427,15 @@ function applyCounts(
 ) {
   state.movieCount = metadata.count.movies;
   state.seriesCount = metadata.count.series;
+  const groups = normalizeLibraryGroups(
+    metadata.groups,
+    state.query.groupBy,
+    type,
+  );
   if (type === "movie") {
-    state.movieGroups = metadata.groups;
+    state.movieGroups = groups;
   } else {
-    state.seriesGroups = metadata.groups;
+    state.seriesGroups = groups;
   }
 }
 
@@ -422,6 +670,8 @@ const librarySlice = createSlice({
       if (!item) return;
 
       const key = libraryItemKey(mediaType, tmdbId);
+      const previousStatus = item.watch_status;
+      const previousImpression = item.impression;
       const pendingType =
         watch_status !== undefined
           ? "watch_status"
@@ -438,10 +688,22 @@ const librarySlice = createSlice({
       };
 
       if (watch_status !== undefined) {
-        item.watch_status = watch_status;
+        patchItemCopies(state, mediaType, tmdbId, (copy) => {
+          copy.watch_status = watch_status;
+        });
+        syncGroupedLibraryAfterPatch(state, mediaType, {
+          fromStatus: previousStatus,
+          toStatus: watch_status,
+        });
       }
       if (impression !== undefined) {
-        item.impression = impression;
+        patchItemCopies(state, mediaType, tmdbId, (copy) => {
+          copy.impression = impression;
+        });
+        syncGroupedLibraryAfterPatch(state, mediaType, {
+          fromImpression: previousImpression,
+          toImpression: impression,
+        });
       }
     },
     libraryItemMutationSucceeded: (
@@ -453,13 +715,24 @@ const librarySlice = createSlice({
       }>,
     ) => {
       const { mediaType, tmdbId, seriesUpdate } = action.payload;
-      delete state.pending[libraryItemKey(mediaType, tmdbId)];
+      const key = libraryItemKey(mediaType, tmdbId);
+      const snapshot = state.pending[key];
+      delete state.pending[key];
 
       if (mediaType === "series" && seriesUpdate) {
-        const item = findItem(state, "series", tmdbId);
-        if (item && "seasons_info" in item) {
-          applySeriesProgress(item, seriesUpdate);
-        }
+        const previousStatus = snapshot?.watch_status;
+        const previousImpression = snapshot?.impression;
+        patchItemCopies(state, "series", tmdbId, (copy) => {
+          if ("seasons_info" in copy) {
+            applySeriesProgress(copy, seriesUpdate);
+          }
+        });
+        syncGroupedLibraryAfterPatch(state, "series", {
+          fromStatus: previousStatus,
+          toStatus: seriesUpdate.watch_status ?? undefined,
+          fromImpression: previousImpression,
+          toImpression: seriesUpdate.impression,
+        });
       }
     },
     libraryItemMutationFailed: (
@@ -476,8 +749,18 @@ const librarySlice = createSlice({
       const item = findItem(state, mediaType, tmdbId);
 
       if (item && snapshot) {
-        item.watch_status = snapshot.watch_status;
-        item.impression = snapshot.impression;
+        const currentStatus = item.watch_status;
+        const currentImpression = item.impression;
+        patchItemCopies(state, mediaType, tmdbId, (copy) => {
+          copy.watch_status = snapshot.watch_status;
+          copy.impression = snapshot.impression;
+        });
+        syncGroupedLibraryAfterPatch(state, mediaType, {
+          fromStatus: currentStatus,
+          toStatus: snapshot.watch_status,
+          fromImpression: currentImpression,
+          toImpression: snapshot.impression,
+        });
       }
 
       delete state.pending[key];

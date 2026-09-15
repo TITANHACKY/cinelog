@@ -120,6 +120,7 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
             return (
               <LibraryGroupCarousel
                 group={group}
+                groupBy={query.groupBy}
                 hasMore={page?.hasMore ?? Boolean(group.hasMore)}
                 items={page?.items ?? []}
                 key={group.key}

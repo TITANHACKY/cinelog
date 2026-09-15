@@ -71,6 +71,32 @@ export function toLibrarySearchParams(
   return params;
 }
 
+export function libraryImpressionGroupKey(impression: number | null) {
+  return impression === null ? "none" : String(impression);
+}
+
+const IMPRESSION_GROUP_LABELS: Record<string, string> = {
+  none: "No Impression",
+  "0": IMPRESSION[0].display_value,
+  "1": IMPRESSION[1].display_value,
+  "2": IMPRESSION[2].display_value,
+};
+
+export function libraryImpressionGroupLabel(key: string) {
+  return IMPRESSION_GROUP_LABELS[key] ?? key;
+}
+
+export function compareImpressionGroupKeys(left: string, right: string) {
+  const order: Record<string, number> = {
+    "2": 0,
+    "1": 1,
+    "0": 2,
+    none: 3,
+  };
+
+  return (order[left] ?? 99) - (order[right] ?? 99);
+}
+
 export function libraryGroupKey(
   item: LibraryMovie | LibrarySeries,
   groupBy: LibraryGroupBy,
@@ -81,11 +107,7 @@ export function libraryGroupKey(
   }
 
   if (groupBy === 1) {
-    const date =
-      mediaType === "movie"
-        ? (item as LibraryMovie).release_date
-        : (item as LibrarySeries).first_air_date;
-    return date?.slice(0, 4) || "Unknown";
+    return libraryImpressionGroupKey(item.impression);
   }
 
   return item.status || "Unknown";
@@ -106,7 +128,7 @@ export function libraryGroupLabel(
   }
 
   if (groupBy === 1) {
-    return key;
+    return libraryImpressionGroupLabel(key);
   }
 
   if (mediaType === "movie") {
@@ -125,11 +147,19 @@ export function mapLibraryGroups(
     return undefined;
   }
 
-  return rows.map((row) => ({
+  const mapped = rows.map((row) => ({
     key: String(row.key),
     label: libraryGroupLabel(groupBy, String(row.key), mediaType),
     count: Number(row.value),
   }));
+
+  if (groupBy === 1) {
+    return [...mapped].sort((left, right) =>
+      compareImpressionGroupKeys(left.key, right.key),
+    );
+  }
+
+  return mapped;
 }
 
 export function withGroupHasMore(

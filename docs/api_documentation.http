@@ -61,7 +61,7 @@ GET /api/search/series?query={{query}}&year=2024&page=1
 #   filter_field + filter_operator + filter_value (all three together)
 #   sort_field (default created_at)
 #   sort_direction=0|1 (default 1 desc)
-#   group_by=0|1|2 (watch_status, year, status)
+#   group_by=0|1|2 (watch_status, impression, status)
 #   group_key (optional; only with group_by — page that group)
 #
 # filter_field: watch_status, impression, vote_average, release_year,
@@ -264,7 +264,7 @@ Content-Type: application/json
 #   filters[], sorts[]
 #
 # mediaType: 0 Movie, 1 Series
-# groupBy: 0 Watch Status, 1 Year, 2 Status (or null)
+# groupBy: 0 Watch Status, 1 Impression, 2 Status (or null)
 # filter operator: 0 eq, 1 neq, 2 gt, 3 lt, 4 in
 # sort direction: 0 asc, 1 desc
 GET /api/collections

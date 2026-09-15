@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Carousel } from "@/components/ui/carousel";
 import { MovieCard } from "@/components/ui/movie-card";
 import { SeriesCard } from "@/components/ui/series-card";
+import { libraryImpressionGroupLabel } from "@/lib/media/library-browse";
 import type {
   LibraryGroup,
+  LibraryGroupBy,
   LibraryMediaType,
   LibraryMovie,
   LibrarySeries,
@@ -15,6 +17,7 @@ import type {
 
 type LibraryGroupCarouselProps = {
   group: LibraryGroup;
+  groupBy?: LibraryGroupBy;
   mediaType: LibraryMediaType;
   items: Array<LibraryMovie | LibrarySeries>;
   hasMore: boolean;
@@ -24,12 +27,15 @@ type LibraryGroupCarouselProps = {
 
 export function LibraryGroupCarousel({
   group,
+  groupBy,
   mediaType,
   items,
   hasMore,
   loadingMore,
   onLoadMore,
 }: LibraryGroupCarouselProps) {
+  const title =
+    groupBy === 1 ? libraryImpressionGroupLabel(group.key) : group.label;
   const handleNearEnd = useCallback(() => {
     if (hasMore && !loadingMore) {
       onLoadMore();
@@ -57,7 +63,7 @@ export function LibraryGroupCarousel({
       navAlwaysVisible
       onNearEnd={handleNearEnd}
       showNav
-      title={group.label}
+      title={title}
     >
       {items.map((item) => (
         <div className="w-40 shrink-0 sm:w-60" key={item.tmdb_id}>

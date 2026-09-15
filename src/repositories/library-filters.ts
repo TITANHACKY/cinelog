@@ -179,15 +179,13 @@ export function libraryWhere(
 function groupKeyExpression(mediaType: "movie" | "series", groupBy: 0 | 1 | 2) {
   const user = mediaType === "movie" ? userMovies : userSeries;
   const catalog = mediaType === "movie" ? movies : series;
-  const dateColumn =
-    mediaType === "movie" ? movies.releaseDate : series.firstAirDate;
 
   if (groupBy === 0) {
     return sql<string>`cast(${user.watchStatus} as text)`;
   }
 
   if (groupBy === 1) {
-    return sql<string>`coalesce(nullif(substr(${dateColumn}, 1, 4), ''), 'Unknown')`;
+    return sql<string>`coalesce(cast(${user.impression} as text), 'none')`;
   }
 
   return sql<string>`coalesce(${catalog.status}, 'Unknown')`;
@@ -227,9 +225,10 @@ export function libraryOrderBy(
   const orders: SQL[] = [];
 
   if (query.group_by === 1) {
-    const yearKey = groupKeyExpression(mediaType, 1);
-    orders.push(sql`CASE WHEN ${yearKey} = 'Unknown' THEN 1 ELSE 0 END`);
-    orders.push(desc(yearKey));
+    const impressionKey = groupKeyExpression(mediaType, 1);
+    orders.push(
+      sql`CASE ${impressionKey} WHEN '2' THEN 0 WHEN '1' THEN 1 WHEN '0' THEN 2 WHEN 'none' THEN 3 ELSE 4 END`,
+    );
   } else if (query.group_by === 0) {
     const user = mediaType === "movie" ? userMovies : userSeries;
     orders.push(asc(user.watchStatus));
