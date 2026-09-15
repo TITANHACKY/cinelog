@@ -22,7 +22,7 @@ export const CUSTOM_COLLECTIONS = {
   },
   group_by: {
     0: { value: "watch_status", display_value: "Watch Status" },
-    1: { value: "year", display_value: "Year" },
+    1: { value: "impression", display_value: "Impression" },
     2: { value: "status", display_value: "Status" },
   },
   operator: {

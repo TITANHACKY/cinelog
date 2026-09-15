@@ -92,7 +92,7 @@ Logged-in search results include `is_present_in_watchlist` and `watch_status`.
 | `filter_value` | With field + operator | Single value, or comma-separated for `in` |
 | `sort_field` | No | Default `created_at`. Also `release_date`, `title`, `vote_average`, `last_watched_at`, `completed_at` |
 | `sort_direction` | No | `0` asc, `1` desc (default) |
-| `group_by` | No | `0` watch status, `1` year, `2` catalog status |
+| `group_by` | No | `0` watch status, `1` impression, `2` catalog status |
 | `group_key` | With `group_by` | Page one group. Omit to get every group total plus the first `limit` items per group. |
 
 Operator allow-list: `watch_status` / `impression` → 0, 1, 4; `vote_average` / `release_year` → 0, 1, 2, 3; text/genre fields → 0, 1, 4. Contains (`5`) is not accepted.
