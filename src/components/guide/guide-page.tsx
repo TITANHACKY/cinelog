@@ -12,7 +12,6 @@ import {
   ListFilter,
   Search,
   Settings,
-  Smartphone,
   Star,
 } from "lucide-react";
 
@@ -362,28 +361,6 @@ export function GuidePage() {
                 tips={guide.tips}
               />
             ))}
-          </div>
-        </section>
-
-        {/* ── PWA Install Guide ── */}
-        <section className="space-y-5 pb-4">
-          <div className="overflow-hidden rounded-2xl border border-outline-variant bg-gradient-to-br from-surface-container-low via-surface-container to-surface-container-high p-6 sm:p-8">
-            <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:text-left">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-brand-primary/20 bg-brand-primary-container/15 shadow-md sm:size-16">
-                <Smartphone className="size-6 text-brand-primary sm:size-7" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-heading text-lg font-bold text-on-surface sm:text-xl">
-                  Install CineLog as an app
-                </h3>
-                <p className="mt-1.5 max-w-xl font-public-sans text-xs leading-relaxed text-secondary sm:text-sm">
-                  CineLog works as a Progressive Web App. Install it from your
-                  browser for native-like experience. On iOS, tap Share → Add to
-                  Home Screen. On Android or desktop, use the install prompt or
-                  the browser menu.
-                </p>
-              </div>
-            </div>
           </div>
         </section>
       </div>
