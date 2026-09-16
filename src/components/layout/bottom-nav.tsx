@@ -4,13 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookOpen,
   LayoutDashboard,
   Library,
   Loader2,
   LogIn,
   LogOut,
   Menu,
-  Settings,
   UserPlus,
   X,
 } from "lucide-react";
@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 const navigation = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "My library", href: "/library", icon: Library },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Guide", href: "/guide", icon: BookOpen },
 ];
 
 export function BottomNav() {
