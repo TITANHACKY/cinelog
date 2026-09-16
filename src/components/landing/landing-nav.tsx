@@ -36,7 +36,7 @@ export function LandingNav() {
           : "bg-transparent"
       }`}
     >
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:h-16 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
           href="/"
@@ -56,13 +56,16 @@ export function LandingNav() {
           </span>
         </Link>
 
-        {/* Desktop Nav Links */}
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Landing page navigation">
+        {/* Desktop Nav Links - Centered */}
+        <nav
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden items-center justify-center gap-0.5 md:flex lg:gap-1"
+          aria-label="Landing page navigation"
+        >
           {navLinks.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="rounded-lg px-3 py-2 font-public-sans text-sm font-medium text-secondary transition-colors hover:bg-surface-container-high hover:text-on-surface"
+              className="rounded-lg px-2.5 py-2 font-public-sans text-xs font-medium text-secondary transition-colors hover:bg-surface-container-high hover:text-on-surface lg:px-3 lg:text-sm"
             >
               {link.label}
             </a>
@@ -70,12 +73,12 @@ export function LandingNav() {
         </nav>
 
         {/* Desktop Actions */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2 md:flex lg:gap-3">
           <ThemeToggle />
           <ButtonLink
             href="/login"
             variant="ghost"
-            className="gap-1.5 px-3.5"
+            className="gap-1.5 px-3 lg:px-3.5"
           >
             <LogIn className="size-4" />
             Log In
@@ -83,7 +86,7 @@ export function LandingNav() {
           <ButtonLink
             href="/signup"
             variant="primaryFilled"
-            className="gap-1.5 px-4"
+            className="gap-1.5 px-3.5 lg:px-4"
           >
             <UserPlus className="size-4" />
             Sign Up

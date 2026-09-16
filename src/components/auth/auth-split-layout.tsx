@@ -51,23 +51,21 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
         <header className="relative z-10 flex items-center">
           <Link
             href="/"
-            className="group inline-flex items-center gap-2.5 sm:gap-3.5 transition-transform duration-200 active:scale-95"
+            className="group inline-flex items-center gap-2.5 sm:gap-3 transition-opacity hover:opacity-90 active:scale-95"
             aria-label="CineLog Home"
           >
-            <div className="relative size-9 sm:size-12 lg:size-14 shrink-0 overflow-hidden rounded-xl sm:rounded-2xl border border-white/20 bg-black/45 p-1.5 sm:p-2 shadow-lg backdrop-blur-md transition-all group-hover:border-white/40 group-hover:bg-black/60">
+            <div className="relative size-8 sm:size-9 lg:size-10 shrink-0 overflow-hidden">
               <Image
                 src="/logo_dark.svg"
                 alt="CineLog Logo"
                 fill
                 priority
-                className="object-contain p-0.5"
+                className="object-contain"
               />
             </div>
-            <div className="flex flex-col">
-              <span className="font-heading text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white drop-shadow-md">
-                CineLog
-              </span>
-            </div>
+            <span className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-white drop-shadow-sm">
+              CineLog
+            </span>
           </Link>
         </header>
 
@@ -94,17 +92,17 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
               {HIGHLIGHTS.map(({ icon: Icon, title, description }) => (
                 <div
                   key={title}
-                  className="group rounded-xl border border-white/40 bg-white/80 p-2.5 shadow-md backdrop-blur-md transition-all duration-200 hover:border-white/60 hover:bg-white/90 dark:border-white/15 dark:bg-black/45 dark:shadow-sm dark:hover:border-white/30 dark:hover:bg-black/60"
+                  className="group rounded-xl border border-white/15 bg-black/45 p-2.5 shadow-sm backdrop-blur-md transition-all duration-200 hover:border-white/30 hover:bg-black/60"
                 >
                   <div className="flex items-center gap-2">
-                    <div className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-brand-primary/25 bg-brand-primary/10 text-brand-primary shadow-xs dark:border-blue-400/30 dark:bg-blue-500/20 dark:text-blue-300">
+                    <div className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-blue-400/30 bg-blue-500/20 text-blue-300 shadow-xs">
                       <Icon className="size-3.5" />
                     </div>
-                    <span className="text-xs font-semibold text-slate-900 transition-colors dark:text-white">
+                    <span className="text-xs font-semibold text-white">
                       {title}
                     </span>
                   </div>
-                  <p className="mt-1 text-[10px] leading-tight text-slate-600 transition-colors dark:text-zinc-300">
+                  <p className="mt-1 text-[10px] leading-tight text-zinc-300">
                     {description}
                   </p>
                 </div>

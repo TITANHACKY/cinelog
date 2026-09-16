@@ -7,7 +7,6 @@ import {
   Bookmark,
   ChevronDown,
   ChevronRight,
-  Download,
   Film,
   Library,
   ListFilter,
@@ -150,6 +149,11 @@ const PREVIEWS = [
     src: "/mockup_dashboard.jpg",
     alt: "CineLog Dashboard — personalized welcome, stats, and continue watching",
     label: "Dashboard",
+  },
+  {
+    src: "/mockup_library.jpg",
+    alt: "CineLog Search - Search for movies and series",
+    label: "Search",
   },
   {
     src: "/mockup_library.jpg",
@@ -436,40 +440,6 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ PWA ANNOUNCEMENT ═══ */}
-      <section className="px-4 py-16 sm:px-6 sm:py-20">
-        <div className="mx-auto max-w-4xl">
-          <div className="landing-reveal overflow-hidden rounded-2xl border border-outline-variant bg-gradient-to-br from-surface-container-low via-surface-container to-surface-container-high p-6 sm:p-10">
-            <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
-              <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl border border-brand-primary/20 bg-brand-primary-container/15 shadow-lg sm:size-20">
-                <Download className="size-7 text-brand-primary sm:size-8" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-heading text-xl font-bold text-on-surface sm:text-2xl">
-                  Install CineLog on any device
-                </h3>
-                <p className="mt-2 max-w-lg font-public-sans text-sm leading-relaxed text-secondary">
-                  CineLog is a Progressive Web App — install it straight from
-                  your browser. Get an app-like experience with offline support,
-                  no app store required.
-                </p>
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-                  <span className="flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface-container px-3 py-1 text-xs font-medium text-secondary">
-                    <Smartphone className="size-3.5" />
-                    iOS & Android
-                  </span>
-                  <span className="flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface-container px-3 py-1 text-xs font-medium text-secondary">
-                    💻 Desktop
-                  </span>
-                  <span className="flex items-center gap-1.5 rounded-full border border-outline-variant bg-surface-container px-3 py-1 text-xs font-medium text-secondary">
-                    ⚡ Instant Install
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ═══ FAQ ═══ */}
       <section id="faq" className="px-4 py-20 sm:px-6 sm:py-28">
