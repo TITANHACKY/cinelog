@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/hooks/use-theme";
 import {
+  BookOpen,
   LayoutDashboard,
   Library,
   Settings,
@@ -13,6 +14,7 @@ import {
 const navigation = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "My library", href: "/library", icon: Library },
+  { label: "Guide", href: "/guide", icon: BookOpen },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 

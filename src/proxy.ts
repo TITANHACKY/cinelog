@@ -48,7 +48,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3. For ALL OTHER routes (both UI and API), enforce authentication
+  // 3. Allow the landing page through – page.tsx handles its own auth branch
+  if (pathname === "/") {
+    if (!token) {
+      return NextResponse.next();
+    }
+    try {
+      await jwtVerify(token, JWT_SECRET);
+      return NextResponse.next();
+    } catch {
+      // Token invalid — show landing page
+      return NextResponse.next();
+    }
+  }
+
+  // 4. For ALL OTHER routes (both UI and API), enforce authentication
   if (!token) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
