@@ -1,6 +1,7 @@
 "use client";
 
-import { Layers } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Layers, Loader2 } from "lucide-react";
 import { Carousel } from "@/components/ui/carousel";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterQueryChips } from "@/components/ui/filter-query-chips";
@@ -13,17 +14,45 @@ import type {
 } from "@/lib/types";
 import { filterCollectionItems } from "@/lib/media/collection-filter";
 
+const MINIMUM_COLLECTION_PAGE_SIZE = 15;
+
 export function CollectionCarousel({
   collection,
   movies,
   series,
+  pageSize = MINIMUM_COLLECTION_PAGE_SIZE,
 }: {
   collection: CustomCollectionWithFilters;
   movies: LibraryMovie[];
   series: LibrarySeries[];
+  pageSize?: number;
 }) {
-  const matchingItems = filterCollectionItems(collection, movies, series);
+  const actualPageSize = Math.max(MINIMUM_COLLECTION_PAGE_SIZE, pageSize);
+  const matchingItems = useMemo(
+    () => filterCollectionItems(collection, movies, series),
+    [collection, movies, series],
+  );
   const count = matchingItems.length;
+
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const visibleCount = page * actualPageSize;
+  const hasMore = visibleCount < count;
+  const visibleItems = useMemo(
+    () => matchingItems.slice(0, visibleCount),
+    [matchingItems, visibleCount],
+  );
+
+  const handleNearEnd = useCallback(() => {
+    if (hasMore && !loadingMore) {
+      setLoadingMore(true);
+      window.setTimeout(() => {
+        setPage((prev) => prev + 1);
+        setLoadingMore(false);
+      }, 180);
+    }
+  }, [hasMore, loadingMore]);
 
   return (
     <Carousel
@@ -42,12 +71,15 @@ export function CollectionCarousel({
       }
       headingId={`collection-${collection.id}-heading`}
       icon={<Layers className="h-4.5 w-4.5" />}
+      navAlwaysVisible
+      onNearEnd={handleNearEnd}
       showNav={count > 0}
       subtitle={<FilterQueryChips filters={collection.filters} />}
       title={collection.name}
     >
-      {count > 0
-        ? matchingItems.map((item) => {
+      {count > 0 ? (
+        <>
+          {visibleItems.map((item) => {
             const isMovie = "title" in item;
             return (
               <div
@@ -61,8 +93,14 @@ export function CollectionCarousel({
                 )}
               </div>
             );
-          })
-        : undefined}
+          })}
+          {loadingMore ? (
+            <div className="flex w-16 shrink-0 items-center justify-center py-8 text-brand-primary">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : null}
+        </>
+      ) : undefined}
     </Carousel>
   );
 }
