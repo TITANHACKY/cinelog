@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AlertCircle, Clapperboard, TvMinimal } from "lucide-react";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { MovieCard } from "@/components/ui/movie-card";
 import { SeriesCard } from "@/components/ui/series-card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionCarousel } from "@/components/library/collection-carousel";
 import { LibraryFilterControls } from "@/components/library/library-filter-controls";
 import { LibraryGroupCarousel } from "@/components/library/library-group-carousel";
 import { LibrarySection } from "@/components/library/library-section";
@@ -15,7 +16,7 @@ import {
   LIBRARY_ERROR_DESCRIPTION,
   LIBRARY_ERROR_TITLE,
 } from "@/lib/constants";
-import type { LibraryMediaType } from "@/lib/types";
+import type { CustomCollectionWithFilters, LibraryMediaType } from "@/lib/types";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
   libraryGroupPageRequested,
@@ -47,6 +48,29 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     query,
     status,
   } = useAppSelector((state) => state.library);
+
+  const [collections, setCollections] = useState<CustomCollectionWithFilters[]>([]);
+
+  useEffect(() => {
+    let ignore = false;
+    async function loadCols() {
+      try {
+        const res = await fetch("/api/collections");
+        if (res.ok) {
+          const data = await res.json();
+          if (!ignore) {
+            setCollections(data.collections ?? data.data?.collections ?? []);
+          }
+        }
+      } catch {
+        // silent ignore
+      }
+    }
+    void loadCols();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     dispatch(libraryRequested({ type: mediaType }));
@@ -138,24 +162,42 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
             );
           })
         ) : (
-          <LibrarySection
-            count={currentCount}
-            emptyIcon={emptyIcon}
-            hasMore={hasMore}
-            loadingMore={loadingMore}
-            onLoadMore={() =>
-              dispatch(libraryPageRequested({ type: mediaType }))
-            }
-            title={isMovies ? "Movies" : "Series"}
-          >
-            {isMovies
-              ? movies.map((movie) => (
-                  <MovieCard key={movie.tmdb_id} movie={movie} />
-                ))
-              : series.map((show) => (
-                  <SeriesCard key={show.tmdb_id} series={show} />
+          <>
+            {!hasActiveBrowse &&
+              collections
+                .filter(
+                  (col) =>
+                    col.showInLibrary &&
+                    col.mediaType === (isMovies ? 0 : 1),
+                )
+                .map((col) => (
+                  <CollectionCarousel
+                    collection={col}
+                    key={col.id}
+                    movies={movies}
+                    pageSize={15}
+                    series={series}
+                  />
                 ))}
-          </LibrarySection>
+            <LibrarySection
+              count={currentCount}
+              emptyIcon={emptyIcon}
+              hasMore={hasMore}
+              loadingMore={loadingMore}
+              onLoadMore={() =>
+                dispatch(libraryPageRequested({ type: mediaType }))
+              }
+              title={isMovies ? "Movies" : "Series"}
+            >
+              {isMovies
+                ? movies.map((movie) => (
+                    <MovieCard key={movie.tmdb_id} movie={movie} />
+                  ))
+                : series.map((show) => (
+                    <SeriesCard key={show.tmdb_id} series={show} />
+                  ))}
+            </LibrarySection>
+          </>
         )}
       </div>
       {isLoading && <LoadingOverlay />}
