@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SEARCH_PAGE_MAX, SEARCH_YEAR_MIN } from "@/lib/constants";
+import { TMDB_LANGUAGE_CODE_SET } from "@/lib/constants/search-popup";
 
 function parseOptionalInt(value: unknown) {
   if (value === undefined || value === null || value === "") {
@@ -25,13 +26,15 @@ export const searchQuerySchema = z.object({
     parseOptionalInt,
     z.number().int().min(SEARCH_YEAR_MIN).max(currentYear).optional(),
   ),
-  region: z.preprocess(
+  language: z.preprocess(
     (value) => (value === null || value === "" ? undefined : value),
     z
       .string()
       .trim()
-      .toUpperCase()
-      .regex(/^[A-Z]{2}$/, "Invalid region")
+      .toLowerCase()
+      .refine((code) => TMDB_LANGUAGE_CODE_SET.has(code), {
+        message: "Invalid language",
+      })
       .optional(),
   ),
   page: z.preprocess(
@@ -48,7 +51,7 @@ export function parseSearchQuery(url: string) {
   return searchQuerySchema.safeParse({
     query: searchParams.get("query"),
     year: searchParams.get("year") ?? undefined,
-    region: searchParams.get("region") ?? undefined,
+    language: searchParams.get("language") ?? undefined,
     page: searchParams.get("page") ?? undefined,
   });
 }

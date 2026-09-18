@@ -5,8 +5,6 @@ import { SearchFilterSelect } from "@/components/search-popup/search-filter-sele
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import {
-  COMMON_GENRES,
-  COMMON_LANGUAGES,
   IMPRESSION,
   LIBRARY_FILTER_FIELDS,
   LIBRARY_GROUP_OPTIONS,
@@ -15,11 +13,16 @@ import {
   LIBRARY_SORT_OPTIONS,
   MOVIE_STATUS,
   SERIES_STATUS,
-  TMDB_REGIONS,
   WATCH_STATUS,
 } from "@/lib/constants";
+import { useGenres } from "@/hooks/use-genres";
 import { defaultFilterValue } from "@/lib/media/library-browse";
-import { getSearchYears } from "@/lib/search/filters";
+import {
+  getSearchYears,
+  getTmdbLanguageOptions,
+  getTmdbRegionOptions,
+} from "@/lib/search/filters";
+import type { GenreOption } from "@/hooks/use-genres";
 import type {
   LibraryBrowseQuery,
   LibraryFilterField,
@@ -47,6 +50,7 @@ function splitFilterValues(value: string | undefined) {
 function filterValueOptions(
   field: LibraryFilterField | undefined,
   mediaType: LibraryMediaType,
+  genres: GenreOption[],
 ) {
   if (field === "watch_status") {
     return Object.values(WATCH_STATUS).map((status) => ({
@@ -56,10 +60,13 @@ function filterValueOptions(
   }
 
   if (field === "impression") {
-    return Object.values(IMPRESSION).map((impression) => ({
-      value: String(impression.value),
-      label: impression.display_value,
-    }));
+    return [
+      { value: "none", label: "No Impression" },
+      ...Object.values(IMPRESSION).map((impression) => ({
+        value: String(impression.value),
+        label: impression.display_value,
+      })),
+    ];
   }
 
   if (field === "status") {
@@ -74,21 +81,15 @@ function filterValueOptions(
   }
 
   if (field === "genre") {
-    return COMMON_GENRES.map((genre) => ({ value: genre, label: genre }));
+    return genres.map((genre) => ({ value: genre.name, label: genre.name }));
   }
 
   if (field === "original_language") {
-    return COMMON_LANGUAGES.map((language) => ({
-      value: language.code,
-      label: `${language.label} (${language.code})`,
-    }));
+    return getTmdbLanguageOptions();
   }
 
   if (field === "origin_country") {
-    return TMDB_REGIONS.map((region) => ({
-      value: region.iso_3166_1,
-      label: region.english_name,
-    }));
+    return getTmdbRegionOptions();
   }
 
   if (field === "release_year") {
@@ -107,6 +108,7 @@ export function LibraryBrowseFields({
   layout = "inline",
   onChange,
 }: LibraryBrowseFieldsProps) {
+  const { genres } = useGenres();
   const operatorOptions = query.filterField
     ? LIBRARY_OPERATORS.filter((operator) =>
         LIBRARY_OPERATORS_BY_FIELD[query.filterField!].includes(operator.value),
@@ -119,7 +121,7 @@ export function LibraryBrowseFields({
     (option) => !option.seriesOnly || mediaType === "series",
   );
   const stacked = layout === "stack";
-  const valueOptions = filterValueOptions(query.filterField, mediaType);
+  const valueOptions = filterValueOptions(query.filterField, mediaType, genres);
   const searchableValue =
     query.filterField === "genre" ||
     query.filterField === "original_language" ||

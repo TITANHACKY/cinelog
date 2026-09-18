@@ -6,8 +6,8 @@ import {
   canUpdateSeriesWatchActivity,
   toSeriesStatusDisplay,
 } from "@/lib/media/status";
+import { getCachedTmdbSeries } from "@/lib/tmdb/cache";
 import { pickCastAndDirectors } from "@/lib/tmdb/credits";
-import { tmdbFetch } from "@/lib/tmdb/client";
 import type { TmdbSeries } from "@/lib/types";
 import type { SeriesPatchInput } from "@/lib/validations/library";
 import {
@@ -49,18 +49,6 @@ export type SeriesLibraryFields = {
     episodes_watched: number;
   }>;
 };
-
-async function fetchTmdbSeries(tmdbId: number) {
-  const queryParams = new URLSearchParams({
-    append_to_response: "external_ids,content_ratings,credits",
-    language: "en-US",
-  });
-
-  return tmdbFetch<TmdbSeries>(`/tv/${tmdbId}`, {
-    searchParams: queryParams,
-    failedMessage: "TMDB series request failed",
-  });
-}
 
 function toSeriesLibraryFields({
   userSeries,
@@ -135,7 +123,7 @@ function toSeriesDetails(seriesRecord: TmdbSeries, library: UserSeriesLibrary) {
 }
 
 export async function getSeriesDetails(tmdbId: number, userId?: number) {
-  const seriesRecord = await fetchTmdbSeries(tmdbId);
+  const seriesRecord = await getCachedTmdbSeries(tmdbId);
   const library = userId
     ? await findUserSeriesAndSeasons(tmdbId, userId)
     : { userSeries: undefined, userSeasons: [] };
@@ -159,13 +147,12 @@ function toSeriesInsertPayload(body: TmdbSeries): TmdbSeries {
   return body;
 }
 
-export async function addSeriesToLibrary(
-  tmdbId: number,
-  userId: number,
-  body: TmdbSeries,
-) {
+export async function addSeriesToLibrary(tmdbId: number, userId: number) {
+  const seriesRecord = await getCachedTmdbSeries(tmdbId);
+  const payload = toSeriesInsertPayload(seriesRecord);
+
   try {
-    await insertUserSeries(tmdbId, userId, toSeriesInsertPayload(body));
+    await insertUserSeries(tmdbId, userId, payload);
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       throw new AppError("Series already exists in library", 409);
@@ -173,14 +160,19 @@ export async function addSeriesToLibrary(
     throw error;
   }
 
+  const details = toSeriesDetails(seriesRecord, {
+    userSeries: undefined,
+    userSeasons: [],
+  });
+
   return {
-    ...body,
+    ...details,
     is_present_in_watchlist: true,
     impression: null,
     watch_status: 0,
     total_number_of_episodes_watched: 0,
     total_number_of_seasons_watched: 0,
-    seasons: (body.seasons ?? []).map((season) => ({
+    seasons: (details.seasons ?? []).map((season) => ({
       ...season,
       episodes_watched: 0,
     })),

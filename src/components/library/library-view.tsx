@@ -76,7 +76,6 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     dispatch(libraryRequested({ type: mediaType }));
   }, [dispatch, mediaType]);
 
-  const total = movieCount + seriesCount;
   const isMovies = mediaType === "movie";
   const isLoaded = isMovies ? moviesLoaded : seriesLoaded;
   const isLoading = !isLoaded && status !== "failed";
@@ -95,6 +94,7 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     Boolean(query.q.trim()) ||
     Boolean(query.filterField) ||
     query.groupBy !== undefined;
+  const headerTotal = hasActiveBrowse ? currentCount : movieCount + seriesCount;
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 py-6 sm:px-8 lg:py-10">
@@ -113,8 +113,8 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
               {isLoading
                 ? "Loading your watchlist"
                 : hasActiveBrowse
-                  ? `${total} matching ${total === 1 ? "title" : "titles"}`
-                  : `${total} titles in your watchlist`}
+                  ? `${headerTotal} matching ${headerTotal === 1 ? "title" : "titles"}`
+                  : `${headerTotal} titles in your watchlist`}
             </p>
           </div>
 

@@ -57,6 +57,51 @@ function textCompare(column: SQLWrapper, operator: number, value: string) {
   return sql`lower(${column}) = ${parts[0]}`;
 }
 
+const IMPRESSION_NONE = "none";
+
+function impressionCompare(
+  column: SQLWrapper,
+  operator: number,
+  value: string,
+) {
+  const parts = splitValues(value);
+  const hasNone = parts.includes(IMPRESSION_NONE);
+  const numericParts = parts
+    .filter((part) => part !== IMPRESSION_NONE)
+    .map((part) => Number(part))
+    .filter((part) => !Number.isNaN(part));
+
+  if (operator === 4) {
+    const conditions: SQL[] = [];
+    if (hasNone) {
+      conditions.push(sql`${column} IS NULL`);
+    }
+    if (numericParts.length > 0) {
+      conditions.push(
+        sql`${column} in (${sql.join(
+          numericParts.map((part) => sql`${part}`),
+          sql`, `,
+        )})`,
+      );
+    }
+    if (conditions.length === 0) {
+      return sql`1 = 0`;
+    }
+    if (conditions.length === 1) {
+      return conditions[0]!;
+    }
+    return sql`(${sql.join(conditions, sql` OR `)})`;
+  }
+
+  if (value === IMPRESSION_NONE || parts[0] === IMPRESSION_NONE) {
+    if (operator === 0) return sql`${column} IS NULL`;
+    if (operator === 1) return sql`${column} IS NOT NULL`;
+    return sql`1 = 0`;
+  }
+
+  return numericCompare(column, operator, value);
+}
+
 function numericCompare(column: SQLWrapper, operator: number, value: string) {
   const parsedParts = splitValues(value)
     .map((part) => Number(part))
@@ -133,7 +178,7 @@ function filterCondition(
     case "watch_status":
       return numericCompare(user.watchStatus, operator, value);
     case "impression":
-      return numericCompare(user.impression, operator, value);
+      return impressionCompare(user.impression, operator, value);
     case "vote_average":
       return numericCompare(catalog.voteAverage, operator, value);
     case "release_year":

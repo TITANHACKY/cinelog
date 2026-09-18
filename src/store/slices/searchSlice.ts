@@ -20,7 +20,7 @@ export type SearchRequestPayload = {
   mediaType: SearchMediaType;
   query: string;
   year?: number;
-  region?: string;
+  language?: string;
   page: number;
 };
 
@@ -28,10 +28,9 @@ type SearchMediaState = {
   error?: string;
   query: string;
   year?: number;
-  region?: string;
+  language?: string;
   page: number;
   total_pages: number;
-  total_results: number;
   results: SearchResult[];
   status: SearchStatus;
 };
@@ -42,7 +41,6 @@ const initialMediaState: SearchMediaState = {
   query: "",
   page: 1,
   total_pages: 0,
-  total_results: 0,
   results: [],
   status: "idle",
 };
@@ -61,7 +59,7 @@ const searchSlice = createSlice({
       mediaState.error = undefined;
       mediaState.query = action.payload.query;
       mediaState.year = action.payload.year;
-      mediaState.region = action.payload.region;
+      mediaState.language = action.payload.language;
       mediaState.page = action.payload.page;
       mediaState.results = [];
       mediaState.status = "loading";
@@ -74,7 +72,6 @@ const searchSlice = createSlice({
         results: SearchResult[];
         page: number;
         total_pages: number;
-        total_results: number;
       }>,
     ) => {
       const mediaState = state[action.payload.mediaType];
@@ -83,7 +80,6 @@ const searchSlice = createSlice({
       mediaState.results = action.payload.results;
       mediaState.page = action.payload.page;
       mediaState.total_pages = action.payload.total_pages;
-      mediaState.total_results = action.payload.total_results;
       mediaState.status = "success";
     },
     searchFailed: (
@@ -99,7 +95,6 @@ const searchSlice = createSlice({
       mediaState.query = action.payload.query;
       mediaState.results = [];
       mediaState.total_pages = 0;
-      mediaState.total_results = 0;
       mediaState.status = "failed";
     },
     searchCleared: (state, action: PayloadAction<SearchMediaType>) => {

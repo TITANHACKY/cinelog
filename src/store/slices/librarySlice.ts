@@ -419,8 +419,11 @@ function applyCounts(
   metadata: LibraryMetadata,
   type: LibraryMediaType,
 ) {
-  state.movieCount = metadata.count.movies;
-  state.seriesCount = metadata.count.series;
+  if (type === "movie") {
+    state.movieCount = metadata.count.movies;
+  } else {
+    state.seriesCount = metadata.count.series;
+  }
   const groups = normalizeLibraryGroups(
     metadata.groups,
     state.query.groupBy,
@@ -727,6 +730,16 @@ const librarySlice = createSlice({
         });
       }
     },
+    libraryWatchlistItemAdded: (
+      state,
+      action: PayloadAction<{ mediaType: LibraryMediaType }>,
+    ) => {
+      if (action.payload.mediaType === "movie") {
+        state.movieCount += 1;
+      } else {
+        state.seriesCount += 1;
+      }
+    },
     libraryItemMutationFailed: (
       state,
       action: PayloadAction<{
@@ -775,5 +788,6 @@ export const {
   libraryQueryUpdated,
   libraryRequested,
   librarySucceeded,
+  libraryWatchlistItemAdded,
 } = librarySlice.actions;
 export default librarySlice.reducer;

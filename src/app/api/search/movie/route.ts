@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     }
 
     const session = await getSession();
-    const { query, year, region, page } = parsedQuery.data;
+    const { query, year, language, page } = parsedQuery.data;
 
     return ok(
       await searchTitles({
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
         type: "movie",
         userId: session?.userId,
         year,
-        region,
+        language,
         page,
       }),
     );

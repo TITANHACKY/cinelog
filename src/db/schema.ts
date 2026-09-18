@@ -109,6 +109,18 @@ export const userMovies = sqliteTable(
       table.userId,
       table.createdAt,
     ),
+    index("user_movies_user_id_watch_status_index").on(
+      table.userId,
+      table.watchStatus,
+    ),
+    index("user_movies_user_id_impression_index").on(
+      table.userId,
+      table.impression,
+    ),
+    index("user_movies_user_id_completed_at_index").on(
+      table.userId,
+      table.completedAt,
+    ),
   ],
 );
 
@@ -228,6 +240,22 @@ export const userSeries = sqliteTable(
     index("user_series_user_id_created_at_index").on(
       table.userId,
       table.createdAt,
+    ),
+    index("user_series_user_id_watch_status_index").on(
+      table.userId,
+      table.watchStatus,
+    ),
+    index("user_series_user_id_impression_index").on(
+      table.userId,
+      table.impression,
+    ),
+    index("user_series_user_id_completed_at_index").on(
+      table.userId,
+      table.completedAt,
+    ),
+    index("user_series_user_id_last_watched_at_index").on(
+      table.userId,
+      table.lastWatchedAt,
     ),
   ],
 );

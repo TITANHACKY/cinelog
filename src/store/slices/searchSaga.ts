@@ -13,14 +13,13 @@ type SearchResponse = {
   results?: SearchResult[];
   page?: number;
   total_pages?: number;
-  total_results?: number;
 };
 
 function buildSearchUrl({
   mediaType,
   query,
   year,
-  region,
+  language,
   page,
 }: ReturnType<typeof searchRequested>["payload"]) {
   const params = new URLSearchParams({
@@ -32,8 +31,8 @@ function buildSearchUrl({
     params.set("year", String(year));
   }
 
-  if (mediaType === "movie" && region) {
-    params.set("region", region);
+  if (language) {
+    params.set("language", language);
   }
 
   return `/api/search/${mediaType}?${params.toString()}`;
@@ -59,7 +58,6 @@ function* fetchSearchResults(
         results: data.results ?? [],
         page: data.page ?? action.payload.page,
         total_pages: data.total_pages ?? 1,
-        total_results: data.total_results ?? (data.results ?? []).length,
       }),
     );
   } catch (error) {
