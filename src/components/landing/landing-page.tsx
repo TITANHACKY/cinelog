@@ -95,7 +95,7 @@ const STEPS = [
   {
     number: "01",
     icon: UserPlus,
-    title: "Sign Up",
+    title: "Create Account",
     description: "Create your free account in seconds. No credit card required.",
   },
   {
@@ -565,7 +565,7 @@ export function LandingPage() {
                 href="/signup"
                 className="font-public-sans text-sm text-secondary transition-colors hover:text-on-surface"
               >
-                Sign Up
+                Create Account
               </Link>
             </div>
           </div>

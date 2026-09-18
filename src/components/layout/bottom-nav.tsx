@@ -190,12 +190,12 @@ export function BottomNav() {
                       {status === "loading" ? (
                         <>
                           <Loader2 className="size-4 animate-spin" />
-                          <span>Signing out...</span>
+                          <span>Logout</span>
                         </>
                       ) : (
                         <>
                           <LogOut className="size-4" />
-                          <span>Sign Out</span>
+                          <span>Logout</span>
                         </>
                       )}
                     </Button>
@@ -207,7 +207,7 @@ export function BottomNav() {
                         Welcome to CineLog
                       </p>
                       <p className="text-xs text-secondary">
-                        Sign in to sync your library and watchlist across devices.
+                        Log in to sync your library and watchlist across devices.
                       </p>
                     </div>
 
@@ -219,7 +219,7 @@ export function BottomNav() {
                         className="justify-center gap-1.5"
                       >
                         <LogIn className="size-4" />
-                        Sign In
+                        Log In
                       </ButtonLink>
                       <ButtonLink
                         href="/signup"
@@ -228,7 +228,7 @@ export function BottomNav() {
                         className="justify-center gap-1.5"
                       >
                         <UserPlus className="size-4" />
-                        Sign Up
+                        Create Account
                       </ButtonLink>
                     </div>
                   </div>

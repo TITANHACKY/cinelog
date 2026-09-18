@@ -114,10 +114,10 @@ export function LoginForm() {
           {status === "loading" ? (
             <>
               <Loader2 className="size-3.5 sm:size-4 animate-spin" />
-              <span>Signing in...</span>
+              <span>Log in</span>
             </>
           ) : (
-            "Sign in"
+            "Log in"
           )}
         </Button>
       </form>
@@ -128,7 +128,7 @@ export function LoginForm() {
           className="font-medium text-brand-primary hover:underline underline-offset-4"
           href="/signup"
         >
-          Sign up
+          Create account
         </Link>
       </div>
     </div>
