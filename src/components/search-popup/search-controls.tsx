@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { Clapperboard, TvMinimal } from "lucide-react";
 import { SearchFilterSelect } from "@/components/search-popup/search-filter-select";
-import { Badge, type BadgeIndicator } from "@/components/ui/badge";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { getSearchYears, getTmdbLanguageOptions } from "@/lib/search/filters";
 
@@ -15,8 +14,6 @@ type SearchControlsProps = {
   onLanguageChange: (language?: string) => void;
   onYearChange: (year?: number) => void;
   language?: string;
-  resultIndicator?: BadgeIndicator;
-  resultText: string;
   year?: number;
 };
 
@@ -26,8 +23,6 @@ export function SearchControls({
   onLanguageChange,
   onYearChange,
   language,
-  resultIndicator,
-  resultText,
   year,
 }: SearchControlsProps) {
   const yearOptions = useMemo(
@@ -49,7 +44,7 @@ export function SearchControls({
   );
 
   return (
-    <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 pt-0.5 sm:gap-3 sm:pt-1">
+    <div className="flex shrink-0 flex-wrap items-center gap-2 pt-0.5 sm:gap-3 sm:pt-1">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <SegmentedControl
           onChange={onMediaTypeChange}
@@ -93,12 +88,6 @@ export function SearchControls({
           />
         </div>
       </div>
-
-      <Badge
-        className="max-w-full shrink-0 truncate border-outline-alt bg-surface-container-low px-2.5 py-1 text-xs text-on-surface sm:px-3.25 sm:py-1.75"
-        indicator={resultIndicator}
-        text={resultText}
-      />
     </div>
   );
 }

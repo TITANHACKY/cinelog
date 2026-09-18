@@ -27,8 +27,6 @@ function SearchDialogContent() {
     language,
     page,
     searchState,
-    resultIndicator,
-    resultText,
     showPagination,
     requestSearch,
     handleOpenChange,
@@ -67,8 +65,6 @@ function SearchDialogContent() {
           language={language}
           onLanguageChange={handleLanguageChange}
           onYearChange={handleYearChange}
-          resultIndicator={resultIndicator}
-          resultText={resultText}
           year={year}
         />
 

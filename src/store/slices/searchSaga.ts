@@ -13,7 +13,6 @@ type SearchResponse = {
   results?: SearchResult[];
   page?: number;
   total_pages?: number;
-  total_results?: number;
 };
 
 function buildSearchUrl({
@@ -59,7 +58,6 @@ function* fetchSearchResults(
         results: data.results ?? [],
         page: data.page ?? action.payload.page,
         total_pages: data.total_pages ?? 1,
-        total_results: data.total_results ?? (data.results ?? []).length,
       }),
     );
   } catch (error) {

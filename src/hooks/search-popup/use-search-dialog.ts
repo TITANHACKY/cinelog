@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useSearchShortcut } from "@/hooks/search-popup/use-search-shortcut";
 import type { SearchMediaType } from "@/components/search-popup/search-controls";
-import type { BadgeIndicator } from "@/lib/types";
 import { searchCleared, searchRequested } from "@/store/slices/searchSlice";
 import { useAppDispatch, useAppSelector } from "@/store";
 
@@ -75,18 +74,6 @@ export function useSearchDialog() {
     useCallback(() => handleOpenChange(!open), [handleOpenChange, open]),
   );
 
-  const resultIndicator: BadgeIndicator | undefined =
-    searchState.status === "loading"
-      ? "accentAlt"
-      : searchState.status === "failed"
-        ? "error"
-        : searchState.status === "idle"
-          ? undefined
-          : "success";
-  const resultText =
-    searchState.status === "idle"
-      ? `Search for ${mediaType === "movie" ? "movies" : "series"}`
-      : `${searchState.total_results} results`;
   const showPagination =
     searchState.total_pages > 1 &&
     (searchState.status === "success" || searchState.status === "loading");
@@ -122,8 +109,6 @@ export function useSearchDialog() {
     language,
     page,
     searchState,
-    resultIndicator,
-    resultText,
     showPagination,
     requestSearch,
     handleOpenChange,
