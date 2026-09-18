@@ -20,7 +20,7 @@ export type SearchRequestPayload = {
   mediaType: SearchMediaType;
   query: string;
   year?: number;
-  region?: string;
+  language?: string;
   page: number;
 };
 
@@ -28,7 +28,7 @@ type SearchMediaState = {
   error?: string;
   query: string;
   year?: number;
-  region?: string;
+  language?: string;
   page: number;
   total_pages: number;
   total_results: number;
@@ -61,7 +61,7 @@ const searchSlice = createSlice({
       mediaState.error = undefined;
       mediaState.query = action.payload.query;
       mediaState.year = action.payload.year;
-      mediaState.region = action.payload.region;
+      mediaState.language = action.payload.language;
       mediaState.page = action.payload.page;
       mediaState.results = [];
       mediaState.status = "loading";

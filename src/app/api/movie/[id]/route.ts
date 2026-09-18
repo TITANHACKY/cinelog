@@ -1,7 +1,7 @@
 import { getSession, requireSession } from "@/lib/auth/session";
 import { parseJson, parsePositiveIntId, parseSchema } from "@/lib/http/request";
 import { created, ok, toErrorResponse } from "@/lib/http/response";
-import type { MoviePayload, RouteContext } from "@/lib/types";
+import type { RouteContext } from "@/lib/types";
 import { moviePatchSchema } from "@/lib/validations/library";
 import {
   addMovieToLibrary,
@@ -27,13 +27,12 @@ export async function GET(_request: Request, { params }: RouteContext) {
   }
 }
 
-export async function POST(request: Request, { params }: RouteContext) {
+export async function POST(_request: Request, { params }: RouteContext) {
   try {
     const { id } = await params;
     const tmdbId = parsePositiveIntId(id, "movie");
     const session = await requireSession();
-    const body = await parseJson<MoviePayload>(request);
-    return created(await addMovieToLibrary(tmdbId, session.userId, body));
+    return created(await addMovieToLibrary(tmdbId, session.userId));
   } catch (error) {
     return toErrorResponse(
       error,

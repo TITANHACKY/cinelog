@@ -9,7 +9,7 @@ type SearchTitlesInput = {
   type: SearchType;
   userId?: number;
   year?: number;
-  region?: string;
+  language?: string;
   page?: number;
 };
 
@@ -18,7 +18,7 @@ export async function searchTitles({
   type,
   userId,
   year,
-  region,
+  language,
   page = 1,
 }: SearchTitlesInput) {
   const endpoint = type === "movie" ? "movie" : "tv";
@@ -30,11 +30,10 @@ export async function searchTitles({
   });
 
   if (year !== undefined) {
-    params.set(type === "movie" ? "year" : "first_air_date_year", String(year));
-  }
-
-  if (type === "movie" && region) {
-    params.set("region", region);
+    params.set(
+      type === "movie" ? "primary_release_year" : "year",
+      String(year),
+    );
   }
 
   const data = await tmdbFetch<TmdbSearchResponse>(`/search/${endpoint}`, {
@@ -42,12 +41,16 @@ export async function searchTitles({
     failedMessage: "TMDB search request failed",
   });
 
+  const filteredResults = language
+    ? (data.results ?? []).filter(
+        (result) => result.original_language === language,
+      )
+    : (data.results ?? []);
+
   const genreIds = [
-    ...new Set(
-      (data.results ?? []).flatMap((result) => result.genre_ids ?? []),
-    ),
+    ...new Set(filteredResults.flatMap((result) => result.genre_ids ?? [])),
   ];
-  const tmdbIds = (data.results ?? []).flatMap((result) =>
+  const tmdbIds = filteredResults.flatMap((result) =>
     result.id === undefined ? [] : [result.id],
   );
   const { genreRows, watchlistedTmdbIds, watchStatusByTmdbId } =
@@ -60,7 +63,7 @@ export async function searchTitles({
     page: data.page ?? page,
     total_pages: data.total_pages ?? 1,
     total_results: data.total_results ?? (data.results ?? []).length,
-    results: (data.results ?? []).map((result) => ({
+    results: filteredResults.map((result) => ({
       id: result.id,
       genres: (result.genre_ids ?? []).flatMap((genreId) => {
         const name = genreNamesByTmdbId.get(genreId);

@@ -10,6 +10,7 @@ import {
   type ContentDetailsData,
   type ContentLibraryFields,
 } from "./contentDetailsSlice";
+import { libraryWatchlistItemAdded } from "./librarySlice";
 import { showToast } from "./toastSlice";
 import { IMPRESSION, WATCH_STATUS } from "@/lib/constants";
 import { apiFetch } from "@/lib/http/client";
@@ -53,7 +54,7 @@ const activeMutations = new Set<string>();
 function* mutateContentDetails(
   action: ReturnType<typeof mutationRequested>,
 ): SagaIterator {
-  const { id, mediaType, mutation, value, content, progress } = action.payload;
+  const { id, mediaType, mutation, value, progress } = action.payload;
   const mutationKey = `${mediaType}:${id}:${mutation}`;
 
   if (activeMutations.has(mutationKey)) {
@@ -63,23 +64,18 @@ function* mutateContentDetails(
 
   const method = mutation === "add-watchlist" ? "POST" : "PATCH";
   const body =
-    mutation === "add-watchlist"
-      ? content
-      : mutation === "update-impression"
-        ? { impression: value }
-        : mutation === "update-watch-status"
-          ? { watch_status: value }
-          : mutation === "update-progress" && progress
-            ? {
-                mark_season_to_watched: progress.seasonNumber,
-                mark_episode_to_watched: progress.episodeNumber,
-              }
-            : undefined;
+    mutation === "update-impression"
+      ? { impression: value }
+      : mutation === "update-watch-status"
+        ? { watch_status: value }
+        : mutation === "update-progress" && progress
+          ? {
+              mark_season_to_watched: progress.seasonNumber,
+              mark_episode_to_watched: progress.episodeNumber,
+            }
+          : undefined;
 
   try {
-    if (mutation === "add-watchlist" && !content) {
-      throw new Error("Content details are unavailable");
-    }
     if (
       mutation === "update-progress" &&
       (!progress || mediaType !== "series")
@@ -97,6 +93,7 @@ function* mutateContentDetails(
 
     if (mutation === "add-watchlist") {
       yield put(detailsSucceeded({ data, id, mediaType }));
+      yield put(libraryWatchlistItemAdded({ mediaType }));
       yield put(
         showToast({
           message: "Added to your watchlist",

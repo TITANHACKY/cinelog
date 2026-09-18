@@ -5,16 +5,16 @@ import { Clapperboard, TvMinimal } from "lucide-react";
 import { SearchFilterSelect } from "@/components/search-popup/search-filter-select";
 import { Badge, type BadgeIndicator } from "@/components/ui/badge";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { getSearchYears, TMDB_REGIONS } from "@/lib/search/filters";
+import { getSearchYears, getTmdbLanguageOptions } from "@/lib/search/filters";
 
 export type SearchMediaType = "movie" | "series";
 
 type SearchControlsProps = {
   mediaType: SearchMediaType;
   onMediaTypeChange: (mediaType: SearchMediaType) => void;
-  onRegionChange: (region?: string) => void;
+  onLanguageChange: (language?: string) => void;
   onYearChange: (year?: number) => void;
-  region?: string;
+  language?: string;
   resultIndicator?: BadgeIndicator;
   resultText: string;
   year?: number;
@@ -23,9 +23,9 @@ type SearchControlsProps = {
 export function SearchControls({
   mediaType,
   onMediaTypeChange,
-  onRegionChange,
+  onLanguageChange,
   onYearChange,
-  region,
+  language,
   resultIndicator,
   resultText,
   year,
@@ -40,13 +40,10 @@ export function SearchControls({
     ],
     [],
   );
-  const regionOptions = useMemo(
+  const languageOptions = useMemo(
     () => [
-      { value: "", label: "Any region" },
-      ...TMDB_REGIONS.map((tmdbRegion) => ({
-        value: tmdbRegion.iso_3166_1,
-        label: tmdbRegion.english_name,
-      })),
+      { value: "", label: "Any language" },
+      ...getTmdbLanguageOptions(),
     ],
     [],
   );
@@ -82,18 +79,18 @@ export function SearchControls({
             placeholder="Any year"
             value={year ? String(year) : ""}
           />
-          {mediaType === "movie" ? (
-            <SearchFilterSelect
-              aria-label="Filter by region"
-              heading="Region"
-              onChange={(nextRegion) => onRegionChange(nextRegion || undefined)}
-              options={regionOptions}
-              placeholder="Any region"
-              searchPlaceholder="Search regions"
-              searchable
-              value={region ?? ""}
-            />
-          ) : null}
+          <SearchFilterSelect
+            aria-label="Filter by language"
+            heading="Language"
+            onChange={(nextLanguage) =>
+              onLanguageChange(nextLanguage || undefined)
+            }
+            options={languageOptions}
+            placeholder="Any language"
+            searchPlaceholder="Search languages"
+            searchable
+            value={language ?? ""}
+          />
         </div>
       </div>
 

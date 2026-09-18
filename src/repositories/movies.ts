@@ -66,7 +66,7 @@ export async function deleteUserMovie(tmdbId: number, userId: number) {
   return db.delete(userMovies).where(eq(userMovies.id, row.id)).returning();
 }
 
-export async function updateUserMovie(
+export async function updateUserMovieByTmdbId(
   tmdbId: number,
   userId: number,
   updateData: Partial<typeof userMovies.$inferInsert>,
@@ -80,12 +80,17 @@ export async function updateUserMovie(
     .get();
 
   if (!row) {
-    return [];
+    return null;
   }
 
-  return db
+  const updated = await db
     .update(userMovies)
     .set(updateData)
     .where(eq(userMovies.id, row.id))
-    .returning();
+    .returning({
+      impression: userMovies.impression,
+      watchStatus: userMovies.watchStatus,
+    });
+
+  return updated[0] ?? null;
 }

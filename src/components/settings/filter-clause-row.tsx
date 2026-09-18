@@ -2,14 +2,12 @@
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { COMMON_CERTS, FIELD_OPTIONS, OPERATOR_OPTIONS } from "@/lib/constants";
+import { useGenres } from "@/hooks/use-genres";
 import {
-  COMMON_CERTS,
-  COMMON_COUNTRIES,
-  COMMON_GENRES,
-  COMMON_LANGUAGES,
-  FIELD_OPTIONS,
-  OPERATOR_OPTIONS,
-} from "@/lib/constants";
+  getTmdbLanguageOptions,
+  getTmdbRegionOptions,
+} from "@/lib/search/filters";
 import type { CollectionFilterItem } from "@/lib/types";
 import { Trash2 } from "lucide-react";
 
@@ -31,6 +29,10 @@ export function FilterClauseRow({
   onRemove,
   onUpdate,
 }: FilterClauseRowProps) {
+  const { genres, loading: genresLoading } = useGenres();
+  const languageOptions = getTmdbLanguageOptions();
+  const regionOptions = getTmdbRegionOptions();
+
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-lg border border-outline-alt/60 bg-surface-container p-2.5 sm:flex-nowrap">
       <span className="font-mono text-[11px] font-semibold text-outline-muted sm:w-6">
@@ -62,12 +64,13 @@ export function FilterClauseRow({
         {clause.field === "genre" ? (
           <select
             className="h-8 w-full rounded border border-outline-alt bg-surface-container-high px-2 font-public-sans text-xs text-on-surface outline-none"
+            disabled={genresLoading}
             onChange={(event) => onUpdate("value", event.target.value)}
             value={clause.value}
           >
-            {COMMON_GENRES.map((genre) => (
-              <option key={genre} value={genre}>
-                {genre}
+            {genres.map((genre) => (
+              <option key={genre.tmdb_id} value={genre.name}>
+                {genre.name}
               </option>
             ))}
           </select>
@@ -77,9 +80,9 @@ export function FilterClauseRow({
             onChange={(event) => onUpdate("value", event.target.value)}
             value={clause.value}
           >
-            {COMMON_LANGUAGES.map((language) => (
-              <option key={language.code} value={language.code}>
-                {language.label} ({language.code})
+            {languageOptions.map((language) => (
+              <option key={language.value} value={language.value}>
+                {language.label}
               </option>
             ))}
           </select>
@@ -89,9 +92,9 @@ export function FilterClauseRow({
             onChange={(event) => onUpdate("value", event.target.value)}
             value={clause.value}
           >
-            {COMMON_COUNTRIES.map((country) => (
-              <option key={country.code} value={country.code}>
-                {country.label} ({country.code})
+            {regionOptions.map((region) => (
+              <option key={region.value} value={region.value}>
+                {region.label}
               </option>
             ))}
           </select>

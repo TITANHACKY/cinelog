@@ -5,10 +5,10 @@ import {
   canUpdateMovieWatchActivity,
   toMovieStatusDisplay,
 } from "@/lib/media/status";
+import { getCachedTmdbMovie } from "@/lib/tmdb/cache";
 import { pickMovieCertification } from "@/lib/tmdb/catalog-fields";
 import { pickCastAndDirectors } from "@/lib/tmdb/credits";
-import { tmdbFetch } from "@/lib/tmdb/client";
-import type { MoviePayload, TmdbMovie } from "@/lib/types";
+import type { TmdbMovie } from "@/lib/types";
 import type { MoviePatchInput } from "@/lib/validations/library";
 import type { NewUserMovie } from "@/db/schema";
 import {
@@ -16,7 +16,7 @@ import {
   findUserMovie,
   findUserMovieData,
   insertUserMovie,
-  updateUserMovie,
+  updateUserMovieByTmdbId,
 } from "@/repositories/movies";
 import { isUniqueConstraintError } from "@/lib/db/unique-constraint";
 
@@ -30,18 +30,6 @@ export type MovieLibraryFields = {
   impression: number | null;
   watch_status: number | null;
 };
-
-async function fetchTmdbMovie(tmdbId: number) {
-  const queryParams = new URLSearchParams({
-    append_to_response: "release_dates,credits",
-    language: "en-US",
-  });
-
-  return tmdbFetch<TmdbMovie>(`/movie/${tmdbId}`, {
-    searchParams: queryParams,
-    failedMessage: "TMDB movie request failed",
-  });
-}
 
 function toMovieLibraryFields(
   userMovie?: UserMovieLibraryRow,
@@ -78,21 +66,19 @@ function toMovieDetails(movie: TmdbMovie, userMovie?: UserMovieLibraryRow) {
 }
 
 export async function getMovieDetails(tmdbId: number, userId?: number) {
-  const movie = await fetchTmdbMovie(tmdbId);
+  const movie = await getCachedTmdbMovie(tmdbId);
   const userMovie = userId
-    ? await findUserMovieData(tmdbId, userId).impression
+    ? await findUserMovieData(tmdbId, userId)
     : undefined;
 
   return toMovieDetails(movie, userMovie);
 }
 
-export async function addMovieToLibrary(
-  tmdbId: number,
-  userId: number,
-  body: MoviePayload,
-) {
+export async function addMovieToLibrary(tmdbId: number, userId: number) {
+  const movie = await getCachedTmdbMovie(tmdbId);
+
   try {
-    await insertUserMovie(tmdbId, userId, body);
+    await insertUserMovie(tmdbId, userId, movie);
   } catch (error) {
     if (isUniqueConstraintError(error)) {
       throw new AppError("Movie already exists in library", 409);
@@ -101,7 +87,7 @@ export async function addMovieToLibrary(
   }
 
   return {
-    ...body,
+    ...toMovieDetails(movie),
     is_present_in_watchlist: true,
     impression: null,
     watch_status: 0,
@@ -157,8 +143,7 @@ export async function updateMovieInLibrary(
     updateData.impression = body.impression;
   }
 
-  const updated = await updateUserMovie(tmdbId, userId, updateData);
-  const updatedMovie = updated[0];
+  const updatedMovie = await updateUserMovieByTmdbId(tmdbId, userId, updateData);
 
   if (!updatedMovie) {
     throw new AppError("Movie not found in library", 404);

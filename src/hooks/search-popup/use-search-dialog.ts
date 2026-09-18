@@ -12,7 +12,7 @@ export function useSearchDialog() {
   const [query, setQuery] = useState("");
   const [mediaType, setMediaType] = useState<SearchMediaType>("movie");
   const [year, setYear] = useState<number>();
-  const [region, setRegion] = useState<string>();
+  const [language, setLanguage] = useState<string>();
   const [page, setPage] = useState(1);
   const dispatch = useAppDispatch();
   const searchState = useAppSelector((state) => state.search[mediaType]);
@@ -24,12 +24,12 @@ export function useSearchDialog() {
           mediaType,
           query: nextQuery,
           year,
-          region: mediaType === "movie" ? region : undefined,
+          language,
           page: nextPage,
         }),
       );
     },
-    [dispatch, mediaType, query, region, year],
+    [dispatch, language, mediaType, query, year],
   );
 
   const handleOpenChange = useCallback((nextOpen: boolean) => {
@@ -38,7 +38,7 @@ export function useSearchDialog() {
     if (!nextOpen) {
       setQuery("");
       setYear(undefined);
-      setRegion(undefined);
+      setLanguage(undefined);
       setPage(1);
     }
   }, []);
@@ -46,9 +46,6 @@ export function useSearchDialog() {
   const handleMediaTypeChange = useCallback((nextType: SearchMediaType) => {
     setMediaType(nextType);
     setPage(1);
-    if (nextType === "series") {
-      setRegion(undefined);
-    }
   }, []);
 
   const handleQueryChange = useCallback((nextQuery: string) => {
@@ -61,8 +58,8 @@ export function useSearchDialog() {
     setPage(1);
   }, []);
 
-  const handleRegionChange = useCallback((nextRegion?: string) => {
-    setRegion(nextRegion);
+  const handleLanguageChange = useCallback((nextLanguage?: string) => {
+    setLanguage(nextLanguage);
     setPage(1);
   }, []);
 
@@ -108,21 +105,21 @@ export function useSearchDialog() {
           mediaType,
           query: normalizedQuery,
           year,
-          region: mediaType === "movie" ? region : undefined,
+          language,
           page: 1,
         }),
       );
     }, 500);
 
     return () => window.clearTimeout(timeoutId);
-  }, [dispatch, mediaType, query, region, year]);
+  }, [dispatch, language, mediaType, query, year]);
 
   return {
     open,
     query,
     mediaType,
     year,
-    region,
+    language,
     page,
     searchState,
     resultIndicator,
@@ -133,7 +130,7 @@ export function useSearchDialog() {
     handleMediaTypeChange,
     handleQueryChange,
     handleYearChange,
-    handleRegionChange,
+    handleLanguageChange,
     handlePageChange,
   };
 }

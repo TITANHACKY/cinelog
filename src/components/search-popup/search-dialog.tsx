@@ -24,7 +24,7 @@ function SearchDialogContent() {
     query,
     mediaType,
     year,
-    region,
+    language,
     page,
     searchState,
     resultIndicator,
@@ -35,7 +35,7 @@ function SearchDialogContent() {
     handleMediaTypeChange,
     handleQueryChange,
     handleYearChange,
-    handleRegionChange,
+    handleLanguageChange,
     handlePageChange,
   } = useSearchDialog();
   const viewport = useSearchDialogViewport(open);
@@ -64,9 +64,9 @@ function SearchDialogContent() {
         <SearchControls
           mediaType={mediaType}
           onMediaTypeChange={handleMediaTypeChange}
-          onRegionChange={handleRegionChange}
+          language={language}
+          onLanguageChange={handleLanguageChange}
           onYearChange={handleYearChange}
-          region={region}
           resultIndicator={resultIndicator}
           resultText={resultText}
           year={year}

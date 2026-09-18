@@ -1,7 +1,7 @@
 import { getSession, requireSession } from "@/lib/auth/session";
 import { parseJson, parsePositiveIntId, parseSchema } from "@/lib/http/request";
 import { created, ok, toErrorResponse } from "@/lib/http/response";
-import type { RouteContext, TmdbSeries } from "@/lib/types";
+import type { RouteContext } from "@/lib/types";
 import { seriesPatchSchema } from "@/lib/validations/library";
 import {
   addSeriesToLibrary,
@@ -27,13 +27,12 @@ export async function GET(_request: Request, { params }: RouteContext) {
   }
 }
 
-export async function POST(request: Request, { params }: RouteContext) {
+export async function POST(_request: Request, { params }: RouteContext) {
   try {
     const { id } = await params;
     const tmdbId = parsePositiveIntId(id, "series");
     const session = await requireSession();
-    const body = await parseJson<TmdbSeries>(request);
-    return created(await addSeriesToLibrary(tmdbId, session.userId, body));
+    return created(await addSeriesToLibrary(tmdbId, session.userId));
   } catch (error) {
     return toErrorResponse(
       error,

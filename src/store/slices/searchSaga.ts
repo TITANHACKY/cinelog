@@ -20,7 +20,7 @@ function buildSearchUrl({
   mediaType,
   query,
   year,
-  region,
+  language,
   page,
 }: ReturnType<typeof searchRequested>["payload"]) {
   const params = new URLSearchParams({
@@ -32,8 +32,8 @@ function buildSearchUrl({
     params.set("year", String(year));
   }
 
-  if (mediaType === "movie" && region) {
-    params.set("region", region);
+  if (language) {
+    params.set("language", language);
   }
 
   return `/api/search/${mediaType}?${params.toString()}`;
