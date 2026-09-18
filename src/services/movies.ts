@@ -14,7 +14,7 @@ import type { NewUserMovie } from "@/db/schema";
 import {
   deleteUserMovie,
   findUserMovie,
-  findUserMovieImpression,
+  findUserMovieData,
   insertUserMovie,
   updateUserMovie,
 } from "@/repositories/movies";
@@ -80,7 +80,7 @@ function toMovieDetails(movie: TmdbMovie, userMovie?: UserMovieLibraryRow) {
 export async function getMovieDetails(tmdbId: number, userId?: number) {
   const movie = await fetchTmdbMovie(tmdbId);
   const userMovie = userId
-    ? await findUserMovieImpression(tmdbId, userId)
+    ? await findUserMovieData(tmdbId, userId).impression
     : undefined;
 
   return toMovieDetails(movie, userMovie);

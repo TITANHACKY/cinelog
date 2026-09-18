@@ -6,7 +6,7 @@ import {
   upsertCatalogMovieWithGenres,
 } from "@/repositories/catalog";
 
-export async function findUserMovieImpression(tmdbId: number, userId: number) {
+export async function findUserMovieData(tmdbId: number, userId: number) {
   return getDb()
     .select({
       impression: userMovies.impression,
