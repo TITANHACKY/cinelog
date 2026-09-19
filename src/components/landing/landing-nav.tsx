@@ -89,7 +89,7 @@ export function LandingNav() {
             className="gap-1.5 px-3.5 lg:px-4"
           >
             <UserPlus className="size-4" />
-            Sign Up
+            Create Account
           </ButtonLink>
         </div>
 
@@ -138,7 +138,7 @@ export function LandingNav() {
                 className="justify-center gap-1.5"
               >
                 <UserPlus className="size-4" />
-                Sign Up
+                Create Account
               </ButtonLink>
             </div>
           </nav>

@@ -16,6 +16,7 @@ type LibraryBrowseDialogProps = {
   mediaType: LibraryMediaType;
   open: boolean;
   query: LibraryBrowseQuery;
+  disabled?: boolean;
   onOpenChange: (open: boolean) => void;
   onChange: (query: LibraryBrowseQuery) => void;
   onApply: () => void;
@@ -26,6 +27,7 @@ export function LibraryBrowseDialog({
   mediaType,
   open,
   query,
+  disabled = false,
   onOpenChange,
   onChange,
   onApply,
@@ -42,16 +44,27 @@ export function LibraryBrowseDialog({
           </DialogDescription>
         </DialogHeader>
         <LibraryBrowseFields
+          disabled={disabled}
           layout="stack"
           mediaType={mediaType}
           onChange={onChange}
           query={query}
         />
         <DialogFooter>
-          <Button onClick={onClear} type="button" variant="darkFilled">
+          <Button
+            disabled={disabled}
+            onClick={onClear}
+            type="button"
+            variant="darkFilled"
+          >
             Clear
           </Button>
-          <Button onClick={onApply} type="button" variant="primaryFilled">
+          <Button
+            disabled={disabled}
+            onClick={onApply}
+            type="button"
+            variant="primaryFilled"
+          >
             Apply
           </Button>
         </DialogFooter>

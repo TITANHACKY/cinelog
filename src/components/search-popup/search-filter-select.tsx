@@ -23,6 +23,7 @@ export type SearchFilterOption = {
 
 type SearchFilterSelectProps = {
   "aria-label"?: string;
+  disabled?: boolean;
   heading: string;
   menuMinWidth?: number;
   onChange: (value: string) => void;
@@ -36,6 +37,7 @@ type SearchFilterSelectProps = {
 
 export function SearchFilterSelect({
   "aria-label": ariaLabel,
+  disabled = false,
   heading,
   menuMinWidth,
   onChange,
@@ -130,9 +132,12 @@ export function SearchFilterSelect({
           aria-label={ariaLabel ?? placeholder}
           className={cn(
             "px-2.5 py-1 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm",
+            disabled && "pointer-events-none opacity-50",
             triggerClassName,
           )}
+          disabled={disabled}
           onClick={() => {
+            if (disabled) return;
             if (isOpen) {
               closeMenu();
               return;

@@ -146,18 +146,23 @@ export async function insertUserCollection(
         displayOrder: data.displayOrder,
       })
       .returning(),
-    db
-      .insert(customCollectionFilters)
-      .values(
-        data.filters.map((filter) => ({
-          customCollectionId: collectionIdSql,
-          field: filter.field,
-          operator: filter.operator,
-          value: filter.value,
-        })),
-      )
-      .returning(),
   ];
+
+  if (data.filters.length > 0) {
+    queries.push(
+      db
+        .insert(customCollectionFilters)
+        .values(
+          data.filters.map((filter) => ({
+            customCollectionId: collectionIdSql,
+            field: filter.field,
+            operator: filter.operator,
+            value: filter.value,
+          })),
+        )
+        .returning(),
+    );
+  }
 
   if (data.sorts && data.sorts.length > 0) {
     queries.push(
@@ -176,16 +181,27 @@ export async function insertUserCollection(
   }
 
   const results = await db.batch(asBatch(queries));
-  const [createdCollections, createdFilters, createdSorts] = results as [
-    (typeof customCollections.$inferSelect)[],
-    (typeof customCollectionFilters.$inferSelect)[],
-    (typeof customCollectionSorts.$inferSelect)[]?,
-  ];
+  let resultIndex = 0;
+  const createdCollections = results[resultIndex++] as (
+    typeof customCollections.$inferSelect
+  )[];
+  let createdFilters: (typeof customCollectionFilters.$inferSelect)[] = [];
+  if (data.filters.length > 0) {
+    createdFilters = results[resultIndex++] as (
+      typeof customCollectionFilters.$inferSelect
+    )[];
+  }
+  let createdSorts: (typeof customCollectionSorts.$inferSelect)[] = [];
+  if (data.sorts && data.sorts.length > 0) {
+    createdSorts = results[resultIndex++] as (
+      typeof customCollectionSorts.$inferSelect
+    )[];
+  }
 
   return mapCollection(
     createdCollections[0],
     createdFilters,
-    createdSorts ?? [],
+    createdSorts,
   );
 }
 
@@ -226,18 +242,23 @@ export async function updateUserCollection(
       db
         .delete(customCollectionFilters)
         .where(eq(customCollectionFilters.customCollectionId, id)),
-      db
-        .insert(customCollectionFilters)
-        .values(
-          data.filters.map((filter) => ({
-            customCollectionId: id,
-            field: filter.field,
-            operator: filter.operator,
-            value: filter.value,
-          })),
-        )
-        .returning(),
     );
+
+    if (data.filters.length > 0) {
+      queries.push(
+        db
+          .insert(customCollectionFilters)
+          .values(
+            data.filters.map((filter) => ({
+              customCollectionId: id,
+              field: filter.field,
+              operator: filter.operator,
+              value: filter.value,
+            })),
+          )
+          .returning(),
+      );
+    }
   }
 
   if (data.sorts !== undefined) {
@@ -273,16 +294,20 @@ export async function updateUserCollection(
 
   if (data.filters !== undefined) {
     resultIndex += 1;
-    finalFilters = (
-      results[resultIndex] as (typeof customCollectionFilters.$inferSelect)[]
-    ).map((created) => ({
-      id: created.id,
-      customCollectionId: created.customCollectionId,
-      field: created.field,
-      operator: created.operator,
-      value: created.value,
-    }));
-    resultIndex += 1;
+    if (data.filters.length > 0) {
+      finalFilters = (
+        results[resultIndex] as (typeof customCollectionFilters.$inferSelect)[]
+      ).map((created) => ({
+        id: created.id,
+        customCollectionId: created.customCollectionId,
+        field: created.field,
+        operator: created.operator,
+        value: created.value,
+      }));
+      resultIndex += 1;
+    } else {
+      finalFilters = [];
+    }
   }
 
   if (data.sorts !== undefined) {
@@ -316,4 +341,105 @@ export async function updateUserCollection(
     filters: finalFilters,
     sorts: finalSorts,
   };
+}
+
+export async function deleteUserCollection(
+  id: number,
+  userId: number,
+): Promise<boolean> {
+  const db = getDb();
+  const existing = await findUserCollectionById(id, userId);
+  if (!existing) return false;
+
+  await db.batch(
+    asBatch([
+      db
+        .delete(customCollectionFilters)
+        .where(eq(customCollectionFilters.customCollectionId, id)),
+      db
+        .delete(customCollectionSorts)
+        .where(eq(customCollectionSorts.customCollectionId, id)),
+      db
+        .delete(customCollections)
+        .where(
+          and(eq(customCollections.id, id), eq(customCollections.userId, userId)),
+        ),
+    ]),
+  );
+
+  const remaining = await db
+    .select({ id: customCollections.id })
+    .from(customCollections)
+    .where(eq(customCollections.userId, userId))
+    .orderBy(
+      asc(customCollections.displayOrder),
+      desc(customCollections.createdAt),
+    );
+
+  if (remaining.length > 0) {
+    await db.batch(
+      asBatch(
+        remaining.map((row, index) =>
+          db
+            .update(customCollections)
+            .set({
+              displayOrder: index,
+              updatedAt: String(Math.floor(Date.now() / 1000)),
+            })
+            .where(eq(customCollections.id, row.id)),
+        ),
+      ),
+    );
+  }
+
+  return true;
+}
+
+export async function reorderUserCollections(
+  userId: number,
+  orderedIds: number[],
+): Promise<CustomCollectionWithFilters[]> {
+  const db = getDb();
+  const existing = await listUserCollections(userId);
+  const existingIds = new Set(existing.map((col) => col.id));
+
+  if (
+    orderedIds.length !== existing.length ||
+    orderedIds.some((id) => !existingIds.has(id))
+  ) {
+    throw new Error("Invalid collection order");
+  }
+
+  await db.batch(
+    asBatch(
+      orderedIds.map((id, index) =>
+        db
+          .update(customCollections)
+          .set({
+            displayOrder: index,
+            updatedAt: String(Math.floor(Date.now() / 1000)),
+          })
+          .where(
+            and(
+              eq(customCollections.id, id),
+              eq(customCollections.userId, userId),
+            ),
+          ),
+      ),
+    ),
+  );
+
+  return listUserCollections(userId);
+}
+
+export async function nextDisplayOrder(userId: number) {
+  const db = getDb();
+  const rows = await db
+    .select({ value: customCollections.displayOrder })
+    .from(customCollections)
+    .where(eq(customCollections.userId, userId))
+    .orderBy(desc(customCollections.displayOrder))
+    .limit(1);
+
+  return Number(rows[0]?.value ?? -1) + 1;
 }

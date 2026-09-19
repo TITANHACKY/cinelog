@@ -155,26 +155,18 @@ function releaseYearColumn(dateColumn: SQLWrapper) {
   return sql`CAST(substr(${dateColumn}, 1, 4) AS INTEGER)`;
 }
 
-function filterCondition(
+function buildFilterCondition(
   mediaType: "movie" | "series",
-  query: LibraryQueryInput,
+  field: NonNullable<LibraryQueryInput["filter_field"]>,
+  operator: number,
+  value: string,
 ) {
-  if (
-    !query.filter_field ||
-    query.filter_operator === undefined ||
-    !query.filter_value
-  ) {
-    return undefined;
-  }
-
-  const operator = query.filter_operator;
-  const value = query.filter_value;
   const catalog = mediaType === "movie" ? movies : series;
   const user = mediaType === "movie" ? userMovies : userSeries;
   const dateColumn =
     mediaType === "movie" ? movies.releaseDate : series.firstAirDate;
 
-  switch (query.filter_field) {
+  switch (field) {
     case "watch_status":
       return numericCompare(user.watchStatus, operator, value);
     case "impression":
@@ -194,6 +186,56 @@ function filterCondition(
     default:
       return undefined;
   }
+}
+
+function multiFilterCondition(
+  mediaType: "movie" | "series",
+  clauses: NonNullable<LibraryQueryInput["filters"]>,
+) {
+  const conditions = clauses
+    .map((clause) =>
+      buildFilterCondition(
+        mediaType,
+        clause.field,
+        clause.operator,
+        clause.value,
+      ),
+    )
+    .filter((part): part is SQL => part !== undefined);
+
+  if (conditions.length === 0) {
+    return undefined;
+  }
+
+  if (conditions.length === 1) {
+    return conditions[0];
+  }
+
+  return and(...conditions);
+}
+
+function filterCondition(
+  mediaType: "movie" | "series",
+  query: LibraryQueryInput,
+) {
+  if (query.filters && query.filters.length > 0) {
+    return multiFilterCondition(mediaType, query.filters);
+  }
+
+  if (
+    !query.filter_field ||
+    query.filter_operator === undefined ||
+    !query.filter_value
+  ) {
+    return undefined;
+  }
+
+  return buildFilterCondition(
+    mediaType,
+    query.filter_field,
+    query.filter_operator,
+    query.filter_value,
+  );
 }
 
 function searchCondition(mediaType: "movie" | "series", query: LibraryQueryInput) {

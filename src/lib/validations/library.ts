@@ -193,4 +193,14 @@ export const libraryQuerySchema = z
 
 export type MoviePatchInput = z.infer<typeof moviePatchSchema>;
 export type SeriesPatchInput = z.infer<typeof seriesPatchSchema>;
-export type LibraryQueryInput = z.infer<typeof libraryQuerySchema>;
+export type LibraryQuerySchemaInput = z.infer<typeof libraryQuerySchema>;
+
+export type LibraryFilterClause = {
+  field: NonNullable<LibraryQuerySchemaInput["filter_field"]>;
+  operator: NonNullable<LibraryQuerySchemaInput["filter_operator"]>;
+  value: string;
+};
+
+export type LibraryQueryInput = LibraryQuerySchemaInput & {
+  filters?: LibraryFilterClause[];
+};

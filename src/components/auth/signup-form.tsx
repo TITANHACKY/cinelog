@@ -168,7 +168,7 @@ export function SignupForm() {
           {status === "loading" ? (
             <>
               <Loader2 className="size-3.5 sm:size-4 animate-spin" />
-              <span>Creating account...</span>
+              <span>Create account</span>
             </>
           ) : (
             "Create account"
@@ -182,7 +182,7 @@ export function SignupForm() {
           className="font-medium text-brand-primary hover:underline underline-offset-4"
           href="/login"
         >
-          Sign in
+          Log in
         </Link>
       </div>
     </div>

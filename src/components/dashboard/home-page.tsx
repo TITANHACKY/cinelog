@@ -2,38 +2,27 @@
 
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { ButtonLink } from "@/components/ui/button";
-import { ContinueWatching } from "@/components/dashboard/continue-watching";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { CollectionCarousel } from "@/components/library/collection-carousel";
 import { useDashboard } from "@/hooks/dashboard/use-dashboard";
 import { useAppSelector } from "@/store";
-import { Film, Layers, Loader2, Plus, Sparkles, Tv } from "lucide-react";
+import { Film, Layers, Plus, Sparkles, Tv } from "lucide-react";
 
 export function HomePage() {
   const { user } = useAppSelector((state) => state.auth);
   const displayName = user?.displayName || user?.username;
 
-  const {
-    isLoading,
-    errorMessage,
-    movieCount,
-    seriesCount,
-    continueWatchingMovies,
-    continueWatchingSeries,
-    collections,
-    libraryMovies,
-    librarySeries,
-  } = useDashboard();
-
-  // Show collections that are marked for library/dashboard, or fallback to all user collections
-  const activeCollections = collections.filter(
-    (col) => col.showInDashboard || col.showInLibrary,
-  );
-  const displayCollections =
-    activeCollections.length > 0 ? activeCollections : collections;
+  const { isLoading, errorMessage, movieCount, seriesCount, collections } =
+    useDashboard();
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 pt-5 pb-8 sm:px-8 sm:pt-6 lg:pt-8 lg:pb-10">
-      <div className="mx-auto flex w-full max-w-[1720px] flex-col gap-6 sm:gap-8">
+      <div
+        aria-hidden={isLoading}
+        className={`mx-auto flex w-full max-w-[1720px] flex-col gap-6 sm:gap-8 ${
+          isLoading ? "blur-sm" : ""
+        }`}
+      >
         <header className="relative overflow-hidden rounded-2xl border border-outline-variant bg-linear-to-r from-surface-container-low via-surface-container to-surface-container-low px-4 py-4 sm:px-8 sm:py-6">
           <div className="absolute -right-12 -top-12 h-64 w-64 rounded-full bg-brand-primary-container/10 blur-3xl" />
           <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -47,8 +36,8 @@ export function HomePage() {
                   {displayName ? `Welcome ${displayName}!` : "Welcome"}
                 </h1>
                 <p className="mt-1 max-w-xl font-public-sans text-xs text-secondary sm:mt-2 sm:text-sm">
-                  Track your movies, binge series, and continue right where you
-                  left off.
+                  Track your movies and series, and browse custom collection
+                  carousels from your watchlist.
                 </p>
               </div>
             </div>
@@ -74,32 +63,30 @@ export function HomePage() {
           <AlertBanner message={errorMessage} variant="error" />
         ) : null}
 
-        <ContinueWatching
-          movies={continueWatchingMovies}
-          series={continueWatchingSeries}
-        />
-
-        {/* Custom Collections Section */}
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-16 text-secondary">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-            <p className="font-public-sans text-xs text-outline-muted">
-              Loading your custom collections...
-            </p>
-          </div>
-        ) : displayCollections.length > 0 ? (
+        {!isLoading && collections.length > 0 ? (
           <div className="flex flex-col gap-8 sm:gap-10">
-            {displayCollections.map((col) => (
-              <CollectionCarousel
-                collection={col}
-                key={col.id}
-                movies={libraryMovies}
-                pageSize={15}
-                series={librarySeries}
-              />
-            ))}
+            {collections.map((col) => {
+              const items =
+                col.mediaType === 0
+                  ? col.preview.movies
+                  : col.preview.series;
+              const count =
+                col.mediaType === 0
+                  ? col.preview.metadata.count.movies
+                  : col.preview.metadata.count.series;
+
+              return (
+                <CollectionCarousel
+                  collection={col}
+                  initialCount={count}
+                  initialHasMore={col.preview.metadata.hasMore}
+                  initialItems={items}
+                  key={col.id}
+                />
+              );
+            })}
           </div>
-        ) : (
+        ) : !isLoading ? (
           <section className="flex flex-col items-center justify-between gap-4 rounded-2xl border border-dashed border-outline-variant bg-surface-container-low p-6 text-center sm:flex-row sm:text-left">
             <div className="flex items-center gap-3.5">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-primary-container/20 text-brand-primary">
@@ -124,8 +111,9 @@ export function HomePage() {
               Create Stream Collection
             </ButtonLink>
           </section>
-        )}
+        ) : null}
       </div>
+      {isLoading ? <LoadingOverlay /> : null}
     </main>
   );
 }

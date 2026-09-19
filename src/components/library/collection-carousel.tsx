@@ -1,58 +1,81 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { Layers, Loader2 } from "lucide-react";
 import { Carousel } from "@/components/ui/carousel";
 import { EmptyState } from "@/components/ui/empty-state";
-import { FilterQueryChips } from "@/components/ui/filter-query-chips";
 import { MovieCard } from "@/components/ui/movie-card";
 import { SeriesCard } from "@/components/ui/series-card";
+import { apiFetch } from "@/lib/http/client";
 import type {
   CustomCollectionWithFilters,
   LibraryMovie,
   LibrarySeries,
 } from "@/lib/types";
-import { filterCollectionItems } from "@/lib/media/collection-filter";
 
 const MINIMUM_COLLECTION_PAGE_SIZE = 15;
 
+type CollectionCarouselProps = {
+  collection: CustomCollectionWithFilters;
+  initialItems: Array<LibraryMovie | LibrarySeries>;
+  initialCount: number;
+  initialHasMore: boolean;
+  pageSize?: number;
+};
+
 export function CollectionCarousel({
   collection,
-  movies,
-  series,
+  initialItems,
+  initialCount,
+  initialHasMore,
   pageSize = MINIMUM_COLLECTION_PAGE_SIZE,
-}: {
-  collection: CustomCollectionWithFilters;
-  movies: LibraryMovie[];
-  series: LibrarySeries[];
-  pageSize?: number;
-}) {
+}: CollectionCarouselProps) {
   const actualPageSize = Math.max(MINIMUM_COLLECTION_PAGE_SIZE, pageSize);
-  const matchingItems = useMemo(
-    () => filterCollectionItems(collection, movies, series),
-    [collection, movies, series],
-  );
-  const count = matchingItems.length;
-
-  const [page, setPage] = useState(1);
+  const [items, setItems] = useState(initialItems);
+  const [count, setCount] = useState(initialCount);
+  const [hasMore, setHasMore] = useState(initialHasMore);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const visibleCount = page * actualPageSize;
-  const hasMore = visibleCount < count;
-  const visibleItems = useMemo(
-    () => matchingItems.slice(0, visibleCount),
-    [matchingItems, visibleCount],
-  );
+  const handleNearEnd = useCallback(async () => {
+    if (!hasMore || loadingMore) return;
 
-  const handleNearEnd = useCallback(() => {
-    if (hasMore && !loadingMore) {
-      setLoadingMore(true);
-      window.setTimeout(() => {
-        setPage((prev) => prev + 1);
-        setLoadingMore(false);
-      }, 180);
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams({
+        offset: String(items.length),
+        limit: String(actualPageSize),
+      });
+      const res = await apiFetch(
+        `/api/collections/${collection.id}/items?${params.toString()}`,
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to load more items");
+      }
+
+      const payload = data.data ?? data;
+      const pageItems =
+        collection.mediaType === 0 ? payload.movies : payload.series;
+      setItems((prev) => [...prev, ...pageItems]);
+      setCount(
+        collection.mediaType === 0
+          ? payload.metadata.count.movies
+          : payload.metadata.count.series,
+      );
+      setHasMore(payload.metadata.hasMore);
+    } catch {
+      // keep current items visible on load-more failure
+    } finally {
+      setLoadingMore(false);
     }
-  }, [hasMore, loadingMore]);
+  }, [
+    actualPageSize,
+    collection.id,
+    collection.mediaType,
+    hasMore,
+    items.length,
+    loadingMore,
+  ]);
 
   return (
     <Carousel
@@ -72,14 +95,13 @@ export function CollectionCarousel({
       headingId={`collection-${collection.id}-heading`}
       icon={<Layers className="h-4.5 w-4.5" />}
       navAlwaysVisible
-      onNearEnd={handleNearEnd}
+      onNearEnd={() => void handleNearEnd()}
       showNav={count > 0}
-      subtitle={<FilterQueryChips filters={collection.filters} />}
       title={collection.name}
     >
       {count > 0 ? (
         <>
-          {visibleItems.map((item) => {
+          {items.map((item) => {
             const isMovie = "title" in item;
             return (
               <div

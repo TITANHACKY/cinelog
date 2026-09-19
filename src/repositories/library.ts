@@ -252,7 +252,23 @@ export async function listLibraryRows(
 
       itemQueries.push(
         db
-          .select(movieSelect)
+          .select({
+            id: rankedMovies.id,
+            tmdbId: rankedMovies.tmdbId,
+            watchStatus: rankedMovies.watchStatus,
+            impression: rankedMovies.impression,
+            createdAt: rankedMovies.createdAt,
+            updatedAt: rankedMovies.updatedAt,
+            completedAt: rankedMovies.completedAt,
+            title: rankedMovies.title,
+            posterPath: rankedMovies.posterPath,
+            releaseDate: rankedMovies.releaseDate,
+            voteAverage: rankedMovies.voteAverage,
+            status: rankedMovies.status,
+            originalLanguage: rankedMovies.originalLanguage,
+            originCountry: rankedMovies.originCountry,
+            certificate: rankedMovies.certificate,
+          })
           .from(rankedMovies)
           .where(lte(rankedMovies.rn, query.limit)),
       );
@@ -287,7 +303,29 @@ export async function listLibraryRows(
 
       itemQueries.push(
         db
-          .select(seriesSelect)
+          .select({
+            id: rankedSeries.id,
+            tmdbId: rankedSeries.tmdbId,
+            watchStatus: rankedSeries.watchStatus,
+            impression: rankedSeries.impression,
+            createdAt: rankedSeries.createdAt,
+            updatedAt: rankedSeries.updatedAt,
+            lastWatchedAt: rankedSeries.lastWatchedAt,
+            completedAt: rankedSeries.completedAt,
+            name: rankedSeries.name,
+            firstAirDate: rankedSeries.firstAirDate,
+            lastAirDate: rankedSeries.lastAirDate,
+            totalNumberOfEpisodes: rankedSeries.totalNumberOfEpisodes,
+            totalNumberOfSeasons: rankedSeries.totalNumberOfSeasons,
+            totalNumberOfSeasonsWatched: rankedSeries.totalNumberOfSeasonsWatched,
+            totalNumberOfEpisodesWatched: rankedSeries.totalNumberOfEpisodesWatched,
+            posterPath: rankedSeries.posterPath,
+            voteAverage: rankedSeries.voteAverage,
+            status: rankedSeries.status,
+            originalLanguage: rankedSeries.originalLanguage,
+            originCountry: rankedSeries.originCountry,
+            certificate: rankedSeries.certificate,
+          })
           .from(rankedSeries)
           .where(lte(rankedSeries.rn, query.limit)),
       );

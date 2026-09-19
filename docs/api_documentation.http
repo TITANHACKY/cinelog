@@ -137,14 +137,27 @@ GET /api/library?type=series&group_by=0&group_key=2&offset=20&limit=20
 GET /api/library?type=movie&filter_field=impression&filter_operator=0&filter_value=none
 
 ### Get dashboard
-# Requires cookie. Aggregates library counts, continue-watching (watch_status=1),
-# custom collections, and full library snapshots for dashboard carousels.
+# Requires cookie. Returns unfiltered library counts plus dashboard collections
+# only (showInDashboard=true and groupBy=null), ordered by displayOrder ascending.
+# Each collection includes a paginated preview (first page, limit 15) via the
+# same query path as GET /api/collections/:id/items.
+#
 # Response: {
 #   "counts": { "movies": number, "series": number },
-#   "continueWatching": { "movies": LibraryMovie[], "series": LibrarySeries[] },
-#   "collections": CustomCollection[],
-#   "library": { "movies": LibraryMovie[], "series": LibrarySeries[] }
+#   "collections": DashboardCollection[]
 # }
+#
+# DashboardCollection: CustomCollection plus
+#   preview: {
+#     "movies": LibraryMovie[],
+#     "series": LibrarySeries[],
+#     "metadata": LibraryMetadata
+#   }
+#
+# Only the collection's mediaType array is populated in preview (movies or
+# series). metadata.count reflects the collection filter; metadata.hasMore
+# indicates more pages are available via GET /api/collections/:id/items.
+# Collections with groupBy are excluded from the dashboard payload.
 GET /api/dashboard
 
 ### Get movie details
@@ -231,7 +244,7 @@ Content-Type: application/json
 }
 
 ### List collections
-# Requires cookie
+# Requires cookie. Ordered by displayOrder ascending, then createdAt descending.
 # Response: { "collections": CustomCollection[] }
 #
 # CustomCollection: id, userId, name, mediaType, showInDashboard,
@@ -242,35 +255,40 @@ Content-Type: application/json
 # groupBy: 0 Watch Status, 1 Impression, 2 Status (or null)
 # filter operator: 0 eq, 1 neq, 2 gt, 3 lt, 4 in
 # sort direction: 0 asc, 1 desc
+#
+# Validation rules (create and update when toggles/groupBy are sent):
+#   - 0–3 filters on create (AND-combined); update may omit filters.
+#   - At most one sort (optional).
+#   - showInDashboard and groupBy cannot both be set.
+#   - groupBy requires showInLibrary=true and showInDashboard=false.
 GET /api/collections
 
 ### Create collection
-# Requires cookie. At least one filter is required.
-# filter.field: release_year, certification, original_language,
-#   origin_country, genre
-# sort.field examples: created_at, release_date, title, vote_average,
+# Requires cookie. 0–3 filters (AND-combined); at most one sort.
+#
+# filter.field: watch_status, impression, vote_average, release_year,
+#   status, genre, original_language, origin_country
+# filter.operator: same as library (see Get library)
+# sort.field: created_at, release_date, title, vote_average,
 #   last_watched_at, completed_at
+#
+# displayOrder defaults to 0; when 0, the server assigns the next order.
 # Response 201: { "collection": CustomCollection }
 POST /api/collections
 Content-Type: application/json
 
 {
-  "name": "2010s dramas",
+  "name": "Action movies",
   "mediaType": 0,
-  "showInDashboard": false,
+  "showInDashboard": true,
   "showInLibrary": true,
-  "groupBy": 0,
+  "groupBy": null,
   "displayOrder": 0,
   "filters": [
     {
-      "field": "release_year",
-      "operator": 2,
-      "value": "2009"
-    },
-    {
       "field": "genre",
-      "operator": 5,
-      "value": "Drama"
+      "operator": 0,
+      "value": "Action"
     }
   ],
   "sorts": [
@@ -282,26 +300,78 @@ Content-Type: application/json
   ]
 }
 
+### Create grouped library collection
+# groupBy is for library-only grouped carousels (not dashboard).
+POST /api/collections
+Content-Type: application/json
+
+{
+  "name": "By watch status",
+  "mediaType": 0,
+  "showInDashboard": false,
+  "showInLibrary": true,
+  "groupBy": 0,
+  "filters": [
+    {
+      "field": "genre",
+      "operator": 0,
+      "value": "Action"
+    }
+  ],
+  "sorts": []
+}
+
 ### Get collection
 # Requires cookie. 404 if missing or not owned by the current user.
+# Response: { "collection": CustomCollection }
 GET /api/collections/{{collectionId}}
 
+### Get collection items
+# Requires cookie. Runs the collection's saved filter/sort/group against the
+# library via listLibraryRows (same semantics as GET /api/library).
+# 404 if missing or not owned by the current user.
+#
+# Query:
+#   offset=0
+#   limit=15 (max 50)
+#   q (optional title/name search, combined server-side with collection filter)
+#   group_key (optional; page one group when collection groupBy is set)
+#
+# Response: {
+#   "collection": CustomCollection,
+#   "movies": LibraryMovie[],
+#   "series": LibrarySeries[],
+#   "metadata": LibraryMetadata
+# }
+#
+# Only the collection mediaType array is populated. metadata.groups is present
+# when the collection has groupBy. Use group_key + offset/limit to page within
+# a single group carousel.
+GET /api/collections/{{collectionId}}/items?offset=0&limit=15
+
+### Search within collection items
+GET /api/collections/{{collectionId}}/items?q=wolverine&offset=0&limit=15
+
+### Page one collection group
+GET /api/collections/{{collectionId}}/items?group_key=2&offset=0&limit=15
+
 ### Update collection
-# Requires cookie. All body fields are optional; if filters is sent it
-# must have at least one item. Sending filters or sorts replaces the
-# full list (existing ids are not reused).
+# Requires cookie. All body fields are optional; if filters is sent it must
+# contain 0–3 items (AND-combined). Sending filters or sorts replaces the full list
+# (existing ids are not reused). groupBy/showInDashboard/showInLibrary rules
+# apply when any of those fields are sent.
 # Response: { "collection": CustomCollection }
 PUT /api/collections/{{collectionId}}
 Content-Type: application/json
 
 {
-  "name": "2010s dramas",
+  "name": "Action movies",
   "showInLibrary": true,
   "filters": [
     {
-      "field": "release_year",
-      "operator": 2,
-      "value": "2009"
+      "field": "genre",
+      "operator": 0,
+      "value": "Action"
     }
   ],
   "sorts": [
@@ -313,6 +383,20 @@ Content-Type: application/json
   ]
 }
 
+### Reorder collections
+# Requires cookie. Body orderedIds must list every collection id for the user
+# exactly once, in the desired displayOrder (0-based). 400 if ids are missing,
+# unknown, or duplicated.
+# Response: { "collections": CustomCollection[] }
+PATCH /api/collections/reorder
+Content-Type: application/json
+
+{
+  "orderedIds": [2, 1, 3]
+}
+
 ### Delete collection
-# Requires cookie. 404 if missing or not owned by the current user.
+# Requires cookie. Deletes the collection and renormalizes displayOrder on
+# remaining collections to 0…n-1. 404 if missing or not owned by the user.
+# Response: { "collections": CustomCollection[] }
 DELETE /api/collections/{{collectionId}}
