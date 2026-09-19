@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CUSTOM_COLLECTIONS } from "@/lib/constants/api";
+import { CUSTOM_COLLECTIONS, MAX_COLLECTION_FILTERS } from "@/lib/constants/api";
 
 const filterFields = Object.keys(CUSTOM_COLLECTIONS.filter_field) as [
   keyof typeof CUSTOM_COLLECTIONS.filter_field,
@@ -68,7 +68,11 @@ export const createCollectionSchema = z
     displayOrder: z.number().int().default(0),
     filters: z
       .array(collectionFilterInputSchema)
-      .length(1, "Exactly one filter is required"),
+      .max(
+        MAX_COLLECTION_FILTERS,
+        `At most ${MAX_COLLECTION_FILTERS} filters are allowed`,
+      )
+      .default([]),
     sorts: z
       .array(collectionSortInputSchema)
       .max(1, "Only one sort is allowed")
@@ -96,7 +100,10 @@ export const updateCollectionSchema = z
     displayOrder: z.number().int().optional(),
     filters: z
       .array(collectionFilterInputSchema)
-      .length(1, "Exactly one filter is required")
+      .max(
+        MAX_COLLECTION_FILTERS,
+        `At most ${MAX_COLLECTION_FILTERS} filters are allowed`,
+      )
       .optional(),
     sorts: z.array(collectionSortInputSchema).max(1).optional(),
   })

@@ -146,18 +146,23 @@ export async function insertUserCollection(
         displayOrder: data.displayOrder,
       })
       .returning(),
-    db
-      .insert(customCollectionFilters)
-      .values(
-        data.filters.map((filter) => ({
-          customCollectionId: collectionIdSql,
-          field: filter.field,
-          operator: filter.operator,
-          value: filter.value,
-        })),
-      )
-      .returning(),
   ];
+
+  if (data.filters.length > 0) {
+    queries.push(
+      db
+        .insert(customCollectionFilters)
+        .values(
+          data.filters.map((filter) => ({
+            customCollectionId: collectionIdSql,
+            field: filter.field,
+            operator: filter.operator,
+            value: filter.value,
+          })),
+        )
+        .returning(),
+    );
+  }
 
   if (data.sorts && data.sorts.length > 0) {
     queries.push(
@@ -176,16 +181,27 @@ export async function insertUserCollection(
   }
 
   const results = await db.batch(asBatch(queries));
-  const [createdCollections, createdFilters, createdSorts] = results as [
-    (typeof customCollections.$inferSelect)[],
-    (typeof customCollectionFilters.$inferSelect)[],
-    (typeof customCollectionSorts.$inferSelect)[]?,
-  ];
+  let resultIndex = 0;
+  const createdCollections = results[resultIndex++] as (
+    typeof customCollections.$inferSelect
+  )[];
+  let createdFilters: (typeof customCollectionFilters.$inferSelect)[] = [];
+  if (data.filters.length > 0) {
+    createdFilters = results[resultIndex++] as (
+      typeof customCollectionFilters.$inferSelect
+    )[];
+  }
+  let createdSorts: (typeof customCollectionSorts.$inferSelect)[] = [];
+  if (data.sorts && data.sorts.length > 0) {
+    createdSorts = results[resultIndex++] as (
+      typeof customCollectionSorts.$inferSelect
+    )[];
+  }
 
   return mapCollection(
     createdCollections[0],
     createdFilters,
-    createdSorts ?? [],
+    createdSorts,
   );
 }
 
@@ -226,18 +242,23 @@ export async function updateUserCollection(
       db
         .delete(customCollectionFilters)
         .where(eq(customCollectionFilters.customCollectionId, id)),
-      db
-        .insert(customCollectionFilters)
-        .values(
-          data.filters.map((filter) => ({
-            customCollectionId: id,
-            field: filter.field,
-            operator: filter.operator,
-            value: filter.value,
-          })),
-        )
-        .returning(),
     );
+
+    if (data.filters.length > 0) {
+      queries.push(
+        db
+          .insert(customCollectionFilters)
+          .values(
+            data.filters.map((filter) => ({
+              customCollectionId: id,
+              field: filter.field,
+              operator: filter.operator,
+              value: filter.value,
+            })),
+          )
+          .returning(),
+      );
+    }
   }
 
   if (data.sorts !== undefined) {
@@ -273,16 +294,20 @@ export async function updateUserCollection(
 
   if (data.filters !== undefined) {
     resultIndex += 1;
-    finalFilters = (
-      results[resultIndex] as (typeof customCollectionFilters.$inferSelect)[]
-    ).map((created) => ({
-      id: created.id,
-      customCollectionId: created.customCollectionId,
-      field: created.field,
-      operator: created.operator,
-      value: created.value,
-    }));
-    resultIndex += 1;
+    if (data.filters.length > 0) {
+      finalFilters = (
+        results[resultIndex] as (typeof customCollectionFilters.$inferSelect)[]
+      ).map((created) => ({
+        id: created.id,
+        customCollectionId: created.customCollectionId,
+        field: created.field,
+        operator: created.operator,
+        value: created.value,
+      }));
+      resultIndex += 1;
+    } else {
+      finalFilters = [];
+    }
   }
 
   if (data.sorts !== undefined) {

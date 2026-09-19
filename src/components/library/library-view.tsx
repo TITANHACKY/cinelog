@@ -23,6 +23,7 @@ import type {
 } from "@/lib/types";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
+  libraryCollectionSelected,
   libraryGroupPageRequested,
   libraryPageRequested,
   libraryRequested,
@@ -50,14 +51,12 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     movieGroupPages,
     seriesGroupPages,
     query,
+    selectedCollectionId,
     status,
   } = useAppSelector((state) => state.library);
 
   const [collections, setCollections] = useState<CustomCollectionWithFilters[]>(
     [],
-  );
-  const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(
-    null,
   );
 
   const validSelectedCollectionId = useMemo(() => {
@@ -171,7 +170,7 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
             libraryCollections={libraryCollections}
             mediaType={mediaType}
             movieCount={movieCount}
-            onCollectionChange={setSelectedCollectionId}
+            onCollectionChange={(id) => dispatch(libraryCollectionSelected(id))}
             selectedCollectionId={validSelectedCollectionId}
             seriesCount={seriesCount}
           />

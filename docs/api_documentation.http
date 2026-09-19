@@ -257,14 +257,14 @@ Content-Type: application/json
 # sort direction: 0 asc, 1 desc
 #
 # Validation rules (create and update when toggles/groupBy are sent):
-#   - Exactly one filter is required on create; update may omit filters.
+#   - 0–3 filters on create (AND-combined); update may omit filters.
 #   - At most one sort (optional).
 #   - showInDashboard and groupBy cannot both be set.
 #   - groupBy requires showInLibrary=true and showInDashboard=false.
 GET /api/collections
 
 ### Create collection
-# Requires cookie. Exactly one filter is required; at most one sort.
+# Requires cookie. 0–3 filters (AND-combined); at most one sort.
 #
 # filter.field: watch_status, impression, vote_average, release_year,
 #   status, genre, original_language, origin_country
@@ -357,7 +357,7 @@ GET /api/collections/{{collectionId}}/items?group_key=2&offset=0&limit=15
 
 ### Update collection
 # Requires cookie. All body fields are optional; if filters is sent it must
-# contain exactly one item. Sending filters or sorts replaces the full list
+# contain 0–3 items (AND-combined). Sending filters or sorts replaces the full list
 # (existing ids are not reused). groupBy/showInDashboard/showInLibrary rules
 # apply when any of those fields are sent.
 # Response: { "collection": CustomCollection }

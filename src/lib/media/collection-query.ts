@@ -1,5 +1,8 @@
 import type { CustomCollectionWithFilters } from "@/lib/types";
-import type { LibraryQueryInput } from "@/lib/validations/library";
+import type {
+  LibraryFilterClause,
+  LibraryQueryInput,
+} from "@/lib/validations/library";
 
 export function collectionToLibraryQuery(
   collection: CustomCollectionWithFilters,
@@ -10,7 +13,6 @@ export function collectionToLibraryQuery(
     groupKey?: string;
   },
 ): LibraryQueryInput {
-  const filter = collection.filters[0];
   const sort = collection.sorts?.[0];
   const mediaType = collection.mediaType === 0 ? "movie" : "series";
 
@@ -27,10 +29,14 @@ export function collectionToLibraryQuery(
     query.q = q;
   }
 
-  if (filter) {
-    query.filter_field = filter.field as LibraryQueryInput["filter_field"];
-    query.filter_operator = filter.operator as LibraryQueryInput["filter_operator"];
-    query.filter_value = filter.value;
+  if (collection.filters.length > 0) {
+    query.filters = collection.filters.map(
+      (filter): LibraryFilterClause => ({
+        field: filter.field as LibraryFilterClause["field"],
+        operator: filter.operator as LibraryFilterClause["operator"],
+        value: filter.value,
+      }),
+    );
   }
 
   if (collection.groupBy !== null && collection.groupBy !== undefined) {

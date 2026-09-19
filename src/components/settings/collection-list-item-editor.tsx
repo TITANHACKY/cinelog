@@ -9,6 +9,7 @@ import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import {
   LIBRARY_GROUP_OPTIONS,
   LIBRARY_SORT_OPTIONS,
+  MAX_COLLECTION_FILTERS,
 } from "@/lib/constants";
 import { defaultFilterValue } from "@/lib/media/library-browse";
 import type {
@@ -17,7 +18,7 @@ import type {
   CustomCollectionWithFilters,
   LibraryMediaType,
 } from "@/lib/types";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useState } from "react";
 
 type CollectionListItemEditorProps = {
@@ -41,6 +42,12 @@ const defaultSort = (): CollectionSortItem => ({
   priority: 0,
 });
 
+const defaultFilter = (mediaType: LibraryMediaType): CollectionFilterItem => ({
+  field: "genre",
+  operator: 0,
+  value: defaultFilterValue("genre", mediaType),
+});
+
 export function CollectionListItemEditor({
   collection,
   onCancel,
@@ -58,12 +65,8 @@ export function CollectionListItemEditor({
   const [groupBy, setGroupBy] = useState<number | null>(
     collection?.groupBy ?? null,
   );
-  const [filter, setFilter] = useState<CollectionFilterItem>(
-    collection?.filters[0] ?? {
-      field: "genre",
-      operator: 0,
-      value: "Action",
-    },
+  const [filters, setFilters] = useState<CollectionFilterItem[]>(
+    collection?.filters ?? [],
   );
   const [sort, setSort] = useState<CollectionSortItem>(
     collection?.sorts?.[0] ?? defaultSort(),
@@ -77,12 +80,27 @@ export function CollectionListItemEditor({
   );
   const groupDisabled = showInDashboard;
   const dashboardDisabled = groupBy !== null;
+  const canAddFilter = filters.length < MAX_COLLECTION_FILTERS;
 
   function updateFilter(
+    index: number,
     field: keyof CollectionFilterItem,
     value: string | number,
   ) {
-    setFilter((prev) => ({ ...prev, [field]: value }));
+    setFilters((prev) =>
+      prev.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, [field]: value } : item,
+      ),
+    );
+  }
+
+  function addFilter() {
+    if (!canAddFilter) return;
+    setFilters((prev) => [...prev, defaultFilter(mediaTypeKey)]);
+  }
+
+  function removeFilter(index: number) {
+    setFilters((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
   }
 
   async function handleSubmit() {
@@ -90,8 +108,10 @@ export function CollectionListItemEditor({
       setError("Collection name is required.");
       return;
     }
-    if (!filter.value.trim()) {
-      setError("Filter value is required.");
+
+    const invalidFilter = filters.find((filter) => !filter.value.trim());
+    if (invalidFilter) {
+      setError("Each filter must have a value.");
       return;
     }
 
@@ -103,7 +123,7 @@ export function CollectionListItemEditor({
       showInLibrary,
       showInDashboard,
       groupBy: showInDashboard ? null : groupBy,
-      filters: [filter],
+      filters,
       sorts: [sort],
       editingId: collection?.id,
     });
@@ -132,12 +152,7 @@ export function CollectionListItemEditor({
             onChange={(event) => {
               const next = Number(event.target.value);
               setMediaType(next);
-              const nextMedia: LibraryMediaType = next === 0 ? "movie" : "series";
-              setFilter({
-                field: "genre",
-                operator: 0,
-                value: defaultFilterValue("genre", nextMedia),
-              });
+              setFilters([]);
             }}
             value={mediaType}
           >
@@ -147,12 +162,41 @@ export function CollectionListItemEditor({
         </FormField>
       </div>
 
-      <FormField id="collection-filter" label="Filter">
-        <FilterClauseRow
-          clause={filter}
-          mediaType={mediaTypeKey}
-          onUpdate={updateFilter}
-        />
+      <FormField id="collection-filters" label="Filters">
+        <div className="space-y-2">
+          {filters.length === 0 ? (
+            <p className="font-public-sans text-xs text-secondary">
+              No filters — all items of this media type are included.
+            </p>
+          ) : (
+            filters.map((filter, index) => (
+              <div className="space-y-2" key={index}>
+                {index > 0 ? (
+                  <span className="inline-block font-mono text-[10px] font-bold tracking-wider text-outline-muted uppercase">
+                    AND
+                  </span>
+                ) : null}
+                <FilterClauseRow
+                  clause={filter}
+                  mediaType={mediaTypeKey}
+                  onRemove={() => removeFilter(index)}
+                  onUpdate={(field, value) => updateFilter(index, field, value)}
+                />
+              </div>
+            ))
+          )}
+          {canAddFilter ? (
+            <Button
+              className="h-8 gap-1.5 px-2.5 text-xs"
+              onClick={addFilter}
+              type="button"
+              variant="darkFilled"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Add filter
+            </Button>
+          ) : null}
+        </div>
       </FormField>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

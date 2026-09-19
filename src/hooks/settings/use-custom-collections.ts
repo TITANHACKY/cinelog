@@ -39,7 +39,7 @@ export function useCustomCollections() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [notify]);
 
   useEffect(() => {
     let ignore = false;
@@ -66,7 +66,7 @@ export function useCustomCollections() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [notify]);
 
   async function saveCollection(payload: {
     name: string;

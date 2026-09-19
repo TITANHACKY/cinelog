@@ -65,8 +65,8 @@ export function CustomCollectionsSection() {
             </span>
           </div>
           <p className="mt-1 font-public-sans text-xs text-secondary">
-            Drag to reorder. Each collection supports one filter, sort, and
-            optional group.
+            Drag to reorder. Up to 3 filters (AND), one sort, and optional
+            group.
           </p>
         </div>
         <Button
@@ -97,7 +97,7 @@ export function CustomCollectionsSection() {
 
       {!isLoading && collections.length === 0 ? (
         <EmptyState
-          description="Create a collection with a filter, sort, and optional group to use as a library preset or dashboard carousel."
+          description="Create a collection with optional filters, sort, and group to use as a library preset or dashboard carousel."
           icon={<Layers className="h-6 w-6" />}
           title="No collections configured"
         />

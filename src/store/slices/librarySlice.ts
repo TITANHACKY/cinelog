@@ -75,6 +75,7 @@ export type LibraryState = {
   seriesGroupPages: Record<string, LibraryGroupPage<LibrarySeries>>;
   query: LibraryBrowseQuery;
   queryNonce: number;
+  selectedCollectionId: number | null;
   status: LibraryStatus;
   error: string | null;
   /** Pre-mutation values for in-flight items, keyed by `libraryItemKey`. */
@@ -98,6 +99,7 @@ const initialState: LibraryState = {
   seriesGroupPages: {},
   query: DEFAULT_LIBRARY_BROWSE_QUERY,
   queryNonce: 0,
+  selectedCollectionId: null,
   status: "idle",
   error: null,
   pending: {},
@@ -520,6 +522,12 @@ const librarySlice = createSlice({
       state.status = "succeeded";
       state.error = null;
     },
+    libraryCollectionSelected: (
+      state,
+      action: PayloadAction<number | null>,
+    ) => {
+      state.selectedCollectionId = action.payload;
+    },
     libraryQueryUpdated: (
       state,
       action: PayloadAction<LibraryBrowseQuery>,
@@ -785,6 +793,7 @@ export const {
   libraryPageFailed,
   libraryPageRequested,
   libraryPageSucceeded,
+  libraryCollectionSelected,
   libraryQueryUpdated,
   libraryRequested,
   librarySucceeded,

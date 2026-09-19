@@ -27,6 +27,7 @@ import type {
   LibraryOperator,
 } from "@/lib/types";
 import { toMovieStatusDisplay, toSeriesStatusDisplay } from "@/lib/media/status";
+import { Trash2 } from "lucide-react";
 
 type FilterClauseRowProps = {
   clause: CollectionFilterItem;
@@ -35,6 +36,7 @@ type FilterClauseRowProps = {
     field: keyof CollectionFilterItem,
     value: string | number,
   ) => void;
+  onRemove?: () => void;
 };
 
 function splitFilterValues(value: string | undefined) {
@@ -103,6 +105,7 @@ export function FilterClauseRow({
   clause,
   mediaType,
   onUpdate,
+  onRemove,
 }: FilterClauseRowProps) {
   const { genres } = useGenres();
   const field = clause.field as LibraryFilterField;
@@ -195,6 +198,16 @@ export function FilterClauseRow({
           value={clause.value}
         />
       )}
+      {onRemove ? (
+        <button
+          aria-label="Remove filter"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-status-error transition-colors hover:bg-status-error/10"
+          onClick={onRemove}
+          type="button"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      ) : null}
     </div>
   );
 }

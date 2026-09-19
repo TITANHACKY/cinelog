@@ -5,6 +5,7 @@ export const TMDB_API_BASE = "https://api.themoviedb.org/3";
 
 export const LIBRARY_PAGE_SIZE_MAX = 50;
 export const SEARCH_PAGE_MAX = 500;
+export const MAX_COLLECTION_FILTERS = 3;
 
 export const DIRECT_VALIDATION_MESSAGES = new Set([
   "Invalid watch_status",
