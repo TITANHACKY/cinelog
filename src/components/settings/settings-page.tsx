@@ -14,9 +14,6 @@ export function SettingsPage() {
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 py-6 sm:px-8 lg:py-10">
       <div className="mx-auto flex w-full max-w-[1720px] flex-col gap-6 sm:gap-8">
         <header className="space-y-2 border-b border-outline-alt/60 pb-6">
-          <p className="font-mono text-[11px] sm:text-xs font-semibold tracking-wider text-outline-muted uppercase">
-            SETTINGS &gt; DATA ENGINE &amp; PREFERENCES
-          </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
             <div>
               <h1 className="font-heading text-2xl font-semibold tracking-tight text-on-surface sm:text-4xl">

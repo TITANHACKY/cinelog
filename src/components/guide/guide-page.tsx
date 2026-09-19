@@ -238,9 +238,6 @@ export function GuidePage() {
       <div className="mx-auto flex w-full max-w-[1720px] flex-col gap-8 sm:gap-10">
         {/* Header */}
         <header className="space-y-2 border-b border-outline-alt/60 pb-6">
-          <p className="font-mono text-[11px] font-semibold tracking-wider text-outline-muted uppercase sm:text-xs">
-            GUIDE &gt; APP WALKTHROUGH
-          </p>
           <div>
             <h1 className="font-heading text-2xl font-semibold tracking-tight text-on-surface sm:text-4xl">
               CineLog Guide

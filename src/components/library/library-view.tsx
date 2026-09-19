@@ -153,7 +153,7 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
       >
         <header className="flex flex-col gap-4 sm:gap-5">
           <div>
-            <h1 className="font-heading text-2xl tracking-tight sm:text-4xl">
+            <h1 className="font-heading text-2xl font-semibold tracking-tight text-on-surface sm:text-4xl">
               My library
             </h1>
             <p className="mt-1 font-public-sans text-xs text-secondary sm:mt-2">
