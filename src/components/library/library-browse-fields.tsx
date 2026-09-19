@@ -34,6 +34,7 @@ type LibraryBrowseFieldsProps = {
   mediaType: LibraryMediaType;
   query: LibraryBrowseQuery;
   layout?: "inline" | "stack";
+  disabled?: boolean;
   onChange: (query: LibraryBrowseQuery) => void;
 };
 
@@ -106,6 +107,7 @@ export function LibraryBrowseFields({
   mediaType,
   query,
   layout = "inline",
+  disabled = false,
   onChange,
 }: LibraryBrowseFieldsProps) {
   const { genres } = useGenres();
@@ -281,8 +283,7 @@ export function LibraryBrowseFields({
     />
   );
 
-  if (stacked) {
-    return (
+  const content = stacked ? (
       <div className="flex flex-col gap-4">
         <FormField id="library-filter-field" label="Filter">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -298,10 +299,7 @@ export function LibraryBrowseFields({
           {groupControl}
         </FormField>
       </div>
-    );
-  }
-
-  return (
+    ) : (
     <>
       {filterFieldControl}
       {operatorControl}
@@ -309,5 +307,14 @@ export function LibraryBrowseFields({
       {sortControl}
       {groupControl}
     </>
+  );
+
+  return (
+    <div
+      aria-disabled={disabled}
+      className={disabled ? "pointer-events-none opacity-50" : undefined}
+    >
+      {content}
+    </div>
   );
 }

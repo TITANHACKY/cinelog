@@ -2,18 +2,28 @@ import { cn } from "@/lib/utils";
 
 type ToggleSwitchProps = {
   checked: boolean;
+  disabled?: boolean;
   onChange: () => void;
   title?: string;
 };
 
-export function ToggleSwitch({ checked, onChange, title }: ToggleSwitchProps) {
+export function ToggleSwitch({
+  checked,
+  disabled = false,
+  onChange,
+  title,
+}: ToggleSwitchProps) {
   return (
     <button
       aria-checked={checked}
       className={cn(
-        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+        "relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+        disabled
+          ? "cursor-not-allowed opacity-50"
+          : "cursor-pointer",
         checked ? "bg-brand-primary" : "bg-surface-container-high",
       )}
+      disabled={disabled}
       onClick={onChange}
       role="switch"
       title={title}

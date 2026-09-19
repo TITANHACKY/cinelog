@@ -1,33 +1,56 @@
 "use client";
 
-import { AlertBanner } from "@/components/ui/alert-banner";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { CollectionFormDialog } from "@/components/settings/collection-form-dialog";
-import { CollectionStreamCard } from "@/components/settings/collection-stream-card";
-import { useCollectionForm } from "@/hooks/settings/use-collection-form";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { CollectionListItem } from "@/components/settings/collection-list-item";
+import { CollectionListItemEditor } from "@/components/settings/collection-list-item-editor";
 import { useCustomCollections } from "@/hooks/settings/use-custom-collections";
-import { Layers, Loader2, Plus } from "lucide-react";
+import { Layers, Plus } from "lucide-react";
+import { useState } from "react";
 
 export function CustomCollectionsSection() {
   const {
     collections,
     isLoading,
-    errorMessage,
-    successMessage,
-    setErrorMessage,
-    handleToggleLibrary,
-    handleQuickSortChange,
     saveCollection,
+    deleteCollection,
+    reorderCollections,
+    patchCollection,
   } = useCustomCollections();
-  const form = useCollectionForm();
-  const activeCount = collections.filter((item) => item.showInLibrary).length;
+
+  const [expandedId, setExpandedId] = useState<number | "create" | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const activeCount = collections.filter(
+    (item) => item.showInLibrary || item.showInDashboard,
+  ).length;
+
+  function handleDragStart(index: number) {
+    setDragIndex(index);
+  }
+
+  function handleDrop(targetIndex: number) {
+    if (dragIndex === null || dragIndex === targetIndex) {
+      setDragIndex(null);
+      return;
+    }
+
+    const next = [...collections];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(targetIndex, 0, moved);
+    setDragIndex(null);
+    void reorderCollections(next.map((col) => col.id));
+  }
 
   return (
     <section
       aria-labelledby="custom-collections-heading"
-      className="w-full space-y-6"
+      className="relative w-full space-y-6"
     >
+      <div
+        aria-hidden={isLoading}
+        className={`space-y-6 ${isLoading ? "blur-sm" : ""}`}
+      >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
@@ -35,94 +58,92 @@ export function CustomCollectionsSection() {
               className="font-heading text-xl font-semibold tracking-tight text-on-surface sm:text-2xl"
               id="custom-collections-heading"
             >
-              Custom Stream Collections
+              Custom Collections
             </h2>
             <span className="inline-flex items-center rounded-md border border-brand-tertiary-accent/30 bg-brand-tertiary-accent/10 px-2.5 py-0.5 font-public-sans text-xs font-semibold text-brand-tertiary-accent">
               {activeCount} Active
             </span>
           </div>
           <p className="mt-1 font-public-sans text-xs text-secondary">
-            Configure horizontal carousels, nested query filters, and sort
-            priorities for your live library.
+            Drag to reorder. Each collection supports one filter, sort, and
+            optional group.
           </p>
         </div>
         <Button
-          variant="primaryFilled"
           className="inline-flex h-9 items-center gap-2 rounded-lg px-4 font-public-sans text-xs font-semibold"
-          onClick={form.openCreateDialog}
+          onClick={() =>
+            setExpandedId((prev) => (prev === "create" ? null : "create"))
+          }
           type="button"
+          variant="primaryFilled"
         >
           <Plus className="h-4 w-4" />
-          Add New Carousel Stream
+          Add Collection
         </Button>
       </div>
 
-      {successMessage ? (
-        <AlertBanner message={successMessage} variant="success" />
-      ) : null}
-      {errorMessage ? (
-        <AlertBanner message={errorMessage} variant="error" />
+      {expandedId === "create" ? (
+        <div className="rounded-xl border border-outline-alt/60 bg-surface-container-low p-4">
+          <CollectionListItemEditor
+            onCancel={() => setExpandedId(null)}
+            onSave={async (payload) => {
+              const saved = await saveCollection(payload);
+              if (saved) setExpandedId(null);
+              return saved;
+            }}
+          />
+        </div>
       ) : null}
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-secondary">
-          <Loader2 className="h-6 w-6 animate-spin text-brand-primary" />
-        </div>
-      ) : collections.length === 0 ? (
+      {!isLoading && collections.length === 0 ? (
         <EmptyState
-          action={
-            <Button
-              variant="primaryFilled"
-              className="mt-1 rounded-lg px-4 py-2 font-public-sans text-xs font-semibold"
-              onClick={form.openCreateDialog}
-              type="button"
-            >
-              Create Your First Stream
-            </Button>
-          }
-          description="Create custom filter groups based on genre, release year, language, certification, and origin country to stream dedicated carousels in your library."
+          description="Create a collection with a filter, sort, and optional group to use as a library preset or dashboard carousel."
           icon={<Layers className="h-6 w-6" />}
-          title="No stream collections configured"
+          title="No collections configured"
         />
-      ) : (
-        <div className="space-y-3">
+      ) : !isLoading ? (
+        <ul className="space-y-2">
           {collections.map((collection, index) => (
-            <CollectionStreamCard
+            <CollectionListItem
               collection={collection}
               index={index}
+              isDragging={dragIndex === index}
+              isExpanded={expandedId === collection.id}
               key={collection.id}
-              onAddClause={() => form.openEditDialog(collection, true)}
-              onEdit={() => form.openEditDialog(collection, false)}
-              onSortChange={(sortValue) =>
-                handleQuickSortChange(collection, sortValue)
+              onDelete={() => void deleteCollection(collection.id)}
+              onDragEnd={() => setDragIndex(null)}
+              onDragOver={(event) => event.preventDefault()}
+              onDragStart={() => handleDragStart(index)}
+              onDrop={() => handleDrop(index)}
+              onSave={async (payload) => {
+                const saved = await saveCollection(payload);
+                if (saved) setExpandedId(null);
+                return saved;
+              }}
+              onToggleDashboard={() =>
+                void patchCollection(collection.id, {
+                  showInDashboard: !collection.showInDashboard,
+                  groupBy: !collection.showInDashboard
+                    ? null
+                    : collection.groupBy,
+                })
               }
-              onToggleLibrary={() => handleToggleLibrary(collection)}
+              onToggleExpand={() =>
+                setExpandedId((prev) =>
+                  prev === collection.id ? null : collection.id,
+                )
+              }
+              onToggleLibrary={() =>
+                void patchCollection(collection.id, {
+                  showInLibrary: !collection.showInLibrary,
+                })
+              }
             />
           ))}
-        </div>
-      )}
-
-      <CollectionFormDialog
-        formFilters={form.formFilters}
-        formMediaType={form.formMediaType}
-        formName={form.formName}
-        formShowInLibrary={form.formShowInLibrary}
-        formSort={form.formSort}
-        isEditing={Boolean(form.editingCollection)}
-        isSubmitting={form.isSubmitting}
-        onAddClause={form.handleAddClause}
-        onMediaTypeChange={form.setFormMediaType}
-        onNameChange={form.setFormName}
-        onOpenChange={form.setDialogOpen}
-        onRemoveClause={form.handleRemoveClause}
-        onShowInLibraryChange={form.setFormShowInLibrary}
-        onSortChange={form.setFormSort}
-        onSubmit={(event) =>
-          form.handleSaveCollection(event, saveCollection, setErrorMessage)
-        }
-        onUpdateClause={form.handleUpdateClause}
-        open={form.dialogOpen}
-      />
+        </ul>
+      ) : null}
+      </div>
+      {isLoading ? <LoadingOverlay /> : null}
     </section>
   );
 }

@@ -2,11 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http/client";
-import type {
-  CustomCollectionWithFilters,
-  LibraryMovie,
-  LibrarySeries,
-} from "@/lib/types";
 import type { DashboardData } from "@/services/dashboard";
 
 export function useDashboard() {
@@ -70,24 +65,16 @@ export function useDashboard() {
     };
   }, []);
 
-  const continueWatchingMovies: LibraryMovie[] = data?.continueWatching?.movies ?? [];
-  const continueWatchingSeries: LibrarySeries[] = data?.continueWatching?.series ?? [];
-  const collections: CustomCollectionWithFilters[] = data?.collections ?? [];
-  const libraryMovies: LibraryMovie[] = data?.library?.movies ?? [];
-  const librarySeries: LibrarySeries[] = data?.library?.series ?? [];
-  const movieCount: number = data?.counts?.movies ?? 0;
-  const seriesCount: number = data?.counts?.series ?? 0;
+  const collections = data?.collections ?? [];
+  const movieCount = data?.counts?.movies ?? 0;
+  const seriesCount = data?.counts?.series ?? 0;
 
   return {
     isLoading,
     errorMessage,
     movieCount,
     seriesCount,
-    continueWatchingMovies,
-    continueWatchingSeries,
     collections,
-    libraryMovies,
-    librarySeries,
     refetch: loadData,
   };
 }

@@ -4,6 +4,7 @@ import { ok, toErrorResponse } from "@/lib/http/response";
 import type { RouteContext } from "@/lib/types";
 import { updateCollectionSchema } from "@/lib/validations/collections";
 import {
+  deleteUserCollection,
   getUserCollection,
   updateUserCollection,
 } from "@/services/collections";
@@ -49,3 +50,22 @@ export async function PUT(request: Request, { params }: RouteContext) {
   }
 }
 
+export async function DELETE(_request: Request, { params }: RouteContext) {
+  try {
+    const { id } = await params;
+    const collectionId = parsePositiveIntId(id, "collection");
+    const session = await requireSession();
+
+    const collections = await deleteUserCollection(
+      collectionId,
+      session.userId,
+    );
+    return ok({ collections });
+  } catch (error) {
+    return toErrorResponse(
+      error,
+      "Failed to delete collection",
+      "Failed to delete collection",
+    );
+  }
+}
