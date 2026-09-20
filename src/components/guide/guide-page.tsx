@@ -3,158 +3,204 @@
 import { useState } from "react";
 import Image from "next/image";
 import {
-  BookOpen,
   ChevronDown,
   Download,
   Film,
   LayoutDashboard,
   Library,
   ListFilter,
+  Maximize2,
   Search,
   Settings,
   Star,
+  X,
+  type LucideIcon,
 } from "lucide-react";
 
-/* ── Preview data ── */
-const PREVIEWS = [
-  {
-    src: "/mockup_dashboard.jpg",
-    alt: "CineLog Dashboard — personalized welcome, stats, and continue watching",
-    label: "Dashboard",
-    description:
-      "Your home base. See a personalized welcome, quick stats on your movie and series count, and pick up where you left off with Continue Watching.",
-  },
-  {
-    src: "/mockup_library.jpg",
-    alt: "CineLog Library — filterable grid of your saved movies and series",
-    label: "Library",
-    description:
-      "Your entire watchlist in one place. Filter by movies or series, search by title, apply advanced filters, or group by status, genre, or year.",
-  },
-  {
-    src: "/mockup_detail.jpg",
-    alt: "CineLog Movie Detail — hero header with poster, metadata, cast and crew",
-    label: "Title Detail",
-    description:
-      "Dive deep into any title. See the cinematic hero header, genre pills, runtime, rating, and full cast & crew. Add to your watchlist or log your impression.",
-  },
-];
+/* ── Types ── */
+export interface GuideScreenshot {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
+export interface FeatureGuide {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  tips: string[];
+  screenshot?: GuideScreenshot;
+  screenshots?: GuideScreenshot[];
+}
 
 /* ── Feature guide data ── */
-const FEATURE_GUIDES = [
+const FEATURE_GUIDES: FeatureGuide[] = [
   {
     icon: LayoutDashboard,
     title: "Dashboard",
     description:
-      "The Dashboard is your personalized home. It greets you by name, shows your library stats at a glance, and surfaces titles you're currently watching so you can jump right back in.",
+      "The Dashboard is your personalized command center. It welcomes you by name, displays real-time counters of your saved movies and series, and dynamically renders interactive collection carousels directly onto your home screen so you can jump straight into your favorite curated streams.",
     tips: [
-      "Your movie and series counts update in real-time as you add titles",
-      "The \"Continue Watching\" section shows titles with in-progress status",
+      "Stats counters for Movies and Series update automatically whenever titles are added, edited, or removed",
+      "Enable 'Show in dashboard' on any custom Smart Collection in Settings to surface it as an interactive carousel shelf",
+      "Interact directly with carousel cards: tap to view details, toggle watch status, or record quick reactions",
+      "When no collection carousels are configured, use the home screen prompt to set up your first smart collection pipeline",
     ],
+    screenshot: {
+      src: "/mocks/mock-dashboard.png",
+      alt: "CineLog Dashboard — personalized welcome, library counters, and custom collection carousels",
+      caption:
+        "Dashboard home showing personalized welcome, real-time library stats counters, and custom collection stream carousels.",
+    },
   },
   {
     icon: Library,
     title: "My Library",
     description:
-      "The Library is the heart of CineLog. Every movie and series you save lives here. Switch between Movies and Series tabs, search within your collection, and use advanced filters to find exactly what you need.",
+      "The Library houses your entire personal cinema catalog. Seamlessly switch between dedicated Movies and Series tabs, execute real-time title searches, build multi-criteria filter rules, sort with precision, and group titles into clear visual clusters.",
     tips: [
-      "Use the Group By control to organize by genre, year, or watch status",
-      "Apply multiple filters for precise browsing (e.g. 'Sci-Fi' + 'Watched')",
-      "Scroll to load more — the library paginates automatically",
+      "Switch between Movies and TV Series tabs to view isolated collections with live item count badges",
+      "Filter your collection across multiple dimensions: Origin Country, Genre, Release Year, Watch Status, and Rating with flexible operators (Equals, Contains, Greater Than)",
+      "Organize your titles with dynamic sorting by Rating (highest/lowest), Release Date, Date Added, or Alphabetical title",
+      "Group titles into collapsible visual categories by Genre, Release Decade/Year, or Watch Status",
+      "Switch from manual browsing to any active Smart Collection view using the Collection dropdown",
+      "Each poster card features release year, TMDB rating, language/country, and 1-click status & reaction toggles in the card footer",
     ],
+    screenshot: {
+      src: "/mocks/mock-library.png",
+      alt: "CineLog Library — filterable grid, sorting, grouping, and card status actions",
+      caption:
+        "My Library view featuring media tabs, live search, multi-condition filters, sorting, grouping, and interactive movie cards.",
+    },
   },
   {
     icon: Search,
     title: "Search & Discover",
     description:
-      "Press the floating search button or use the keyboard shortcut to open the search dialog. Search TMDB's catalog of 800,000+ titles by name, then filter by genre, year, or media type.",
+      "Explore TMDB's catalog of 800,000+ movies and TV series with the global search dialog. Access it instantly via keyboard shortcut or the floating action button, filter by year and language, and add titles directly to your watchlist with a single click.",
     tips: [
-      "Search results include both movies and TV series",
-      "Click any result to view full details and add it to your library",
-      "Use the filter dropdown to narrow results by genre or year",
+      "Open search from anywhere with the ⌘K (Mac) or Ctrl+K (Windows/Linux) shortcut, or click the floating search button in the bottom right",
+      "Switch between Movies and Series tabs to narrow your search query scope",
+      "Filter search results by Release Year and Spoken Language dropdowns",
+      "Result cards showcase high-res posters, release year, star ratings, primary genre tags, audio language, and plot synopses",
+      "Add titles directly to your watchlist or mark them as completed with one click without leaving the search dialog",
+      "Page through results smoothly using previous/next pagination controls",
     ],
+    screenshot: {
+      src: "/mocks/mock-search.png",
+      alt: "CineLog Search & Discover dialog — real-time TMDB query, media filters, and quick-add actions",
+      caption:
+        "Search dialog with instant debounced TMDB catalog search, media type filters, year and language selectors, and 1-click watchlist toggles.",
+    },
   },
   {
     icon: Film,
     title: "Title Details",
     description:
-      "Each title page features a cinematic hero header with the backdrop image, poster, metadata, and genre pills. Below you'll find full specifications (director, budget, revenue, languages) and the cast & crew grid.",
+      "Every title features an immersive cinematic presentation with a full-bleed backdrop hero, high-resolution poster artwork, metadata tags, and deep production specifications. Take immediate actions, log impressions, browse cast & crew, and discover related titles.",
     tips: [
-      "Use the action bar to add/remove from watchlist, set watch status, and log your impression",
-      "Share titles directly from the share button",
-      "Tap genre pills to discover similar titles",
+      "Hero bar displays media type, release year, runtime, age certification (e.g. UA), release status, and official tagline",
+      "Use the action bar to toggle watchlist status, share title links, update watch progress (Plan to Watch, In Progress, Completed, Dropped), or log reactions",
+      "Reference external TMDB ID and IMDB ID links for verified cross-platform database info",
+      "Detailed specifications include age rating, runtime, audio tracks, narrative synopsis, original creator, and lead studio",
+      "Explore the Cast & Key Crew gallery with high-res headshots, actor names, and character roles",
+      "Click any genre pill to quickly discover similar cinema in your library",
     ],
+    screenshot: {
+      src: "/mocks/mock-title-details.png",
+      alt: "CineLog Title Detail — backdrop hero, specifications, reactions, action bar, and cast grid",
+      caption:
+        "Title detail page featuring backdrop hero, comprehensive metadata, action bar (watchlist, status, share, reactions), specifications, and cast & crew gallery.",
+    },
   },
   {
     icon: ListFilter,
     title: "Smart Collections",
     description:
-      "Smart Collections are filter-driven, auto-updating lists. Define rules based on genre, watch status, rating, or specific criteria, and CineLog keeps the collection current without manual curation.",
+      "Smart Collections are dynamic, rule-based playlists that automatically update as your library evolves. Construct multi-clause filter pipelines with AND logic, assign custom sorting and grouping, and toggle their appearance on your library dropdown or dashboard carousels.",
     tips: [
-      "Create collections from Settings → Smart Collections",
-      "Each collection can have multiple filter clauses",
-      "Collections update automatically as your library changes",
+      "Manage and create collections under System Preferences → Smart Collections tab",
+      "Drag and drop collections using the handle (⋮⋮) to reorder how they appear throughout CineLog",
+      "Build compound filter pipelines with up to 3 simultaneous rules (AND logic) across Genre, Origin Country, Release Year, Vote Average, and Watch Status",
+      "Select custom sort orders (e.g. Date Added Newest, Rating Highest) and grouping categories (e.g. Group by Watch Status)",
+      "Toggle 'Show in library' to access the collection from the library dropdown",
+      "Toggle 'Show in dashboard' to display the collection as an automated horizontal stream carousel on your home page",
+      "Pause or activate individual collections anytime using the toggle switch without deleting your rules",
     ],
+    screenshot: {
+      src: "/mocks/mock-smart-collections.png",
+      alt: "CineLog Smart Collections Builder — rule pipelines, filters, sort, group, and display toggles",
+      caption:
+        "Smart Collections builder showing multi-condition filter pipelines (AND logic), sorting, grouping, drag-and-drop reordering, and display toggles for library & dashboard.",
+    },
   },
   {
     icon: Star,
     title: "Impressions & Reactions",
     description:
-      "Log how you feel about every title. Use the reaction buttons (like, love, dislike) on any title's detail page. Your impressions are saved and visible in your library cards.",
+      "Express and track your sentiment for every movie and show. Choose between three reaction levels — Dislike, Like, and Love — available directly from title detail hero headers or straight from poster card footers in the library grid.",
     tips: [
-      "Impressions are shown as colored indicators on library cards",
-      "You can change your impression at any time",
-      "Filter your library by impression to find your favorites",
+      "Three sentiment tiers: Dislike (thumbs down), Like (thumbs up), and Love (heart)",
+      "Log reactions instantly from the library grid by hovering or clicking the reaction button on any card footer without opening the title page",
+      "Log or update reactions on any title's detail page via the dedicated action bar pill",
+      "Active reactions are visually highlighted with color-coded badges on cards",
+      "Create Smart Collections targeting titles you 'Love' to generate an auto-updating favorite films shelf",
+      "You can modify or clear your reaction at any time",
+    ],
+    screenshots: [
+      {
+        src: "/mocks/mock-reaction-2.png",
+        alt: "CineLog Reaction Popover — contextual sentiment picker on library poster cards",
+        caption:
+          "Contextual reaction popover directly on library poster cards for instant sentiment logging without leaving the grid.",
+      },
+      {
+        src: "/mocks/mock-impressions-reactions.png",
+        alt: "CineLog Action Bar Reactions — sentiment pill on title detail pages",
+        caption:
+          "Action bar reaction sentiment pill (Dislike, Like, Love) on title detail pages.",
+      },
     ],
   },
   {
     icon: Download,
     title: "Install as PWA",
     description:
-      "CineLog is a Progressive Web App. Install it from your browser for an app-like experience — it works on iOS, Android, and desktop. Look for the install prompt or use your browser's 'Add to Home Screen' option.",
+      "CineLog is built as a Progressive Web App (PWA), providing a fast, distraction-free native application experience on macOS, Windows, Linux, iOS, and Android without requiring an app store download.",
     tips: [
-      "On iOS Safari, tap Share → Add to Home Screen",
-      "On Android Chrome, tap the three-dot menu → Install app",
-      "On desktop Chrome/Edge, look for the install icon in the address bar",
+      "Look for the floating 'Install CineLog App' prompt banner and click 'Install' for one-click setup",
+      "Desktop browsers (Chrome, Edge, Brave): Click the install icon in the URL address bar or select Install from the browser menu",
+      "iOS Safari: Tap the Share button, select 'Add to Home Screen', and tap 'Add'",
+      "Android Chrome: Tap the three-dot menu (⋮) and select 'Install app' or 'Add to Home Screen'",
+      "Enjoy a dedicated standalone window with no browser tabs, search bars, or browser clutter",
+      "Offline caching via background service worker ensures ultra-fast page loads and smooth navigation",
     ],
+    screenshot: {
+      src: "/mocks/mock-install-pwa.png",
+      alt: "CineLog PWA Installation banner — one-click app installation prompt",
+      caption:
+        "Progressive Web App installation prompt for desktop and mobile home screen installation.",
+    },
   },
   {
     icon: Settings,
-    title: "Settings",
+    title: "Settings & Preferences",
     description:
-      "Configure your CineLog experience. Manage your smart collections with advanced filter pipelines, update your display name, email, and password in User Profile & Credentials.",
+      "Configure your CineLog environment, manage account identity, update security credentials, and organize custom collection pipelines through a unified System Preferences interface.",
     tips: [
-      "Use the tabs to switch between Smart Collections and User Profile",
-      "Collection filters support nested AND/OR logic",
+      "Quickly toggle between the 'Smart Collections' tab and 'User Profile & Credentials' tab",
+      "Update your unique username and account notification email address",
+      "Set an optional Display Name to personalize your Dashboard greeting and profile header",
+      "Change your account password securely: enter your current password, new password, and confirmation",
+      "Passwords enforce secure requirements: 6–20 characters with uppercase, lowercase, numbers, and allowed special characters (@ # & ! _)",
+      "Changes take effect immediately across all CineLog surfaces upon saving",
     ],
-  },
-];
-
-/* ── Navigation overview ── */
-const NAV_ITEMS = [
-  {
-    icon: LayoutDashboard,
-    label: "Dashboard",
-    path: "/",
-    description: "Home screen with welcome, stats, and continue watching",
-  },
-  {
-    icon: Library,
-    label: "My Library",
-    path: "/library",
-    description: "Your saved movies & series with filters and grouping",
-  },
-  {
-    icon: BookOpen,
-    label: "Guide",
-    path: "/guide",
-    description: "This page — app walkthrough and feature tutorials",
-  },
-  {
-    icon: Settings,
-    label: "Settings",
-    path: "/settings",
-    description: "Smart collections, profile, and preferences",
+    screenshot: {
+      src: "/mocks/mock-settings.png",
+      alt: "CineLog Settings — User Profile & Credentials management",
+      caption:
+        "User Profile & Credentials configuration: update username, email, display name, and secure password updates.",
+    },
   },
 ];
 
@@ -164,13 +210,20 @@ function ExpandableGuide({
   title,
   description,
   tips,
+  screenshot,
+  screenshots,
+  onImageClick,
 }: {
-  icon: typeof LayoutDashboard;
+  icon: LucideIcon;
   title: string;
   description: string;
   tips: string[];
+  screenshot?: GuideScreenshot;
+  screenshots?: GuideScreenshot[];
+  onImageClick?: (screenshot: GuideScreenshot) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const items = screenshots ?? (screenshot ? [screenshot] : []);
 
   return (
     <div className="rounded-xl border border-outline-variant bg-surface-container-low transition-colors hover:bg-surface-container">
@@ -183,7 +236,7 @@ function ExpandableGuide({
         <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-primary-container/15 text-brand-primary">
           <Icon className="size-4.5" strokeWidth={1.8} />
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center">
           <span className="font-public-sans text-sm font-semibold text-on-surface sm:text-base">
             {title}
           </span>
@@ -200,12 +253,62 @@ function ExpandableGuide({
         }`}
       >
         <div className="overflow-hidden">
-          <div className="space-y-3 px-4 pb-4 sm:px-5 sm:pb-5">
+          <div className="space-y-4 px-4 pb-4 sm:px-5 sm:pb-5">
             <p className="font-public-sans text-sm leading-relaxed text-secondary">
               {description}
             </p>
+
+            {/* Screenshots section */}
+            {items.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <p className="font-public-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-outline-muted">
+                  Screenshots & Preview
+                </p>
+                <div
+                  className={`grid gap-3 ${
+                    items.length > 1 ? "sm:grid-cols-2" : "grid-cols-1"
+                  }`}
+                >
+                  {items.map((img, idx) => (
+                    <figure
+                      key={img.src + idx}
+                      className="group relative flex flex-col overflow-hidden rounded-xl border border-outline-variant bg-surface-container shadow-sm"
+                    >
+                      <button
+                        type="button"
+                        className="relative aspect-video w-full cursor-pointer bg-surface-container-lowest text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+                        onClick={() => onImageClick?.(img)}
+                        aria-label={`Enlarge screenshot: ${img.alt}`}
+                      >
+                        <Image
+                          src={img.src}
+                          alt={img.alt}
+                          fill
+                          className="object-contain p-2 sm:p-3 transition-transform duration-300 group-hover:scale-[1.01]"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/30 group-hover:opacity-100">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-container-highest/90 px-3 py-1.5 font-public-sans text-xs font-medium text-on-surface shadow-md backdrop-blur-sm">
+                            <Maximize2 className="size-3.5" />
+                            Click to expand
+                          </span>
+                        </div>
+                      </button>
+                      {img.caption && (
+                        <figcaption className="mt-auto border-t border-outline-variant/60 bg-surface-container-low/70 px-3.5 py-2">
+                          <p className="font-public-sans text-xs text-secondary">
+                            {img.caption}
+                          </p>
+                        </figcaption>
+                      )}
+                    </figure>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {tips.length > 0 && (
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 pt-1">
                 <p className="font-public-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-outline-muted">
                   Tips
                 </p>
@@ -231,11 +334,11 @@ function ExpandableGuide({
 
 /* ── Main Guide Page ── */
 export function GuidePage() {
-  const [activePreview, setActivePreview] = useState(0);
+  const [activeModalImage, setActiveModalImage] = useState<GuideScreenshot | null>(null);
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 py-6 sm:px-8 lg:py-10">
-      <div className="mx-auto flex w-full max-w-[1720px] flex-col gap-8 sm:gap-10">
+      <div className="mx-auto flex w-full max-w-[1720px] flex-col gap-6 sm:gap-8">
         {/* Header */}
         <header className="space-y-2 border-b border-outline-alt/60 pb-6">
           <div>
@@ -243,108 +346,19 @@ export function GuidePage() {
               CineLog Guide
             </h1>
             <p className="mt-1 font-public-sans text-xs text-secondary sm:text-sm">
-              Explore features, learn what each section does, and get the most
-              out of your cinema tracking experience.
+              Explore features, section walkthroughs, and screenshot previews to get the most out of CineLog.
             </p>
           </div>
         </header>
 
-        {/* ── App Preview Section ── */}
-        <section className="space-y-5">
-          <div>
-            <h2 className="font-heading text-xl font-semibold tracking-tight text-on-surface sm:text-2xl">
-              App Preview
-            </h2>
-            <p className="mt-1 font-public-sans text-xs text-secondary sm:text-sm">
-              Visual walkthrough of CineLog&apos;s main screens.
-            </p>
-          </div>
-
-          {/* Preview tabs */}
-          <div className="flex flex-wrap gap-2">
-            {PREVIEWS.map((preview, i) => (
-              <button
-                key={preview.label}
-                type="button"
-                onClick={() => setActivePreview(i)}
-                className={`rounded-lg px-3.5 py-2 font-public-sans text-xs font-medium transition-colors sm:text-sm ${
-                  activePreview === i
-                    ? "bg-brand-primary-container/20 text-brand-primary border border-brand-primary/30"
-                    : "text-secondary hover:bg-surface-container hover:text-on-surface border border-transparent"
-                }`}
-              >
-                {preview.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Preview image + description */}
-          <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-low shadow-lg sm:rounded-2xl">
-            <div className="relative aspect-video w-full">
-              <Image
-                src={PREVIEWS[activePreview].src}
-                alt={PREVIEWS[activePreview].alt}
-                fill
-                className="object-cover object-top transition-opacity duration-300"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1152px"
-              />
-            </div>
-            <div className="p-4 sm:p-5">
-              <h3 className="font-heading text-base font-semibold text-on-surface sm:text-lg">
-                {PREVIEWS[activePreview].label}
-              </h3>
-              <p className="mt-1 font-public-sans text-xs leading-relaxed text-secondary sm:text-sm">
-                {PREVIEWS[activePreview].description}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Navigation Overview ── */}
-        <section className="space-y-5">
-          <div>
-            <h2 className="font-heading text-xl font-semibold tracking-tight text-on-surface sm:text-2xl">
-              Where is what?
-            </h2>
-            <p className="mt-1 font-public-sans text-xs text-secondary sm:text-sm">
-              Quick map of CineLog&apos;s main navigation.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {NAV_ITEMS.map(({ icon: Icon, label, path, description }) => (
-              <div
-                key={path}
-                className="flex items-start gap-3 rounded-xl border border-outline-variant bg-surface-container-low p-4"
-              >
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-primary-container/15 text-brand-primary">
-                  <Icon className="size-4.5" strokeWidth={1.8} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-public-sans text-sm font-semibold text-on-surface">
-                    {label}
-                  </p>
-                  <p className="mt-0.5 font-public-sans text-xs text-secondary">
-                    {description}
-                  </p>
-                  <p className="mt-1 font-mono text-[10px] text-outline-muted">
-                    {path}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Feature Tutorials ── */}
-        <section className="space-y-5">
+        {/* Feature Guides Section */}
+        <section className="space-y-4">
           <div>
             <h2 className="font-heading text-xl font-semibold tracking-tight text-on-surface sm:text-2xl">
               Feature Guide
             </h2>
             <p className="mt-1 font-public-sans text-xs text-secondary sm:text-sm">
-              Learn about each feature — expand any section for details and
-              tips.
+              Learn about each feature — expand any section for details, screenshot previews, and tips.
             </p>
           </div>
 
@@ -356,11 +370,59 @@ export function GuidePage() {
                 title={guide.title}
                 description={guide.description}
                 tips={guide.tips}
+                screenshot={guide.screenshot}
+                screenshots={guide.screenshots}
+                onImageClick={(img) => setActiveModalImage(img)}
               />
             ))}
           </div>
         </section>
       </div>
+
+      {/* Screenshot Lightbox Modal */}
+      {activeModalImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm sm:p-6"
+          onClick={() => setActiveModalImage(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="relative flex max-h-[90dvh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-outline-variant bg-surface-container-low shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-outline-variant/60 px-4 py-3 sm:px-6">
+              <span className="font-public-sans text-xs font-medium text-secondary sm:text-sm">
+                {activeModalImage.alt}
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveModalImage(null)}
+                className="rounded-lg p-1 text-secondary transition-colors hover:bg-surface-container-high hover:text-on-surface"
+                aria-label="Close image preview"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="relative aspect-video w-full flex-1 bg-surface-container-lowest">
+              <Image
+                src={activeModalImage.src}
+                alt={activeModalImage.alt}
+                fill
+                className="object-contain"
+                sizes="(max-width: 1200px) 100vw, 1200px"
+              />
+            </div>
+            {activeModalImage.caption && (
+              <div className="border-t border-outline-variant/60 bg-surface-container px-4 py-3 sm:px-6">
+                <p className="font-public-sans text-xs text-secondary sm:text-sm">
+                  {activeModalImage.caption}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -17,7 +17,7 @@ export function useSearchShortcut(onTrigger: () => void) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const isShortcut =
-        event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey);
+        event.key?.toLowerCase() === "k" && (event.metaKey || event.ctrlKey);
 
       if (!isShortcut) {
         return;
