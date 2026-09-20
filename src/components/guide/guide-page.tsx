@@ -6,7 +6,6 @@ import {
   ChevronDown,
   Download,
   Film,
-  ImageIcon,
   LayoutDashboard,
   Library,
   ListFilter,
@@ -40,135 +39,168 @@ const FEATURE_GUIDES: FeatureGuide[] = [
     icon: LayoutDashboard,
     title: "Dashboard",
     description:
-      "The Dashboard is your personalized home. It greets you by name, shows your library stats at a glance, and surfaces titles you're currently watching so you can jump right back in.",
+      "The Dashboard is your personalized command center. It welcomes you by name, displays real-time counters of your saved movies and series, and dynamically renders interactive collection carousels directly onto your home screen so you can jump straight into your favorite curated streams.",
     tips: [
-      "Your movie and series counts update in real-time as you add titles",
-      "The \"Continue Watching\" section shows titles with in-progress status",
+      "Stats counters for Movies and Series update automatically whenever titles are added, edited, or removed",
+      "Enable 'Show in dashboard' on any custom Smart Collection in Settings to surface it as an interactive carousel shelf",
+      "Interact directly with carousel cards: tap to view details, toggle watch status, or record quick reactions",
+      "When no collection carousels are configured, use the home screen prompt to set up your first smart collection pipeline",
     ],
     screenshot: {
-      src: "/mockup_dashboard.jpg",
-      alt: "CineLog Dashboard — personalized welcome, stats, and continue watching",
+      src: "/mocks/mock-dashboard.png",
+      alt: "CineLog Dashboard — personalized welcome, library counters, and custom collection carousels",
       caption:
-        "Dashboard home showing your cinema tracking metrics and continue watching carousel.",
+        "Dashboard home showing personalized welcome, real-time library stats counters, and custom collection stream carousels.",
     },
   },
   {
     icon: Library,
     title: "My Library",
     description:
-      "The Library is the heart of CineLog. Every movie and series you save lives here. Switch between Movies and Series tabs, search within your collection, and use advanced filters to find exactly what you need.",
+      "The Library houses your entire personal cinema catalog. Seamlessly switch between dedicated Movies and Series tabs, execute real-time title searches, build multi-criteria filter rules, sort with precision, and group titles into clear visual clusters.",
     tips: [
-      "Use the Group By control to organize by genre, year, or watch status",
-      "Apply multiple filters for precise browsing (e.g. 'Sci-Fi' + 'Watched')",
-      "Scroll to load more — the library paginates automatically",
+      "Switch between Movies and TV Series tabs to view isolated collections with live item count badges",
+      "Filter your collection across multiple dimensions: Origin Country, Genre, Release Year, Watch Status, and Rating with flexible operators (Equals, Contains, Greater Than)",
+      "Organize your titles with dynamic sorting by Rating (highest/lowest), Release Date, Date Added, or Alphabetical title",
+      "Group titles into collapsible visual categories by Genre, Release Decade/Year, or Watch Status",
+      "Switch from manual browsing to any active Smart Collection view using the Collection dropdown",
+      "Each poster card features release year, TMDB rating, language/country, and 1-click status & reaction toggles in the card footer",
     ],
     screenshot: {
-      src: "/mockup_library.jpg",
-      alt: "CineLog Library — filterable grid of your saved movies and series",
+      src: "/mocks/mock-library.png",
+      alt: "CineLog Library — filterable grid, sorting, grouping, and card status actions",
       caption:
-        "Watchlist with filterable tabs, search by title, and multi-criteria grouping.",
+        "My Library view featuring media tabs, live search, multi-condition filters, sorting, grouping, and interactive movie cards.",
     },
   },
   {
     icon: Search,
     title: "Search & Discover",
     description:
-      "Press the floating search button or use the keyboard shortcut to open the search dialog. Search TMDB's catalog of 800,000+ titles by name, then filter by genre, year, or media type.",
+      "Explore TMDB's catalog of 800,000+ movies and TV series with the global search dialog. Access it instantly via keyboard shortcut or the floating action button, filter by year and language, and add titles directly to your watchlist with a single click.",
     tips: [
-      "Search results include both movies and TV series",
-      "Click any result to view full details and add it to your library",
-      "Use the filter dropdown to narrow results by genre or year",
+      "Open search from anywhere with the ⌘K (Mac) or Ctrl+K (Windows/Linux) shortcut, or click the floating search button in the bottom right",
+      "Switch between Movies and Series tabs to narrow your search query scope",
+      "Filter search results by Release Year and Spoken Language dropdowns",
+      "Result cards showcase high-res posters, release year, star ratings, primary genre tags, audio language, and plot synopses",
+      "Add titles directly to your watchlist or mark them as completed with one click without leaving the search dialog",
+      "Page through results smoothly using previous/next pagination controls",
     ],
-    // Provision for screenshot sample:
-    // screenshot: {
-    //   src: "/mockup_search.jpg",
-    //   alt: "CineLog Search & Discover dialog",
-    //   caption: "Search dialog with live suggestions and TMDB integration.",
-    // },
+    screenshot: {
+      src: "/mocks/mock-search.png",
+      alt: "CineLog Search & Discover dialog — real-time TMDB query, media filters, and quick-add actions",
+      caption:
+        "Search dialog with instant debounced TMDB catalog search, media type filters, year and language selectors, and 1-click watchlist toggles.",
+    },
   },
   {
     icon: Film,
     title: "Title Details",
     description:
-      "Each title page features a cinematic hero header with the backdrop image, poster, metadata, and genre pills. Below you'll find full specifications (director, budget, revenue, languages) and the cast & crew grid.",
+      "Every title features an immersive cinematic presentation with a full-bleed backdrop hero, high-resolution poster artwork, metadata tags, and deep production specifications. Take immediate actions, log impressions, browse cast & crew, and discover related titles.",
     tips: [
-      "Use the action bar to add/remove from watchlist, set watch status, and log your impression",
-      "Share titles directly from the share button",
-      "Tap genre pills to discover similar titles",
+      "Hero bar displays media type, release year, runtime, age certification (e.g. UA), release status, and official tagline",
+      "Use the action bar to toggle watchlist status, share title links, update watch progress (Plan to Watch, In Progress, Completed, Dropped), or log reactions",
+      "Reference external TMDB ID and IMDB ID links for verified cross-platform database info",
+      "Detailed specifications include age rating, runtime, audio tracks, narrative synopsis, original creator, and lead studio",
+      "Explore the Cast & Key Crew gallery with high-res headshots, actor names, and character roles",
+      "Click any genre pill to quickly discover similar cinema in your library",
     ],
     screenshot: {
-      src: "/mockup_detail.jpg",
-      alt: "CineLog Movie Detail — hero header with poster, metadata, cast and crew",
+      src: "/mocks/mock-title-details.png",
+      alt: "CineLog Title Detail — backdrop hero, specifications, reactions, action bar, and cast grid",
       caption:
-        "Title detail page featuring backdrop hero, specifications, reactions, and cast grid.",
+        "Title detail page featuring backdrop hero, comprehensive metadata, action bar (watchlist, status, share, reactions), specifications, and cast & crew gallery.",
     },
   },
   {
     icon: ListFilter,
     title: "Smart Collections",
     description:
-      "Smart Collections are filter-driven, auto-updating lists. Define rules based on genre, watch status, rating, or custom criteria, and CineLog keeps the collection current without manual curation.",
+      "Smart Collections are dynamic, rule-based playlists that automatically update as your library evolves. Construct multi-clause filter pipelines with AND logic, assign custom sorting and grouping, and toggle their appearance on your library dropdown or dashboard carousels.",
     tips: [
-      "Create collections from Settings → Custom Collections",
-      "Each collection can have multiple filter clauses",
-      "Collections update automatically as your library changes",
+      "Manage and create collections under System Preferences → Smart Collections tab",
+      "Drag and drop collections using the handle (⋮⋮) to reorder how they appear throughout CineLog",
+      "Build compound filter pipelines with up to 3 simultaneous rules (AND logic) across Genre, Origin Country, Release Year, Vote Average, and Watch Status",
+      "Select custom sort orders (e.g. Date Added Newest, Rating Highest) and grouping categories (e.g. Group by Watch Status)",
+      "Toggle 'Show in library' to access the collection from the library dropdown",
+      "Toggle 'Show in dashboard' to display the collection as an automated horizontal stream carousel on your home page",
+      "Pause or activate individual collections anytime using the toggle switch without deleting your rules",
     ],
-    // Provision for screenshot sample:
-    // screenshot: {
-    //   src: "/mockup_collections.jpg",
-    //   alt: "CineLog Smart Collections manager",
-    //   caption: "Dynamic rule builder for auto-updating watchlists.",
-    // },
+    screenshot: {
+      src: "/mocks/mock-smart-collections.png",
+      alt: "CineLog Smart Collections Builder — rule pipelines, filters, sort, group, and display toggles",
+      caption:
+        "Smart Collections builder showing multi-condition filter pipelines (AND logic), sorting, grouping, drag-and-drop reordering, and display toggles for library & dashboard.",
+    },
   },
   {
     icon: Star,
     title: "Impressions & Reactions",
     description:
-      "Log how you feel about every title. Use the reaction buttons (like, love, dislike) on any title's detail page. Your impressions are saved and visible in your library cards.",
+      "Express and track your sentiment for every movie and show. Choose between three reaction levels — Dislike, Like, and Love — available directly from title detail hero headers or straight from poster card footers in the library grid.",
     tips: [
-      "Impressions are shown as colored indicators on library cards",
-      "You can change your impression at any time",
-      "Filter your library by impression to find your favorites",
+      "Three sentiment tiers: Dislike (thumbs down), Like (thumbs up), and Love (heart)",
+      "Log reactions instantly from the library grid by hovering or clicking the reaction button on any card footer without opening the title page",
+      "Log or update reactions on any title's detail page via the dedicated action bar pill",
+      "Active reactions are visually highlighted with color-coded badges on cards",
+      "Create Smart Collections targeting titles you 'Love' to generate an auto-updating favorite films shelf",
+      "You can modify or clear your reaction at any time",
     ],
-    // Provision for screenshot sample:
-    // screenshot: {
-    //   src: "/mockup_impressions.jpg",
-    //   alt: "CineLog Impressions & Reactions",
-    //   caption: "Sentiment and reaction logging for every watched film.",
-    // },
+    screenshots: [
+      {
+        src: "/mocks/mock-reaction-2.png",
+        alt: "CineLog Reaction Popover — contextual sentiment picker on library poster cards",
+        caption:
+          "Contextual reaction popover directly on library poster cards for instant sentiment logging without leaving the grid.",
+      },
+      {
+        src: "/mocks/mock-impressions-reactions.png",
+        alt: "CineLog Action Bar Reactions — sentiment pill on title detail pages",
+        caption:
+          "Action bar reaction sentiment pill (Dislike, Like, Love) on title detail pages.",
+      },
+    ],
   },
   {
     icon: Download,
     title: "Install as PWA",
     description:
-      "CineLog is a Progressive Web App. Install it from your browser for an app-like experience — it works on iOS, Android, and desktop. Look for the install prompt or use your browser's 'Add to Home Screen' option.",
+      "CineLog is built as a Progressive Web App (PWA), providing a fast, distraction-free native application experience on macOS, Windows, Linux, iOS, and Android without requiring an app store download.",
     tips: [
-      "On iOS Safari, tap Share → Add to Home Screen",
-      "On Android Chrome, tap the three-dot menu → Install app",
-      "On desktop Chrome/Edge, look for the install icon in the address bar",
+      "Look for the floating 'Install CineLog App' prompt banner and click 'Install' for one-click setup",
+      "Desktop browsers (Chrome, Edge, Brave): Click the install icon in the URL address bar or select Install from the browser menu",
+      "iOS Safari: Tap the Share button, select 'Add to Home Screen', and tap 'Add'",
+      "Android Chrome: Tap the three-dot menu (⋮) and select 'Install app' or 'Add to Home Screen'",
+      "Enjoy a dedicated standalone window with no browser tabs, search bars, or browser clutter",
+      "Offline caching via background service worker ensures ultra-fast page loads and smooth navigation",
     ],
-    // Provision for screenshot sample:
-    // screenshot: {
-    //   src: "/mockup_pwa.jpg",
-    //   alt: "CineLog PWA Installation instructions",
-    //   caption: "Install prompts and native web app setup.",
-    // },
+    screenshot: {
+      src: "/mocks/mock-install-pwa.png",
+      alt: "CineLog PWA Installation banner — one-click app installation prompt",
+      caption:
+        "Progressive Web App installation prompt for desktop and mobile home screen installation.",
+    },
   },
   {
     icon: Settings,
-    title: "Settings",
+    title: "Settings & Preferences",
     description:
-      "Configure your CineLog experience. Manage your custom collections with advanced filter pipelines, update your display name, email, and password in User Profile & Credentials.",
+      "Configure your CineLog environment, manage account identity, update security credentials, and organize custom collection pipelines through a unified System Preferences interface.",
     tips: [
-      "Use the tabs to switch between Custom Collections and User Profile",
-      "Collection filters support nested AND/OR logic",
+      "Quickly toggle between the 'Smart Collections' tab and 'User Profile & Credentials' tab",
+      "Update your unique username and account notification email address",
+      "Set an optional Display Name to personalize your Dashboard greeting and profile header",
+      "Change your account password securely: enter your current password, new password, and confirmation",
+      "Passwords enforce secure requirements: 6–20 characters with uppercase, lowercase, numbers, and allowed special characters (@ # & ! _)",
+      "Changes take effect immediately across all CineLog surfaces upon saving",
     ],
-    // Provision for screenshot sample:
-    // screenshot: {
-    //   src: "/mockup_settings.jpg",
-    //   alt: "CineLog Settings panel",
-    //   caption: "Custom collection filter pipelines and account profile management.",
-    // },
+    screenshot: {
+      src: "/mocks/mock-settings.png",
+      alt: "CineLog Settings — User Profile & Credentials management",
+      caption:
+        "User Profile & Credentials configuration: update username, email, display name, and secure password updates.",
+    },
   },
 ];
 
@@ -204,16 +236,10 @@ function ExpandableGuide({
         <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-primary-container/15 text-brand-primary">
           <Icon className="size-4.5" strokeWidth={1.8} />
         </div>
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <div className="flex min-w-0 flex-1 items-center">
           <span className="font-public-sans text-sm font-semibold text-on-surface sm:text-base">
             {title}
           </span>
-          {items.length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-surface-container-high px-2 py-0.5 font-public-sans text-[11px] font-medium text-secondary">
-              <ImageIcon className="size-3 text-brand-primary" />
-              <span>Preview</span>
-            </span>
-          )}
         </div>
         <ChevronDown
           className={`size-4 shrink-0 text-secondary transition-transform duration-200 ${
@@ -238,11 +264,15 @@ function ExpandableGuide({
                 <p className="font-public-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-outline-muted">
                   Screenshots & Preview
                 </p>
-                <div className="grid gap-3 sm:grid-cols-1">
+                <div
+                  className={`grid gap-3 ${
+                    items.length > 1 ? "sm:grid-cols-2" : "grid-cols-1"
+                  }`}
+                >
                   {items.map((img, idx) => (
                     <figure
                       key={img.src + idx}
-                      className="group relative overflow-hidden rounded-xl border border-outline-variant bg-surface-container shadow-sm"
+                      className="group relative flex flex-col overflow-hidden rounded-xl border border-outline-variant bg-surface-container shadow-sm"
                     >
                       <button
                         type="button"
@@ -254,7 +284,7 @@ function ExpandableGuide({
                           src={img.src}
                           alt={img.alt}
                           fill
-                          className="object-cover object-top transition-transform duration-300 group-hover:scale-[1.01]"
+                          className="object-contain p-2 sm:p-3 transition-transform duration-300 group-hover:scale-[1.01]"
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/30 group-hover:opacity-100">
@@ -265,7 +295,7 @@ function ExpandableGuide({
                         </div>
                       </button>
                       {img.caption && (
-                        <figcaption className="border-t border-outline-variant/60 bg-surface-container-low/70 px-3.5 py-2">
+                        <figcaption className="mt-auto border-t border-outline-variant/60 bg-surface-container-low/70 px-3.5 py-2">
                           <p className="font-public-sans text-xs text-secondary">
                             {img.caption}
                           </p>
