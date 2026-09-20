@@ -11,6 +11,7 @@ import {
   LogIn,
   LogOut,
   Menu,
+  Settings,
   UserPlus,
   X,
 } from "lucide-react";
@@ -25,6 +26,7 @@ const navigation = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "My library", href: "/library", icon: Library },
   { label: "Guide", href: "/guide", icon: BookOpen },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function BottomNav() {
@@ -54,7 +56,7 @@ export function BottomNav() {
               key={label}
               href={href}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-1 py-1 text-xs font-medium font-public-sans transition-colors",
+                "flex flex-1 min-w-0 flex-col items-center justify-center gap-1 py-1 text-xs font-medium font-public-sans transition-colors",
                 active
                   ? "text-brand-primary"
                   : "text-secondary hover:text-on-surface",
@@ -71,7 +73,12 @@ export function BottomNav() {
               >
                 <Icon className="size-5" strokeWidth={active ? 2.2 : 1.8} />
               </div>
-              <span className={cn("text-[11px] leading-tight", active && "font-semibold")}>
+              <span
+                className={cn(
+                  "text-[11px] leading-tight text-center truncate max-w-full px-0.5",
+                  active && "font-semibold",
+                )}
+              >
                 {label}
               </span>
             </Link>
@@ -85,7 +92,7 @@ export function BottomNav() {
           aria-label="Open menu"
           aria-expanded={isMenuOpen}
           className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-1 py-1 text-xs font-medium font-public-sans transition-colors",
+            "flex flex-1 min-w-0 flex-col items-center justify-center gap-1 py-1 text-xs font-medium font-public-sans transition-colors",
             isMenuOpen
               ? "text-brand-primary"
               : "text-secondary hover:text-on-surface",
@@ -101,7 +108,9 @@ export function BottomNav() {
           >
             <Menu className="size-5" strokeWidth={1.8} />
           </div>
-          <span className="text-[11px] leading-tight">Menu</span>
+          <span className="text-[11px] leading-tight text-center truncate max-w-full px-0.5">
+            Menu
+          </span>
         </button>
       </nav>
 
