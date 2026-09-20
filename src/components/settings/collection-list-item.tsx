@@ -3,11 +3,10 @@
 import { CollectionListItemEditor } from "@/components/settings/collection-list-item-editor";
 import { Button } from "@/components/ui/button";
 import { FilterQueryChips } from "@/components/ui/filter-query-chips";
-import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { LIBRARY_GROUP_OPTIONS } from "@/lib/constants";
 import type { SmartCollectionWithFilters } from "@/lib/types";
-import { ChevronDown, GripVertical, Trash2 } from "lucide-react";
-import { useState, type DragEvent } from "react";
+import { ChevronDown, GripVertical, Pencil, Trash2 } from "lucide-react";
+import { useRef, useState, type DragEvent } from "react";
 
 type CollectionListItemProps = {
   collection: SmartCollectionWithFilters;
@@ -20,8 +19,6 @@ type CollectionListItemProps = {
   onDrop: () => void;
   onDragEnd: () => void;
   onDelete: () => void;
-  onToggleLibrary: () => void;
-  onToggleDashboard: () => void;
   onSave: Parameters<typeof CollectionListItemEditor>[0]["onSave"];
 };
 
@@ -44,34 +41,47 @@ export function CollectionListItem({
   onDrop,
   onDragEnd,
   onDelete,
-  onToggleLibrary,
-  onToggleDashboard,
   onSave,
 }: CollectionListItemProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const itemRef = useRef<HTMLLIElement>(null);
   const group = groupLabel(collection.groupBy);
 
   return (
     <li
+      ref={itemRef}
       className={`rounded-xl border border-outline-alt/60 bg-surface-container-low transition-opacity ${
         isDragging ? "opacity-50" : ""
       }`}
-      draggable
-      onDragEnd={onDragEnd}
       onDragOver={onDragOver}
-      onDragStart={onDragStart}
       onDrop={onDrop}
     >
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <button
+          <div
             aria-label="Drag to reorder"
-            className="mt-0.5 cursor-grab text-secondary/50 active:cursor-grabbing"
-            draggable={false}
-            type="button"
+            className="mt-0.5 -ml-1 flex items-center justify-center rounded p-1 text-secondary/50 hover:bg-surface-container-high hover:text-on-surface cursor-grab active:cursor-grabbing transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-primary"
+            draggable
+            onDragEnd={onDragEnd}
+            onDragStart={(event) => {
+              if (itemRef.current) {
+                const rect = itemRef.current.getBoundingClientRect();
+                event.dataTransfer.setDragImage(
+                  itemRef.current,
+                  event.clientX - rect.left,
+                  event.clientY - rect.top,
+                );
+              }
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/plain", String(index));
+              onDragStart();
+            }}
+            role="button"
+            tabIndex={0}
+            title="Drag to reorder"
           >
-            <GripVertical className="h-4 w-4" />
-          </button>
+            <GripVertical className="h-4 w-4 pointer-events-none" />
+          </div>
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs text-outline-muted">
@@ -100,31 +110,17 @@ export function CollectionListItem({
         </div>
 
         <div className="flex flex-wrap items-center gap-3 pl-7 sm:pl-0">
-          <ToggleSwitch
-            checked={collection.showInLibrary}
-            onChange={onToggleLibrary}
-            title="Show in library"
-          />
-          <ToggleSwitch
-            checked={collection.showInDashboard}
-            disabled={collection.groupBy !== null}
-            onChange={onToggleDashboard}
-            title={
-              collection.groupBy !== null
-                ? "Remove grouping to show on dashboard"
-                : "Show on dashboard"
-            }
-          />
           <Button
             aria-expanded={isExpanded}
-            className="h-8 gap-1 px-2.5 text-xs"
+            className="h-8 gap-1.5 px-2.5 text-xs text-on-surface"
             onClick={onToggleExpand}
             type="button"
             variant="darkFilled"
           >
-            Edit
+            <Pencil className="size-3.5 text-secondary transition-colors group-hover/button:text-on-surface" />
+            <span>Edit</span>
             <ChevronDown
-              className={`h-3.5 w-3.5 transition-transform ${
+              className={`size-3.5 text-secondary transition-transform duration-200 group-hover/button:text-on-surface ${
                 isExpanded ? "rotate-180" : ""
               }`}
             />

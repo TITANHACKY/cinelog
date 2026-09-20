@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 type FormFieldProps = {
   id: string;
   label: ReactNode;
+  labelSuffix?: ReactNode;
   error?: ReactNode;
   hint?: ReactNode;
   className?: string;
@@ -13,6 +14,7 @@ type FormFieldProps = {
 export function FormField({
   id,
   label,
+  labelSuffix,
   error,
   hint,
   className,
@@ -20,12 +22,24 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
-      <label
-        className="text-sm font-medium text-secondary"
-        htmlFor={id}
-      >
-        {label}
-      </label>
+      {labelSuffix ? (
+        <div className="flex items-center gap-1.5">
+          <label
+            className="text-sm font-medium text-secondary"
+            htmlFor={id}
+          >
+            {label}
+          </label>
+          {labelSuffix}
+        </div>
+      ) : (
+        <label
+          className="text-sm font-medium text-secondary"
+          htmlFor={id}
+        >
+          {label}
+        </label>
+      )}
       {children}
       {error}
       {hint ? (
