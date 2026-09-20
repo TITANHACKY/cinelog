@@ -7,7 +7,7 @@ import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { LIBRARY_GROUP_OPTIONS } from "@/lib/constants";
 import type { SmartCollectionWithFilters } from "@/lib/types";
 import { ChevronDown, GripVertical, Trash2 } from "lucide-react";
-import { useState, type DragEvent } from "react";
+import { useRef, useState, type DragEvent } from "react";
 
 type CollectionListItemProps = {
   collection: SmartCollectionWithFilters;
@@ -49,29 +49,44 @@ export function CollectionListItem({
   onSave,
 }: CollectionListItemProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const itemRef = useRef<HTMLLIElement>(null);
   const group = groupLabel(collection.groupBy);
 
   return (
     <li
+      ref={itemRef}
       className={`rounded-xl border border-outline-alt/60 bg-surface-container-low transition-opacity ${
         isDragging ? "opacity-50" : ""
       }`}
-      draggable
-      onDragEnd={onDragEnd}
       onDragOver={onDragOver}
-      onDragStart={onDragStart}
       onDrop={onDrop}
     >
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <button
+          <div
             aria-label="Drag to reorder"
-            className="mt-0.5 cursor-grab text-secondary/50 active:cursor-grabbing"
-            draggable={false}
-            type="button"
+            className="mt-0.5 -ml-1 flex items-center justify-center rounded p-1 text-secondary/50 hover:bg-surface-container-high hover:text-on-surface cursor-grab active:cursor-grabbing transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-primary"
+            draggable
+            onDragEnd={onDragEnd}
+            onDragStart={(event) => {
+              if (itemRef.current) {
+                const rect = itemRef.current.getBoundingClientRect();
+                event.dataTransfer.setDragImage(
+                  itemRef.current,
+                  event.clientX - rect.left,
+                  event.clientY - rect.top,
+                );
+              }
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/plain", String(index));
+              onDragStart();
+            }}
+            role="button"
+            tabIndex={0}
+            title="Drag to reorder"
           >
-            <GripVertical className="h-4 w-4" />
-          </button>
+            <GripVertical className="h-4 w-4 pointer-events-none" />
+          </div>
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs text-outline-muted">
