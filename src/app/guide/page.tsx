@@ -5,7 +5,7 @@ import { GuidePage } from "@/components/guide/guide-page";
 export const metadata: Metadata = {
   title: "CineLog - Guide",
   description:
-    "Explore CineLog features, app preview, and tutorials to get the most out of your cinema tracking experience.",
+    "Explore CineLog features, section walkthroughs, and tutorials to get the most out of your cinema tracking experience.",
 };
 
 export default function Guide() {
