@@ -273,7 +273,7 @@ export function CollectionListItemEditor({
           labelSuffix={
             <Tooltip
               align="responsive"
-              content="We cannot use grouping when this collection is enabled in dashboard, if you have previously enabled grouping you cannot use this smart collection in dashboard"
+              content="Collections displayed on the dashboard cannot be grouped. Disable 'Show in dashboard' to enable grouping."
               contentClassName="w-64 sm:w-72"
               isOpen={groupTooltipOpen}
               onOpenChange={handleGroupTooltipChange}
