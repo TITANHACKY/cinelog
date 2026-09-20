@@ -58,6 +58,15 @@ type LibraryItemSnapshot = {
   pendingType?: "watch_status" | "impression" | "progress";
 };
 
+export type LibrarySuccessfulMutation = {
+  nonce: number;
+  mediaType: LibraryMediaType;
+  tmdbId: number;
+  watch_status?: number;
+  impression?: number | null;
+  seriesUpdate?: SeriesProgressFields;
+};
+
 export type LibraryState = {
   movies: LibraryMovie[];
   series: LibrarySeries[];
@@ -73,13 +82,15 @@ export type LibraryState = {
   seriesGroups: LibraryGroup[] | undefined;
   movieGroupPages: Record<string, LibraryGroupPage<LibraryMovie>>;
   seriesGroupPages: Record<string, LibraryGroupPage<LibrarySeries>>;
-  query: LibraryBrowseQuery;
-  queryNonce: number;
-  selectedCollectionId: number | null;
+  queries: Record<LibraryMediaType, LibraryBrowseQuery>;
+  queryNonces: Record<LibraryMediaType, number>;
+  selectedCollectionIds: Record<LibraryMediaType, number | null>;
   status: LibraryStatus;
   error: string | null;
   /** Pre-mutation values for in-flight items, keyed by `libraryItemKey`. */
   pending: Record<string, LibraryItemSnapshot>;
+  /** Latest successful mutation; `nonce` increments on each success for hook subscriptions. */
+  lastSuccessfulMutation: LibrarySuccessfulMutation | null;
 };
 
 const initialState: LibraryState = {
@@ -97,12 +108,22 @@ const initialState: LibraryState = {
   seriesGroups: undefined,
   movieGroupPages: {},
   seriesGroupPages: {},
-  query: DEFAULT_LIBRARY_BROWSE_QUERY,
-  queryNonce: 0,
-  selectedCollectionId: null,
+  queries: {
+    movie: DEFAULT_LIBRARY_BROWSE_QUERY,
+    series: DEFAULT_LIBRARY_BROWSE_QUERY,
+  },
+  queryNonces: {
+    movie: 0,
+    series: 0,
+  },
+  selectedCollectionIds: {
+    movie: null,
+    series: null,
+  },
   status: "idle",
   error: null,
   pending: {},
+  lastSuccessfulMutation: null,
 };
 
 export function libraryItemKey(mediaType: LibraryMediaType, tmdbId: number) {
@@ -256,11 +277,33 @@ function preserveGroupPageMeta<T extends LibraryMovie | LibrarySeries>(
   }
 }
 
+function resetMediaBrowseData(
+  state: LibraryState,
+  mediaType: LibraryMediaType,
+) {
+  if (mediaType === "movie") {
+    state.movies = [];
+    state.movieGroups = undefined;
+    state.movieGroupPages = {};
+    state.moviesLoaded = false;
+    state.moviesHasMore = false;
+    state.moviesLoadingMore = false;
+    return;
+  }
+
+  state.series = [];
+  state.seriesGroups = undefined;
+  state.seriesGroupPages = {};
+  state.seriesLoaded = false;
+  state.seriesHasMore = false;
+  state.seriesLoadingMore = false;
+}
+
 function rebuildGroupPagesFromFlat(
   state: LibraryState,
   mediaType: LibraryMediaType,
 ) {
-  const groupBy = state.query.groupBy;
+  const groupBy = state.queries[mediaType].groupBy;
   if (groupBy === undefined) {
     return;
   }
@@ -295,12 +338,13 @@ function syncGroupedLibraryAfterPatch(
     toImpression?: number | null;
   },
 ) {
-  if (state.query.groupBy === undefined) {
+  const groupBy = state.queries[mediaType].groupBy;
+  if (groupBy === undefined) {
     return;
   }
 
   if (
-    state.query.groupBy === 0 &&
+    groupBy === 0 &&
     options?.fromStatus !== undefined &&
     options.toStatus !== undefined &&
     options.fromStatus !== options.toStatus
@@ -325,7 +369,7 @@ function syncGroupedLibraryAfterPatch(
   }
 
   if (
-    state.query.groupBy === 1 &&
+    groupBy === 1 &&
     options?.fromImpression !== undefined &&
     options.toImpression !== undefined
   ) {
@@ -426,7 +470,7 @@ function applyCounts(
 
   const groups = normalizeLibraryGroups(
     metadata.groups,
-    state.query.groupBy,
+    state.queries[type].groupBy,
     type,
   );
   if (type === "movie") {
@@ -493,7 +537,8 @@ const librarySlice = createSlice({
       const { type, movies, series, metadata } = action.payload;
       applyCounts(state, metadata, type);
 
-      const isGrouped = state.query.groupBy !== undefined;
+      const groupBy = state.queries[type].groupBy;
+      const isGrouped = groupBy !== undefined;
 
       if (type === "movie") {
         state.movies = movies;
@@ -503,7 +548,7 @@ const librarySlice = createSlice({
         state.movieGroupPages = buildGroupPages(
           movies,
           metadata.groups,
-          state.query.groupBy,
+          groupBy,
         );
       } else {
         state.series = series;
@@ -513,7 +558,7 @@ const librarySlice = createSlice({
         state.seriesGroupPages = buildGroupPages(
           series,
           metadata.groups,
-          state.query.groupBy,
+          groupBy,
         );
       }
 
@@ -522,28 +567,25 @@ const librarySlice = createSlice({
     },
     libraryCollectionSelected: (
       state,
-      action: PayloadAction<number | null>,
+      action: PayloadAction<{
+        type: LibraryMediaType;
+        collectionId: number | null;
+      }>,
     ) => {
-      state.selectedCollectionId = action.payload;
+      state.selectedCollectionIds[action.payload.type] =
+        action.payload.collectionId;
     },
     libraryQueryUpdated: (
       state,
-      action: PayloadAction<LibraryBrowseQuery>,
+      action: PayloadAction<{
+        type: LibraryMediaType;
+        query: LibraryBrowseQuery;
+      }>,
     ) => {
-      state.query = action.payload;
-      state.queryNonce += 1;
-      state.movies = [];
-      state.series = [];
-      state.movieGroups = undefined;
-      state.seriesGroups = undefined;
-      state.movieGroupPages = {};
-      state.seriesGroupPages = {};
-      state.moviesLoaded = false;
-      state.seriesLoaded = false;
-      state.moviesHasMore = false;
-      state.seriesHasMore = false;
-      state.moviesLoadingMore = false;
-      state.seriesLoadingMore = false;
+      const { type, query } = action.payload;
+      state.queries[type] = query;
+      state.queryNonces[type] += 1;
+      resetMediaBrowseData(state, type);
       state.error = null;
     },
     libraryFailed: (state, action: PayloadAction<string>) => {
@@ -668,11 +710,7 @@ const librarySlice = createSlice({
     ) => {
       const { mediaType, tmdbId, watch_status, impression, progress } = action.payload;
       const item = findItem(state, mediaType, tmdbId);
-      if (!item) return;
-
       const key = libraryItemKey(mediaType, tmdbId);
-      const previousStatus = item.watch_status;
-      const previousImpression = item.impression;
       const pendingType =
         watch_status !== undefined
           ? "watch_status"
@@ -683,10 +721,19 @@ const librarySlice = createSlice({
               : undefined;
 
       state.pending[key] = {
-        watch_status: state.pending[key]?.watch_status ?? item.watch_status,
-        impression: state.pending[key]?.impression ?? item.impression,
+        watch_status:
+          state.pending[key]?.watch_status ?? item?.watch_status ?? 0,
+        impression:
+          state.pending[key]?.impression ?? item?.impression ?? null,
         pendingType,
       };
+
+      if (!item) {
+        return;
+      }
+
+      const previousStatus = item.watch_status;
+      const previousImpression = item.impression;
 
       if (watch_status !== undefined) {
         patchItemCopies(state, mediaType, tmdbId, (copy) => {
@@ -712,10 +759,13 @@ const librarySlice = createSlice({
       action: PayloadAction<{
         tmdbId: number;
         mediaType: LibraryMediaType;
+        watch_status?: number;
+        impression?: number | null;
         seriesUpdate?: SeriesProgressFields;
       }>,
     ) => {
-      const { mediaType, tmdbId, seriesUpdate } = action.payload;
+      const { mediaType, tmdbId, watch_status, impression, seriesUpdate } =
+        action.payload;
       const key = libraryItemKey(mediaType, tmdbId);
       const snapshot = state.pending[key];
       delete state.pending[key];
@@ -735,6 +785,15 @@ const librarySlice = createSlice({
           toImpression: seriesUpdate.impression,
         });
       }
+
+      state.lastSuccessfulMutation = {
+        nonce: (state.lastSuccessfulMutation?.nonce ?? 0) + 1,
+        mediaType,
+        tmdbId,
+        watch_status,
+        impression,
+        seriesUpdate,
+      };
     },
     libraryWatchlistItemAdded: (
       state,

@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LibraryFilterControls } from "@/components/library/library-filter-controls";
 import { LibraryGroupCarousel } from "@/components/library/library-group-carousel";
 import { LibrarySection } from "@/components/library/library-section";
+import { useLibraryBrowseSession } from "@/hooks/library/use-library-browse-session";
 import { useLibraryCollectionPreset } from "@/hooks/library/use-library-collection-preset";
 import {
   LIBRARY_DESCRIPTION,
@@ -24,7 +25,6 @@ import type {
 } from "@/lib/types";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
-  libraryCollectionSelected,
   libraryGroupPageRequested,
   libraryPageRequested,
   libraryRequested,
@@ -35,6 +35,7 @@ type LibraryViewProps = {
 };
 
 export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
+  useLibraryBrowseSession();
   const dispatch = useAppDispatch();
   const {
     movies,
@@ -51,10 +52,13 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     seriesGroups,
     movieGroupPages,
     seriesGroupPages,
-    query,
-    selectedCollectionId,
+    queries,
+    selectedCollectionIds,
     status,
   } = useAppSelector((state) => state.library);
+
+  const query = queries[mediaType];
+  const selectedCollectionId = selectedCollectionIds[mediaType];
 
   const [collections, setCollections] = useState<SmartCollectionWithFilters[]>(
     [],
@@ -162,8 +166,6 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
             libraryCollections={libraryCollections}
             mediaType={mediaType}
             movieCount={tabMovieCount}
-            onCollectionChange={(id) => dispatch(libraryCollectionSelected(id))}
-            selectedCollectionId={validSelectedCollectionId}
             seriesCount={tabSeriesCount}
           />
         </header>

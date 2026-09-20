@@ -17,6 +17,7 @@ import {
   Tv,
   UserPlus,
 } from "lucide-react";
+import { GuideFeatureList } from "@/components/guide/guide-feature-list";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { ButtonLink } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
@@ -143,30 +144,6 @@ const FAQ_ITEMS = [
   },
 ];
 
-/* ── Preview images ── */
-const PREVIEWS = [
-  {
-    src: "/mockup_dashboard.jpg",
-    alt: "CineLog Dashboard — personalized welcome, stats, and continue watching",
-    label: "Dashboard",
-  },
-  {
-    src: "/mockup_library.jpg",
-    alt: "CineLog Search - Search for movies and series",
-    label: "Search",
-  },
-  {
-    src: "/mockup_library.jpg",
-    alt: "CineLog Library — filterable grid of your saved movies and series",
-    label: "Library",
-  },
-  {
-    src: "/mockup_detail.jpg",
-    alt: "CineLog Movie Detail — hero header with poster, metadata, cast and crew",
-    label: "Title Detail",
-  },
-];
-
 /* ── FAQ Item ── */
 function FaqItem({
   question,
@@ -214,7 +191,6 @@ export function LandingPage() {
   const scrollRef = useScrollReveal();
   const { theme, mounted } = useTheme();
   const isDark = mounted ? theme === "dark" : true;
-  const [activePreview, setActivePreview] = useState(0);
 
   return (
     <div ref={scrollRef} className="min-h-screen bg-surface text-on-surface">
@@ -363,35 +339,8 @@ export function LandingPage() {
             </p>
           </div>
 
-          {/* Preview tabs */}
-          <div className="landing-reveal mt-10 flex justify-center gap-2">
-            {PREVIEWS.map((preview, i) => (
-              <button
-                key={preview.label}
-                type="button"
-                onClick={() => setActivePreview(i)}
-                className={`rounded-lg px-3.5 py-2 font-public-sans text-xs font-medium transition-colors sm:px-4 sm:text-sm ${
-                  activePreview === i
-                    ? "bg-brand-primary-container/20 text-brand-primary border border-brand-primary/30"
-                    : "text-secondary hover:bg-surface-container hover:text-on-surface border border-transparent"
-                }`}
-              >
-                {preview.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Preview image */}
-          <div className="landing-reveal mt-6 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-low shadow-2xl sm:rounded-2xl">
-            <div className="relative aspect-video w-full">
-              <Image
-                src={PREVIEWS[activePreview].src}
-                alt={PREVIEWS[activePreview].alt}
-                fill
-                className="object-cover object-top transition-opacity duration-300"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1152px"
-              />
-            </div>
+          <div className="landing-reveal mx-auto mt-10 max-w-3xl">
+            <GuideFeatureList />
           </div>
         </div>
       </section>

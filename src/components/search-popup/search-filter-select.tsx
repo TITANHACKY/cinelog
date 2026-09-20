@@ -25,6 +25,7 @@ type SearchFilterSelectProps = {
   "aria-label"?: string;
   disabled?: boolean;
   heading: string;
+  hideHeading?: boolean;
   menuMinWidth?: number;
   onChange: (value: string) => void;
   options: SearchFilterOption[];
@@ -32,6 +33,8 @@ type SearchFilterSelectProps = {
   searchable?: boolean;
   searchPlaceholder?: string;
   triggerClassName?: string;
+  labelClassName?: string;
+  wrapperClassName?: string;
   value: string;
 };
 
@@ -39,6 +42,7 @@ export function SearchFilterSelect({
   "aria-label": ariaLabel,
   disabled = false,
   heading,
+  hideHeading = false,
   menuMinWidth,
   onChange,
   options,
@@ -46,6 +50,8 @@ export function SearchFilterSelect({
   searchable = false,
   searchPlaceholder = "Filter",
   triggerClassName,
+  labelClassName,
+  wrapperClassName,
   value,
 }: SearchFilterSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -125,7 +131,7 @@ export function SearchFilterSelect({
 
   return (
     <>
-      <span className="inline-flex" ref={triggerRef}>
+      <span className={cn("inline-flex", wrapperClassName)} ref={triggerRef}>
         <Button
           aria-expanded={isOpen}
           aria-haspopup="listbox"
@@ -147,11 +153,14 @@ export function SearchFilterSelect({
           type="button"
           variant={isOpen || value ? "primaryFilled" : "darkFilled"}
         >
-          <span>{heading}</span>
+          {hideHeading ? null : <span>{heading}</span>}
           <span
             className={cn(
-              "truncate",
-              triggerClassName ? "max-w-40" : "max-w-24 sm:max-w-28",
+              labelClassName ??
+                cn(
+                  "truncate",
+                  triggerClassName ? "max-w-40" : "max-w-24 sm:max-w-28",
+                ),
             )}
           >
             {selected?.label ?? placeholder}

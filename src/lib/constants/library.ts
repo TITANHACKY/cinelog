@@ -100,6 +100,14 @@ export const LIBRARY_SORT_OPTIONS: {
   },
 ];
 
+export const LIBRARY_BROWSE_SESSION_KEY = "cinelog-library-browse";
+
+export const LIBRARY_COLLECTION_ACTIVE_HINT =
+  "Manual filters are disabled while a smart collection is selected. Choose Browse manually to edit filters.";
+
+export const LIBRARY_CUSTOM_FILTERS_ACTIVE_HINT =
+  "Smart collections are disabled while manual filters are applied. Clear filters to choose a collection.";
+
 export const DEFAULT_LIBRARY_BROWSE_QUERY: LibraryBrowseQuery = {
   q: "",
   sortField: "created_at",
