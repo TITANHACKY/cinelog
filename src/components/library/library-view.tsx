@@ -11,6 +11,7 @@ import { LibraryGroupCarousel } from "@/components/library/library-group-carouse
 import { LibrarySection } from "@/components/library/library-section";
 import { useLibraryCollectionPreset } from "@/hooks/library/use-library-collection-preset";
 import {
+  LIBRARY_DESCRIPTION,
   LIBRARY_EMPTY_DESCRIPTION,
   LIBRARY_EMPTY_TITLE,
   LIBRARY_ERROR_DESCRIPTION,
@@ -106,7 +107,7 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
   }, []);
 
   useEffect(() => {
-    dispatch(libraryRequested({ type: mediaType }));
+    dispatch(libraryRequested({ type: mediaType, refresh: true }));
   }, [dispatch, mediaType]);
 
   const isMovies = mediaType === "movie";
@@ -130,17 +131,14 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     isLoaded &&
     query.groupBy !== undefined &&
     Boolean(groups?.length);
-  const hasActiveBrowse =
-    validSelectedCollectionId !== null ||
-    Boolean(query.q.trim()) ||
-    Boolean(query.filterField) ||
-    query.groupBy !== undefined;
-  const headerTotal =
-    validSelectedCollectionId !== null
+  const tabMovieCount =
+    validSelectedCollectionId !== null && preset.collection?.mediaType === 0
       ? preset.count
-      : hasActiveBrowse
-        ? currentCount
-        : movieCount + seriesCount;
+      : movieCount;
+  const tabSeriesCount =
+    validSelectedCollectionId !== null && preset.collection?.mediaType === 1
+      ? preset.count
+      : seriesCount;
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 py-6 sm:px-8 lg:py-10">
@@ -156,23 +154,17 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
               My library
             </h1>
             <p className="mt-1 font-public-sans text-xs text-secondary sm:mt-2">
-              {isLoading
-                ? "Loading your watchlist"
-                : validSelectedCollectionId && preset.collection
-                  ? `${headerTotal} in ${preset.collection.name}`
-                  : hasActiveBrowse
-                    ? `${headerTotal} matching ${headerTotal === 1 ? "title" : "titles"}`
-                    : `${headerTotal} titles in your watchlist`}
+              {LIBRARY_DESCRIPTION}
             </p>
           </div>
 
           <LibraryFilterControls
             libraryCollections={libraryCollections}
             mediaType={mediaType}
-            movieCount={movieCount}
+            movieCount={tabMovieCount}
             onCollectionChange={(id) => dispatch(libraryCollectionSelected(id))}
             selectedCollectionId={validSelectedCollectionId}
-            seriesCount={seriesCount}
+            seriesCount={tabSeriesCount}
           />
         </header>
 

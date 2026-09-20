@@ -421,11 +421,9 @@ function applyCounts(
   metadata: LibraryMetadata,
   type: LibraryMediaType,
 ) {
-  if (type === "movie") {
-    state.movieCount = metadata.count.movies;
-  } else {
-    state.seriesCount = metadata.count.series;
-  }
+  state.movieCount = metadata.count.movies;
+  state.seriesCount = metadata.count.series;
+
   const groups = normalizeLibraryGroups(
     metadata.groups,
     state.query.groupBy,
@@ -470,13 +468,13 @@ const librarySlice = createSlice({
   reducers: {
     libraryRequested: (
       state,
-      action: PayloadAction<{ type: LibraryMediaType }>,
+      action: PayloadAction<{ type: LibraryMediaType; refresh?: boolean }>,
     ) => {
       const loaded =
         action.payload.type === "movie"
           ? state.moviesLoaded
           : state.seriesLoaded;
-      if (loaded) return;
+      if (loaded && !action.payload.refresh) return;
 
       if (state.status !== "succeeded") {
         state.status = "loading";

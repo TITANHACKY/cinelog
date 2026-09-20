@@ -106,6 +106,9 @@ export const DEFAULT_LIBRARY_BROWSE_QUERY: LibraryBrowseQuery = {
   sortDirection: 1,
 };
 
+export const LIBRARY_DESCRIPTION =
+  "Browse and manage your saved movies and series.";
+
 export const LIBRARY_EMPTY_TITLE = "No titles are found";
 export const LIBRARY_EMPTY_DESCRIPTION =
   "To add more titles click on the search button and search for desired titles";

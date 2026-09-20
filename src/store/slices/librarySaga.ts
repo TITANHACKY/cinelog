@@ -66,7 +66,7 @@ function* fetchLibrary(
   );
   const alreadyLoaded =
     mediaType === "movie" ? library.moviesLoaded : library.seriesLoaded;
-  if (alreadyLoaded) return;
+  if (alreadyLoaded && !action.payload.refresh) return;
 
   const requestNonce = library.queryNonce;
   const params = toLibrarySearchParams(
