@@ -68,17 +68,7 @@ export function LoginForm() {
           </div>
         </FormField>
 
-        <FormField
-          error={
-            errors.password ? (
-              <span className="text-[11px] sm:text-xs text-status-error font-medium">
-                {errors.password.message}
-              </span>
-            ) : null
-          }
-          id="password"
-          label="Password"
-        >
+        <FormField id="password" label="Password">
           <div className="relative">
             <Input
               {...register("password")}
@@ -87,7 +77,6 @@ export function LoginForm() {
               placeholder="••••••••"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
-              required
             />
             <Lock className="pointer-events-none absolute left-2.5 sm:left-3 top-1/2 size-3.5 sm:size-4 -translate-y-1/2 text-outline-muted" />
             <button
