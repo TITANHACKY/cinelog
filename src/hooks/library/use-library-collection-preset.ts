@@ -8,9 +8,11 @@ import {
   libraryGroupLabel,
   withGroupHasMore,
 } from "@/lib/media/library-browse";
+import { usePatchCollectionItemsOnMutationSuccess } from "@/hooks/library/use-patch-collection-items-on-mutation-success";
 import type {
   LibraryGroup,
   LibraryGroupBy,
+  LibraryMediaType,
   LibraryMetadata,
   LibraryMovie,
   LibrarySeries,
@@ -65,6 +67,19 @@ export function useLibraryCollectionPreset(
 
   const isGrouped =
     collection?.groupBy !== null && collection?.groupBy !== undefined;
+
+  const collectionMediaType: LibraryMediaType | undefined =
+    collection?.mediaType === 0
+      ? "movie"
+      : collection?.mediaType === 1
+        ? "series"
+        : undefined;
+
+  usePatchCollectionItemsOnMutationSuccess({
+    mediaType: collectionMediaType,
+    setItems,
+    setGroupPages,
+  });
 
   const fetchItems = useCallback(
     async (options?: { offset?: number; groupKey?: string }) => {

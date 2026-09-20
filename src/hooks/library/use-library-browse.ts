@@ -5,11 +5,18 @@ import { DEFAULT_LIBRARY_BROWSE_QUERY } from "@/lib/constants";
 import { browseQueriesEqual } from "@/lib/media/library-browse";
 import type { LibraryBrowseQuery, LibraryMediaType } from "@/lib/types";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { libraryQueryUpdated, libraryRequested } from "@/store/slices/librarySlice";
+import {
+  libraryCollectionSelected,
+  libraryQueryUpdated,
+  libraryRequested,
+} from "@/store/slices/librarySlice";
 
 export function useLibraryBrowse(mediaType: LibraryMediaType) {
   const dispatch = useAppDispatch();
-  const query = useAppSelector((state) => state.library.query);
+  const query = useAppSelector((state) => state.library.queries[mediaType]);
+  const selectedCollectionId = useAppSelector(
+    (state) => state.library.selectedCollectionIds[mediaType],
+  );
   const [draftQ, setDraftQ] = useState(query.q);
   const [syncedQ, setSyncedQ] = useState(query.q);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -21,7 +28,7 @@ export function useLibraryBrowse(mediaType: LibraryMediaType) {
   }
 
   const applyQuery = useCallback(
-    (next: LibraryBrowseQuery) => {
+    (next: LibraryBrowseQuery, options?: { skipFetch?: boolean }) => {
       const normalized: LibraryBrowseQuery = {
         ...next,
         q: next.q.trim(),
@@ -31,10 +38,13 @@ export function useLibraryBrowse(mediaType: LibraryMediaType) {
         return;
       }
 
-      dispatch(libraryQueryUpdated(normalized));
-      dispatch(libraryRequested({ type: mediaType }));
+      dispatch(libraryQueryUpdated({ type: mediaType, query: normalized }));
+
+      if (!options?.skipFetch && selectedCollectionId === null) {
+        dispatch(libraryRequested({ type: mediaType }));
+      }
     },
-    [dispatch, mediaType, query],
+    [dispatch, mediaType, query, selectedCollectionId],
   );
 
   useEffect(() => {
@@ -43,21 +53,31 @@ export function useLibraryBrowse(mediaType: LibraryMediaType) {
     }
 
     const timeoutId = window.setTimeout(() => {
-      applyQuery({ ...query, q: draftQ });
+      applyQuery(
+        { ...query, q: draftQ },
+        { skipFetch: selectedCollectionId !== null },
+      );
     }, 400);
 
     return () => window.clearTimeout(timeoutId);
-  }, [applyQuery, draftQ, query]);
+  }, [applyQuery, draftQ, query, selectedCollectionId]);
+
+  const hasCustomFilters =
+    selectedCollectionId === null &&
+    (Boolean(query.filterField) ||
+      query.groupBy !== undefined ||
+      query.sortField !== DEFAULT_LIBRARY_BROWSE_QUERY.sortField ||
+      query.sortDirection !== DEFAULT_LIBRARY_BROWSE_QUERY.sortDirection);
 
   const hasActiveBrowse =
+    selectedCollectionId !== null ||
     Boolean(query.q.trim()) ||
-    Boolean(query.filterField) ||
-    query.groupBy !== undefined ||
-    query.sortField !== DEFAULT_LIBRARY_BROWSE_QUERY.sortField ||
-    query.sortDirection !== DEFAULT_LIBRARY_BROWSE_QUERY.sortDirection;
+    hasCustomFilters;
 
   function openDialog() {
-    setDialogDraft(query);
+    setDialogDraft(
+      selectedCollectionId !== null ? DEFAULT_LIBRARY_BROWSE_QUERY : query,
+    );
     setDialogOpen(true);
   }
 
@@ -66,11 +86,24 @@ export function useLibraryBrowse(mediaType: LibraryMediaType) {
     setDialogOpen(false);
   }
 
-  function clearBrowse() {
-    setDraftQ("");
+  function clearDialogFilters() {
     setDialogDraft(DEFAULT_LIBRARY_BROWSE_QUERY);
-    applyQuery(DEFAULT_LIBRARY_BROWSE_QUERY);
+    applyQuery({ ...DEFAULT_LIBRARY_BROWSE_QUERY, q: query.q });
     setDialogOpen(false);
+  }
+
+  function selectCollection(collectionId: number | null) {
+    dispatch(
+      libraryCollectionSelected({
+        type: mediaType,
+        collectionId,
+      }),
+    );
+    setDialogDraft(DEFAULT_LIBRARY_BROWSE_QUERY);
+    applyQuery(
+      { ...DEFAULT_LIBRARY_BROWSE_QUERY, q: query.q },
+      { skipFetch: collectionId !== null },
+    );
   }
 
   return {
@@ -81,10 +114,13 @@ export function useLibraryBrowse(mediaType: LibraryMediaType) {
     setDialogOpen,
     dialogDraft,
     setDialogDraft,
+    selectedCollectionId,
     hasActiveBrowse,
+    hasCustomFilters,
     applyQuery,
     openDialog,
     applyDialog,
-    clearBrowse,
+    clearDialogFilters,
+    selectCollection,
   };
 }
