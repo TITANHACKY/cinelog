@@ -39,7 +39,7 @@ export const loginSchema = z.object({
       /^[a-zA-Z0-9_]+$/,
       "Username can only contain letters, numbers, and underscores",
     ),
-  password: passwordSchema,
+  password: z.string(),
 });
 
 export const updateProfileSchema = z
