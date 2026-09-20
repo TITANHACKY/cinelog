@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { ContentPreferencesSection } from "@/components/settings/content-preferences-section";
 import { CustomCollectionsSection } from "@/components/settings/custom-collections-section";
 import { UserProfileSection } from "@/components/settings/user-profile-section";
-import { SlidersHorizontal, User } from "lucide-react";
+import { Sparkles, SlidersHorizontal, User } from "lucide-react";
 
 export function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<"collections" | "profile">(
-    "collections",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "collections" | "profile" | "preferences"
+  >("collections");
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 py-6 sm:px-8 lg:py-10">
@@ -51,15 +52,25 @@ export function SettingsPage() {
               <User className="h-4 w-4 shrink-0" />
               User Profile &amp; Credentials
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("preferences")}
+              className={`flex items-center gap-2 rounded-lg px-3.5 sm:px-4 py-2 font-public-sans text-xs font-medium transition-colors ${
+                activeTab === "preferences"
+                  ? "bg-brand-primary-container/20 text-brand-primary border border-brand-primary/30"
+                  : "text-secondary hover:bg-surface-container hover:text-on-surface border border-transparent"
+              }`}
+            >
+              <Sparkles className="h-4 w-4 shrink-0" />
+              Content Preferences
+            </button>
           </div>
         </header>
 
         <div className="pt-2">
-          {activeTab === "collections" ? (
-            <CustomCollectionsSection />
-          ) : (
-            <UserProfileSection />
-          )}
+          {activeTab === "collections" ? <CustomCollectionsSection /> : null}
+          {activeTab === "profile" ? <UserProfileSection /> : null}
+          {activeTab === "preferences" ? <ContentPreferencesSection /> : null}
         </div>
       </div>
     </main>

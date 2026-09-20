@@ -39,3 +39,12 @@ export type {
 } from "./library";
 
 export type { BadgeIndicator, ToastProps } from "./ui";
+
+export type {
+  MediaLean,
+  MediaType,
+  SeedTitle,
+  TitleCandidate,
+  UserPreferences,
+  UserPreferencesInput,
+} from "./onboarding";

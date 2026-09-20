@@ -5,6 +5,7 @@ export * from "./custom";
 export * from "./dashboard";
 export * from "./layout";
 export * from "./library";
+export * from "./onboarding";
 export * from "./search-popup";
 export * from "./settings";
 export * from "./ui";

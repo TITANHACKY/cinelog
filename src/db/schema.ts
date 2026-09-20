@@ -32,6 +32,7 @@ export const users = sqliteTable("users", {
     .notNull()
     .default(sql`(unixepoch())`),
   updatedAt: numeric("updated_at"),
+  onboardingCompletedAt: numeric("onboarding_completed_at"),
 });
 
 export const genres = sqliteTable("genres", {
@@ -429,6 +430,96 @@ export const customCollectionSorts = sqliteTable(
   ],
 );
 
+export const userPreferences = sqliteTable(
+  "user_preferences",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    mediaLean: integer("media_lean").notNull().default(2),
+    minRating: real("min_rating"),
+    eras: text("eras"), // JSON array of era bucket values
+    createdAt: numeric("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: numeric("updated_at"),
+  },
+  (table) => [
+    check(
+      "user_preferences_media_lean_check",
+      sql`${table.mediaLean} IN (0, 1, 2)`,
+    ),
+    check(
+      "user_preferences_min_rating_check",
+      sql`${table.minRating} IS NULL OR (${table.minRating} >= 0 AND ${table.minRating} <= 10)`,
+    ),
+    uniqueIndex("user_preferences_user_id_unique").on(table.userId),
+  ],
+);
+
+export const userPreferredGenres = sqliteTable(
+  "user_preferred_genres",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    genreTmdbId: integer("genre_tmdb_id").notNull(),
+  },
+  (table) => [
+    uniqueIndex("user_preferred_genres_user_genre_unique").on(
+      table.userId,
+      table.genreTmdbId,
+    ),
+    index("user_preferred_genres_user_id_index").on(table.userId),
+  ],
+);
+
+export const userPreferredLanguages = sqliteTable(
+  "user_preferred_languages",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    languageCode: text("language_code").notNull(),
+  },
+  (table) => [
+    uniqueIndex("user_preferred_languages_user_lang_unique").on(
+      table.userId,
+      table.languageCode,
+    ),
+    index("user_preferred_languages_user_id_index").on(table.userId),
+  ],
+);
+
+export const userSeedTitles = sqliteTable(
+  "user_seed_titles",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tmdbId: integer("tmdb_id").notNull(),
+    mediaType: integer("media_type").notNull(),
+    title: text("title").notNull(),
+    posterPath: text("poster_path"),
+  },
+  (table) => [
+    check(
+      "user_seed_titles_media_type_check",
+      sql`${table.mediaType} IN (0, 1)`,
+    ),
+    uniqueIndex("user_seed_titles_user_tmdb_media_unique").on(
+      table.userId,
+      table.tmdbId,
+      table.mediaType,
+    ),
+    index("user_seed_titles_user_id_index").on(table.userId),
+  ],
+);
+
 export type Genre = typeof genres.$inferSelect;
 export type NewGenre = typeof genres.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -457,3 +548,12 @@ export type NewCustomCollectionFilter =
   typeof customCollectionFilters.$inferInsert;
 export type CustomCollectionSort = typeof customCollectionSorts.$inferSelect;
 export type NewCustomCollectionSort = typeof customCollectionSorts.$inferInsert;
+export type UserPreferencesRow = typeof userPreferences.$inferSelect;
+export type NewUserPreferencesRow = typeof userPreferences.$inferInsert;
+export type UserPreferredGenre = typeof userPreferredGenres.$inferSelect;
+export type NewUserPreferredGenre = typeof userPreferredGenres.$inferInsert;
+export type UserPreferredLanguage = typeof userPreferredLanguages.$inferSelect;
+export type NewUserPreferredLanguage =
+  typeof userPreferredLanguages.$inferInsert;
+export type UserSeedTitle = typeof userSeedTitles.$inferSelect;
+export type NewUserSeedTitle = typeof userSeedTitles.$inferInsert;

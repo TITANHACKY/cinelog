@@ -33,8 +33,11 @@ export async function proxy(request: NextRequest) {
   if (isAuthRoute) {
     if (token) {
       try {
-        await jwtVerify(token, JWT_SECRET);
-        return NextResponse.redirect(new URL("/", request.url));
+        const { payload } = await jwtVerify(token, JWT_SECRET);
+        const completed = payload.onboarding === "completed";
+        return NextResponse.redirect(
+          new URL(completed ? "/" : "/onboarding", request.url),
+        );
       } catch {
         // Token invalid, allow them to view login page
         return NextResponse.next();
@@ -54,7 +57,10 @@ export async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
     try {
-      await jwtVerify(token, JWT_SECRET);
+      const { payload } = await jwtVerify(token, JWT_SECRET);
+      if (payload.onboarding !== "completed") {
+        return NextResponse.redirect(new URL("/onboarding", request.url));
+      }
       return NextResponse.next();
     } catch {
       // Token invalid — show landing page
@@ -73,7 +79,12 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const onOnboarding =
+      pathname === "/onboarding" || pathname.startsWith("/onboarding/");
+    if (payload.onboarding !== "completed" && !onOnboarding) {
+      return NextResponse.redirect(new URL("/onboarding", request.url));
+    }
     return NextResponse.next();
   } catch {
     // Token is invalid/expired

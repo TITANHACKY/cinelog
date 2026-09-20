@@ -48,3 +48,6 @@ next-env.d.ts
 
 # IDE
 *.code-workspace
+
+# planning artifacts
+/docs/superpowers

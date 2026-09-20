@@ -20,12 +20,14 @@ function toPublicUser(user: {
   username: string;
   email?: string;
   displayName: string | null;
+  onboardingCompletedAt?: string | null;
 }) {
   return {
     id: user.id,
     username: user.username,
     email: user.email,
     displayName: user.displayName,
+    hasCompletedOnboarding: user.onboardingCompletedAt != null,
   };
 }
 
@@ -45,6 +47,7 @@ export async function loginUser(input: LoginInput) {
   const token = await createSessionToken({
     userId: user.id,
     username: user.username,
+    onboarding: user.onboardingCompletedAt != null ? "completed" : undefined,
   });
 
   return { token, publicUser: toPublicUser(user) };

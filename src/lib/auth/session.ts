@@ -38,6 +38,7 @@ export async function requireSession() {
 export async function createSessionToken(user: {
   userId: number;
   username: string;
+  onboarding?: "completed";
 }) {
   return signToken(user);
 }

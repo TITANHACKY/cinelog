@@ -6,6 +6,7 @@ export type User = {
   username: string;
   email?: string;
   displayName?: string | null;
+  hasCompletedOnboarding?: boolean;
 };
 
 export type AuthState = {
