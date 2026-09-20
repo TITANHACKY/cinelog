@@ -3,10 +3,9 @@
 import { CollectionListItemEditor } from "@/components/settings/collection-list-item-editor";
 import { Button } from "@/components/ui/button";
 import { FilterQueryChips } from "@/components/ui/filter-query-chips";
-import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { LIBRARY_GROUP_OPTIONS } from "@/lib/constants";
 import type { SmartCollectionWithFilters } from "@/lib/types";
-import { ChevronDown, GripVertical, Trash2 } from "lucide-react";
+import { ChevronDown, GripVertical, Pencil, Trash2 } from "lucide-react";
 import { useRef, useState, type DragEvent } from "react";
 
 type CollectionListItemProps = {
@@ -20,8 +19,6 @@ type CollectionListItemProps = {
   onDrop: () => void;
   onDragEnd: () => void;
   onDelete: () => void;
-  onToggleLibrary: () => void;
-  onToggleDashboard: () => void;
   onSave: Parameters<typeof CollectionListItemEditor>[0]["onSave"];
 };
 
@@ -44,8 +41,6 @@ export function CollectionListItem({
   onDrop,
   onDragEnd,
   onDelete,
-  onToggleLibrary,
-  onToggleDashboard,
   onSave,
 }: CollectionListItemProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -115,31 +110,17 @@ export function CollectionListItem({
         </div>
 
         <div className="flex flex-wrap items-center gap-3 pl-7 sm:pl-0">
-          <ToggleSwitch
-            checked={collection.showInLibrary}
-            onChange={onToggleLibrary}
-            title="Show in library"
-          />
-          <ToggleSwitch
-            checked={collection.showInDashboard}
-            disabled={collection.groupBy !== null}
-            onChange={onToggleDashboard}
-            title={
-              collection.groupBy !== null
-                ? "Remove grouping to show on dashboard"
-                : "Show on dashboard"
-            }
-          />
           <Button
             aria-expanded={isExpanded}
-            className="h-8 gap-1 px-2.5 text-xs"
+            className="h-8 gap-1.5 px-2.5 text-xs text-on-surface"
             onClick={onToggleExpand}
             type="button"
             variant="darkFilled"
           >
-            Edit
+            <Pencil className="size-3.5 text-secondary transition-colors group-hover/button:text-on-surface" />
+            <span>Edit</span>
             <ChevronDown
-              className={`h-3.5 w-3.5 transition-transform ${
+              className={`size-3.5 text-secondary transition-transform duration-200 group-hover/button:text-on-surface ${
                 isExpanded ? "rotate-180" : ""
               }`}
             />
