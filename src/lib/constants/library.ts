@@ -1,6 +1,6 @@
 import { Clapperboard, TvMinimal, type LucideIcon } from "lucide-react";
 
-import { CUSTOM_COLLECTIONS } from "@/lib/constants/api";
+import { SMART_COLLECTIONS } from "@/lib/constants/api";
 import type {
   LibraryBrowseQuery,
   LibraryFilterField,
@@ -35,13 +35,13 @@ export const COLLECTION_MEDIA_TYPE: Record<LibraryMediaType, number> = {
 };
 
 export const LIBRARY_FILTER_FIELDS = Object.values(
-  CUSTOM_COLLECTIONS.filter_field,
+  SMART_COLLECTIONS.filter_field,
 ).map((field) => ({
   value: field.value,
   label: field.display_value,
 }));
 
-export const LIBRARY_OPERATORS = Object.entries(CUSTOM_COLLECTIONS.operator).map(
+export const LIBRARY_OPERATORS = Object.entries(SMART_COLLECTIONS.operator).map(
   ([key, operator]) => ({
     value: Number(key) as LibraryOperator,
     label: operator.display_value,
@@ -64,7 +64,7 @@ export const LIBRARY_OPERATORS_BY_FIELD: Record<
 
 export const LIBRARY_GROUP_OPTIONS = [
   { value: "", label: "None" },
-  ...Object.entries(CUSTOM_COLLECTIONS.group_by).map(([key, group]) => ({
+  ...Object.entries(SMART_COLLECTIONS.group_by).map(([key, group]) => ({
     value: key,
     label: group.display_value,
   })),

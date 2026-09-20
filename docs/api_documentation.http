@@ -147,7 +147,7 @@ GET /api/library?type=movie&filter_field=impression&filter_operator=0&filter_val
 #   "collections": DashboardCollection[]
 # }
 #
-# DashboardCollection: CustomCollection plus
+# DashboardCollection: SmartCollection plus
 #   preview: {
 #     "movies": LibraryMovie[],
 #     "series": LibrarySeries[],
@@ -245,9 +245,9 @@ Content-Type: application/json
 
 ### List collections
 # Requires cookie. Ordered by displayOrder ascending, then createdAt descending.
-# Response: { "collections": CustomCollection[] }
+# Response: { "collections": SmartCollection[] }
 #
-# CustomCollection: id, userId, name, mediaType, showInDashboard,
+# SmartCollection: id, userId, name, mediaType, showInDashboard,
 #   showInLibrary, groupBy, displayOrder, createdAt, updatedAt,
 #   filters[], sorts[]
 #
@@ -273,7 +273,7 @@ GET /api/collections
 #   last_watched_at, completed_at
 #
 # displayOrder defaults to 0; when 0, the server assigns the next order.
-# Response 201: { "collection": CustomCollection }
+# Response 201: { "collection": SmartCollection }
 POST /api/collections
 Content-Type: application/json
 
@@ -323,7 +323,7 @@ Content-Type: application/json
 
 ### Get collection
 # Requires cookie. 404 if missing or not owned by the current user.
-# Response: { "collection": CustomCollection }
+# Response: { "collection": SmartCollection }
 GET /api/collections/{{collectionId}}
 
 ### Get collection items
@@ -338,7 +338,7 @@ GET /api/collections/{{collectionId}}
 #   group_key (optional; page one group when collection groupBy is set)
 #
 # Response: {
-#   "collection": CustomCollection,
+#   "collection": SmartCollection,
 #   "movies": LibraryMovie[],
 #   "series": LibrarySeries[],
 #   "metadata": LibraryMetadata
@@ -360,7 +360,7 @@ GET /api/collections/{{collectionId}}/items?group_key=2&offset=0&limit=15
 # contain 0–3 items (AND-combined). Sending filters or sorts replaces the full list
 # (existing ids are not reused). groupBy/showInDashboard/showInLibrary rules
 # apply when any of those fields are sent.
-# Response: { "collection": CustomCollection }
+# Response: { "collection": SmartCollection }
 PUT /api/collections/{{collectionId}}
 Content-Type: application/json
 
@@ -387,7 +387,7 @@ Content-Type: application/json
 # Requires cookie. Body orderedIds must list every collection id for the user
 # exactly once, in the desired displayOrder (0-based). 400 if ids are missing,
 # unknown, or duplicated.
-# Response: { "collections": CustomCollection[] }
+# Response: { "collections": SmartCollection[] }
 PATCH /api/collections/reorder
 Content-Type: application/json
 
@@ -398,5 +398,5 @@ Content-Type: application/json
 ### Delete collection
 # Requires cookie. Deletes the collection and renormalizes displayOrder on
 # remaining collections to 0…n-1. 404 if missing or not owned by the user.
-# Response: { "collections": CustomCollection[] }
+# Response: { "collections": SmartCollection[] }
 DELETE /api/collections/{{collectionId}}

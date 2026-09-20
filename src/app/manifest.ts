@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "CineLog - Your Personal Movie Log",
     short_name: "CineLog",
     description:
-      "Track movies, TV series, build custom collections, and log your cinema journey.",
+      "Track movies, TV series, build smart collections, and log your cinema journey.",
     start_url: "/",
     id: "/",
     display: "standalone",

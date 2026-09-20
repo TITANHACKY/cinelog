@@ -1,9 +1,110 @@
 {
+  "id": "da9e9062-c103-452e-880d-400d0c9c37be",
+  "prevId": "f630e82a-4f53-4049-a09c-c997a5a53bcd",
   "version": "6",
   "dialect": "sqlite",
-  "id": "eeea775b-d78a-4891-849a-87f8acb57d48",
-  "prevId": "f630e82a-4f53-4049-a09c-c997a5a53bcd",
   "tables": {
+    "creators": {
+      "name": "creators",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tmdb_id": {
+          "name": "tmdb_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "creators_tmdb_id_unique": {
+          "name": "creators_tmdb_id_unique",
+          "columns": [
+            "tmdb_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "credits": {
+      "name": "credits",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tmdb_id": {
+          "name": "tmdb_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "known_for_department": {
+          "name": "known_for_department",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "credits_tmdb_id_unique": {
+          "name": "credits_tmdb_id_unique",
+          "columns": [
+            "tmdb_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "custom_collection_filters": {
       "name": "custom_collection_filters",
       "columns": {
@@ -56,25 +157,20 @@
         "custom_collection_filters_custom_collection_id_custom_collections_id_fk": {
           "name": "custom_collection_filters_custom_collection_id_custom_collections_id_fk",
           "tableFrom": "custom_collection_filters",
-          "tableTo": "custom_collections",
           "columnsFrom": [
             "custom_collection_id"
           ],
+          "tableTo": "custom_collections",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "custom_collection_filters_operator_check": {
-          "name": "custom_collection_filters_operator_check",
-          "value": "\"custom_collection_filters\".\"operator\" BETWEEN 0 AND 5"
-        }
-      }
+      "checkConstraints": {}
     },
     "custom_collection_sorts": {
       "name": "custom_collection_sorts",
@@ -128,25 +224,20 @@
         "custom_collection_sorts_custom_collection_id_custom_collections_id_fk": {
           "name": "custom_collection_sorts_custom_collection_id_custom_collections_id_fk",
           "tableFrom": "custom_collection_sorts",
-          "tableTo": "custom_collections",
           "columnsFrom": [
             "custom_collection_id"
           ],
+          "tableTo": "custom_collections",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "custom_collection_sorts_direction_check": {
-          "name": "custom_collection_sorts_direction_check",
-          "value": "\"custom_collection_sorts\".\"direction\" IN (0, 1)"
-        }
-      }
+      "checkConstraints": {}
     },
     "custom_collections": {
       "name": "custom_collections",
@@ -239,15 +330,15 @@
         "custom_collections_user_id_users_id_fk": {
           "name": "custom_collections_user_id_users_id_fk",
           "tableFrom": "custom_collections",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -257,17 +348,9 @@
           "name": "custom_collections_group_by_check",
           "value": "\"custom_collections\".\"group_by\" IS NULL OR (\"custom_collections\".\"show_in_dashboard\" = 0 AND \"custom_collections\".\"show_in_library\" = 1)"
         },
-        "custom_collections_group_by_values_check": {
-          "name": "custom_collections_group_by_values_check",
-          "value": "\"custom_collections\".\"group_by\" IS NULL OR \"custom_collections\".\"group_by\" IN (0, 1, 2)"
-        },
         "custom_collections_media_type_check": {
           "name": "custom_collections_media_type_check",
           "value": "\"custom_collections\".\"media_type\" IN (0, 1)"
-        },
-        "custom_collections_name_length_check": {
-          "name": "custom_collections_name_length_check",
-          "value": "length(\"custom_collections\".\"name\") <= 100"
         }
       }
     },
@@ -335,6 +418,50 @@
           "notNull": true,
           "autoincrement": false
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "watch_status": {
+          "name": "watch_status",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "impression": {
+          "name": "impression",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "title": {
           "name": "title",
           "type": "text",
@@ -390,6 +517,80 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        }
+      },
+      "indexes": {
+        "movies_tmdb_id_index": {
+          "name": "movies_tmdb_id_index",
+          "columns": [
+            "tmdb_id"
+          ],
+          "isUnique": false
+        },
+        "movies_user_id_tmdb_id_unique": {
+          "name": "movies_user_id_tmdb_id_unique",
+          "columns": [
+            "user_id",
+            "tmdb_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "movies_user_id_users_id_fk": {
+          "name": "movies_user_id_users_id_fk",
+          "tableFrom": "movies",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "movies_watch_status_check": {
+          "name": "movies_watch_status_check",
+          "value": "\"movies\".\"watch_status\" IN (0, 1, 2, 3)"
+        },
+        "movies_impression_check": {
+          "name": "movies_impression_check",
+          "value": "\"movies\".\"impression\" IN (0, 1, 2)"
+        },
+        "movies_status_check": {
+          "name": "movies_status_check",
+          "value": "\"movies\".\"status\" IS NULL OR \"movies\".\"status\" IN ('rumored', 'planned', 'in_production', 'post_production', 'released', 'canceled')"
+        }
+      }
+    },
+    "movies_to_credits": {
+      "name": "movies_to_credits",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "movie_id": {
+          "name": "movie_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "credit_id": {
+          "name": "credit_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
@@ -398,44 +599,63 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(unixepoch())"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
-        "movies_tmdb_id_unique": {
-          "name": "movies_tmdb_id_unique",
+        "movies_to_credits_unique": {
+          "name": "movies_to_credits_unique",
           "columns": [
-            "tmdb_id"
+            "movie_id",
+            "credit_id"
           ],
           "isUnique": true
         },
-        "movies_status_index": {
-          "name": "movies_status_index",
+        "movies_to_credits_movie_id_index": {
+          "name": "movies_to_credits_movie_id_index",
           "columns": [
-            "status"
+            "movie_id"
+          ],
+          "isUnique": false
+        },
+        "movies_to_credits_credit_id_index": {
+          "name": "movies_to_credits_credit_id_index",
+          "columns": [
+            "credit_id"
           ],
           "isUnique": false
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "movies_to_credits_movie_id_movies_id_fk": {
+          "name": "movies_to_credits_movie_id_movies_id_fk",
+          "tableFrom": "movies_to_credits",
+          "columnsFrom": [
+            "movie_id"
+          ],
+          "tableTo": "movies",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "movies_to_credits_credit_id_credits_id_fk": {
+          "name": "movies_to_credits_credit_id_credits_id_fk",
+          "tableFrom": "movies_to_credits",
+          "columnsFrom": [
+            "credit_id"
+          ],
+          "tableTo": "credits",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "movies_status_check": {
-          "name": "movies_status_check",
-          "value": "\"movies\".\"status\" IS NULL OR \"movies\".\"status\" IN ('rumored', 'planned', 'in_production', 'post_production', 'released', 'canceled')"
-        },
-        "movies_vote_average_check": {
-          "name": "movies_vote_average_check",
-          "value": "\"movies\".\"vote_average\" IS NULL OR (\"movies\".\"vote_average\" >= 0 AND \"movies\".\"vote_average\" <= 10)"
-        }
-      }
+      "checkConstraints": {}
     },
     "movies_to_genres": {
       "name": "movies_to_genres",
@@ -484,30 +704,173 @@
         "movies_to_genres_movie_id_movies_id_fk": {
           "name": "movies_to_genres_movie_id_movies_id_fk",
           "tableFrom": "movies_to_genres",
-          "tableTo": "movies",
           "columnsFrom": [
             "movie_id"
           ],
+          "tableTo": "movies",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "movies_to_genres_genres_id_genres_id_fk": {
           "name": "movies_to_genres_genres_id_genres_id_fk",
           "tableFrom": "movies_to_genres",
-          "tableTo": "genres",
           "columnsFrom": [
             "genres_id"
           ],
+          "tableTo": "genres",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "movies_to_production_companies": {
+      "name": "movies_to_production_companies",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "movie_id": {
+          "name": "movie_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "company_id": {
+          "name": "company_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "movies_to_production_companies_unique": {
+          "name": "movies_to_production_companies_unique",
+          "columns": [
+            "movie_id",
+            "company_id"
+          ],
+          "isUnique": true
+        },
+        "movies_to_production_companies_movie_id_index": {
+          "name": "movies_to_production_companies_movie_id_index",
+          "columns": [
+            "movie_id"
+          ],
+          "isUnique": false
+        },
+        "movies_to_production_companies_company_id_index": {
+          "name": "movies_to_production_companies_company_id_index",
+          "columns": [
+            "company_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "movies_to_production_companies_movie_id_movies_id_fk": {
+          "name": "movies_to_production_companies_movie_id_movies_id_fk",
+          "tableFrom": "movies_to_production_companies",
+          "columnsFrom": [
+            "movie_id"
+          ],
+          "tableTo": "movies",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "movies_to_production_companies_company_id_production_companies_id_fk": {
+          "name": "movies_to_production_companies_company_id_production_companies_id_fk",
+          "tableFrom": "movies_to_production_companies",
+          "columnsFrom": [
+            "company_id"
+          ],
+          "tableTo": "production_companies",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "production_companies": {
+      "name": "production_companies",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tmdb_id": {
+          "name": "tmdb_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "origin_country": {
+          "name": "origin_country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "production_companies_tmdb_id_unique": {
+          "name": "production_companies_tmdb_id_unique",
+          "columns": [
+            "tmdb_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -564,13 +927,34 @@
           "notNull": false,
           "autoincrement": false
         },
+        "episodes_watched": {
+          "name": "episodes_watched",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "last_watched_at": {
+          "name": "last_watched_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "numeric",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "autoincrement": false
         },
         "updated_at": {
           "name": "updated_at",
@@ -581,15 +965,15 @@
         }
       },
       "indexes": {
-        "seasons_catalog_tmdb_id_index": {
-          "name": "seasons_catalog_tmdb_id_index",
+        "seasons_tmdb_id_index": {
+          "name": "seasons_tmdb_id_index",
           "columns": [
             "tmdb_id"
           ],
           "isUnique": false
         },
-        "seasons_catalog_series_id_index": {
-          "name": "seasons_catalog_series_id_index",
+        "seasons_series_id_index": {
+          "name": "seasons_series_id_index",
           "columns": [
             "series_id"
           ],
@@ -608,27 +992,27 @@
         "seasons_series_id_series_id_fk": {
           "name": "seasons_series_id_series_id_fk",
           "tableFrom": "seasons",
-          "tableTo": "series",
           "columnsFrom": [
             "series_id"
           ],
+          "tableTo": "series",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {
-        "seasons_season_number_check": {
-          "name": "seasons_season_number_check",
-          "value": "\"seasons\".\"season_number\" >= 0"
-        },
         "seasons_episode_count_check": {
           "name": "seasons_episode_count_check",
           "value": "\"seasons\".\"episode_count\" >= 0"
+        },
+        "seasons_episodes_watched_check": {
+          "name": "seasons_episodes_watched_check",
+          "value": "\"seasons\".\"episodes_watched\" >= 0 AND \"seasons\".\"episodes_watched\" <= \"seasons\".\"episode_count\""
         }
       }
     },
@@ -649,18 +1033,62 @@
           "notNull": true,
           "autoincrement": false
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "watch_status": {
+          "name": "watch_status",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "impression": {
+          "name": "impression",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "last_watched_at": {
+          "name": "last_watched_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "name": {
           "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        },
-        "poster_path": {
-          "name": "poster_path",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
         },
         "first_air_date": {
@@ -687,6 +1115,27 @@
         "total_number_of_seasons": {
           "name": "total_number_of_seasons",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "total_number_of_episodes_watched": {
+          "name": "total_number_of_episodes_watched",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "total_number_of_seasons_watched": {
+          "name": "total_number_of_seasons_watched",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "poster_path": {
+          "name": "poster_path",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -732,6 +1181,80 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        }
+      },
+      "indexes": {
+        "series_tmdb_id_index": {
+          "name": "series_tmdb_id_index",
+          "columns": [
+            "tmdb_id"
+          ],
+          "isUnique": false
+        },
+        "series_user_id_tmdb_id_unique": {
+          "name": "series_user_id_tmdb_id_unique",
+          "columns": [
+            "user_id",
+            "tmdb_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "series_user_id_users_id_fk": {
+          "name": "series_user_id_users_id_fk",
+          "tableFrom": "series",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "series_watch_status_check": {
+          "name": "series_watch_status_check",
+          "value": "\"series\".\"watch_status\" IN (0, 1, 2, 3)"
+        },
+        "series_impression_check": {
+          "name": "series_impression_check",
+          "value": "\"series\".\"impression\" IN (0, 1, 2)"
+        },
+        "series_status_check": {
+          "name": "series_status_check",
+          "value": "\"series\".\"status\" IS NULL OR \"series\".\"status\" IN ('returning_series', 'planned', 'in_production', 'ended', 'canceled', 'pilot')"
+        }
+      }
+    },
+    "series_to_creators": {
+      "name": "series_to_creators",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "series_id": {
+          "name": "series_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "creator_id": {
+          "name": "creator_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
@@ -740,52 +1263,152 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(unixepoch())"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
-        "series_tmdb_id_unique": {
-          "name": "series_tmdb_id_unique",
+        "series_to_creators_unique": {
+          "name": "series_to_creators_unique",
           "columns": [
-            "tmdb_id"
+            "series_id",
+            "creator_id"
           ],
           "isUnique": true
         },
-        "series_status_index": {
-          "name": "series_status_index",
+        "series_to_creators_series_id_index": {
+          "name": "series_to_creators_series_id_index",
           "columns": [
-            "status"
+            "series_id"
+          ],
+          "isUnique": false
+        },
+        "series_to_creators_creator_id_index": {
+          "name": "series_to_creators_creator_id_index",
+          "columns": [
+            "creator_id"
           ],
           "isUnique": false
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "series_to_creators_series_id_series_id_fk": {
+          "name": "series_to_creators_series_id_series_id_fk",
+          "tableFrom": "series_to_creators",
+          "columnsFrom": [
+            "series_id"
+          ],
+          "tableTo": "series",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "series_to_creators_creator_id_creators_id_fk": {
+          "name": "series_to_creators_creator_id_creators_id_fk",
+          "tableFrom": "series_to_creators",
+          "columnsFrom": [
+            "creator_id"
+          ],
+          "tableTo": "creators",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "series_status_check": {
-          "name": "series_status_check",
-          "value": "\"series\".\"status\" IS NULL OR \"series\".\"status\" IN ('returning_series', 'planned', 'in_production', 'ended', 'canceled', 'pilot')"
+      "checkConstraints": {}
+    },
+    "series_to_credits": {
+      "name": "series_to_credits",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
         },
-        "series_total_episodes_check": {
-          "name": "series_total_episodes_check",
-          "value": "\"series\".\"total_number_of_episodes\" IS NULL OR \"series\".\"total_number_of_episodes\" >= 0"
+        "series_id": {
+          "name": "series_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
-        "series_total_seasons_check": {
-          "name": "series_total_seasons_check",
-          "value": "\"series\".\"total_number_of_seasons\" IS NULL OR \"series\".\"total_number_of_seasons\" >= 0"
+        "credit_id": {
+          "name": "credit_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
-        "series_vote_average_check": {
-          "name": "series_vote_average_check",
-          "value": "\"series\".\"vote_average\" IS NULL OR (\"series\".\"vote_average\" >= 0 AND \"series\".\"vote_average\" <= 10)"
+        "created_at": {
+          "name": "created_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
         }
-      }
+      },
+      "indexes": {
+        "series_to_credits_unique": {
+          "name": "series_to_credits_unique",
+          "columns": [
+            "series_id",
+            "credit_id"
+          ],
+          "isUnique": true
+        },
+        "series_to_credits_series_id_index": {
+          "name": "series_to_credits_series_id_index",
+          "columns": [
+            "series_id"
+          ],
+          "isUnique": false
+        },
+        "series_to_credits_credit_id_index": {
+          "name": "series_to_credits_credit_id_index",
+          "columns": [
+            "credit_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "series_to_credits_series_id_series_id_fk": {
+          "name": "series_to_credits_series_id_series_id_fk",
+          "tableFrom": "series_to_credits",
+          "columnsFrom": [
+            "series_id"
+          ],
+          "tableTo": "series",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "series_to_credits_credit_id_credits_id_fk": {
+          "name": "series_to_credits_credit_id_credits_id_fk",
+          "tableFrom": "series_to_credits",
+          "columnsFrom": [
+            "credit_id"
+          ],
+          "tableTo": "credits",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "series_to_genres": {
       "name": "series_to_genres",
@@ -834,36 +1457,36 @@
         "series_to_genres_series_id_series_id_fk": {
           "name": "series_to_genres_series_id_series_id_fk",
           "tableFrom": "series_to_genres",
-          "tableTo": "series",
           "columnsFrom": [
             "series_id"
           ],
+          "tableTo": "series",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "series_to_genres_genres_id_genres_id_fk": {
           "name": "series_to_genres_genres_id_genres_id_fk",
           "tableFrom": "series_to_genres",
-          "tableTo": "genres",
           "columnsFrom": [
             "genres_id"
           ],
+          "tableTo": "genres",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "user_movies": {
-      "name": "user_movies",
+    "series_to_production_companies": {
+      "name": "series_to_production_companies",
       "columns": {
         "id": {
           "name": "id",
@@ -871,583 +1494,6 @@
           "primaryKey": true,
           "notNull": true,
           "autoincrement": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "movie_id": {
-          "name": "movie_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "watch_status": {
-          "name": "watch_status",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "impression": {
-          "name": "impression",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch())"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "completed_at": {
-          "name": "completed_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "user_movies_user_id_movie_id_unique": {
-          "name": "user_movies_user_id_movie_id_unique",
-          "columns": [
-            "user_id",
-            "movie_id"
-          ],
-          "isUnique": true
-        },
-        "user_movies_user_id_index": {
-          "name": "user_movies_user_id_index",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        },
-        "user_movies_user_id_created_at_index": {
-          "name": "user_movies_user_id_created_at_index",
-          "columns": [
-            "user_id",
-            "created_at"
-          ],
-          "isUnique": false
-        },
-        "user_movies_user_id_watch_status_index": {
-          "name": "user_movies_user_id_watch_status_index",
-          "columns": [
-            "user_id",
-            "watch_status"
-          ],
-          "isUnique": false
-        },
-        "user_movies_user_id_impression_index": {
-          "name": "user_movies_user_id_impression_index",
-          "columns": [
-            "user_id",
-            "impression"
-          ],
-          "isUnique": false
-        },
-        "user_movies_user_id_completed_at_index": {
-          "name": "user_movies_user_id_completed_at_index",
-          "columns": [
-            "user_id",
-            "completed_at"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "user_movies_user_id_users_id_fk": {
-          "name": "user_movies_user_id_users_id_fk",
-          "tableFrom": "user_movies",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "user_movies_movie_id_movies_id_fk": {
-          "name": "user_movies_movie_id_movies_id_fk",
-          "tableFrom": "user_movies",
-          "tableTo": "movies",
-          "columnsFrom": [
-            "movie_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "user_movies_watch_status_check": {
-          "name": "user_movies_watch_status_check",
-          "value": "\"user_movies\".\"watch_status\" IN (0, 1, 2, 3)"
-        },
-        "user_movies_impression_check": {
-          "name": "user_movies_impression_check",
-          "value": "\"user_movies\".\"impression\" IS NULL OR \"user_movies\".\"impression\" IN (0, 1, 2)"
-        }
-      }
-    },
-    "user_preferences": {
-      "name": "user_preferences",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "media_lean": {
-          "name": "media_lean",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 2
-        },
-        "min_rating": {
-          "name": "min_rating",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "eras": {
-          "name": "eras",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch())"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "user_preferences_user_id_unique": {
-          "name": "user_preferences_user_id_unique",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "user_preferences_user_id_users_id_fk": {
-          "name": "user_preferences_user_id_users_id_fk",
-          "tableFrom": "user_preferences",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "user_preferences_media_lean_check": {
-          "name": "user_preferences_media_lean_check",
-          "value": "\"user_preferences\".\"media_lean\" IN (0, 1, 2)"
-        },
-        "user_preferences_min_rating_check": {
-          "name": "user_preferences_min_rating_check",
-          "value": "\"user_preferences\".\"min_rating\" IS NULL OR (\"user_preferences\".\"min_rating\" >= 0 AND \"user_preferences\".\"min_rating\" <= 10)"
-        }
-      }
-    },
-    "user_preferred_genres": {
-      "name": "user_preferred_genres",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "genre_tmdb_id": {
-          "name": "genre_tmdb_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "user_preferred_genres_user_genre_unique": {
-          "name": "user_preferred_genres_user_genre_unique",
-          "columns": [
-            "user_id",
-            "genre_tmdb_id"
-          ],
-          "isUnique": true
-        },
-        "user_preferred_genres_user_id_index": {
-          "name": "user_preferred_genres_user_id_index",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "user_preferred_genres_user_id_users_id_fk": {
-          "name": "user_preferred_genres_user_id_users_id_fk",
-          "tableFrom": "user_preferred_genres",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "user_preferred_languages": {
-      "name": "user_preferred_languages",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "language_code": {
-          "name": "language_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "user_preferred_languages_user_lang_unique": {
-          "name": "user_preferred_languages_user_lang_unique",
-          "columns": [
-            "user_id",
-            "language_code"
-          ],
-          "isUnique": true
-        },
-        "user_preferred_languages_user_id_index": {
-          "name": "user_preferred_languages_user_id_index",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "user_preferred_languages_user_id_users_id_fk": {
-          "name": "user_preferred_languages_user_id_users_id_fk",
-          "tableFrom": "user_preferred_languages",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "user_season_progress": {
-      "name": "user_season_progress",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "user_series_id": {
-          "name": "user_series_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "season_id": {
-          "name": "season_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "episodes_watched": {
-          "name": "episodes_watched",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "last_watched_at": {
-          "name": "last_watched_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "completed_at": {
-          "name": "completed_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch())"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "user_season_progress_user_series_season_unique": {
-          "name": "user_season_progress_user_series_season_unique",
-          "columns": [
-            "user_series_id",
-            "season_id"
-          ],
-          "isUnique": true
-        },
-        "user_season_progress_user_series_id_index": {
-          "name": "user_season_progress_user_series_id_index",
-          "columns": [
-            "user_series_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "user_season_progress_user_series_id_user_series_id_fk": {
-          "name": "user_season_progress_user_series_id_user_series_id_fk",
-          "tableFrom": "user_season_progress",
-          "tableTo": "user_series",
-          "columnsFrom": [
-            "user_series_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "user_season_progress_season_id_seasons_id_fk": {
-          "name": "user_season_progress_season_id_seasons_id_fk",
-          "tableFrom": "user_season_progress",
-          "tableTo": "seasons",
-          "columnsFrom": [
-            "season_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "user_season_progress_episodes_watched_check": {
-          "name": "user_season_progress_episodes_watched_check",
-          "value": "\"user_season_progress\".\"episodes_watched\" >= 0"
-        }
-      }
-    },
-    "user_seed_titles": {
-      "name": "user_seed_titles",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "tmdb_id": {
-          "name": "tmdb_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "media_type": {
-          "name": "media_type",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "poster_path": {
-          "name": "poster_path",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "user_seed_titles_user_tmdb_media_unique": {
-          "name": "user_seed_titles_user_tmdb_media_unique",
-          "columns": [
-            "user_id",
-            "tmdb_id",
-            "media_type"
-          ],
-          "isUnique": true
-        },
-        "user_seed_titles_user_id_index": {
-          "name": "user_seed_titles_user_id_index",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "user_seed_titles_user_id_users_id_fk": {
-          "name": "user_seed_titles_user_id_users_id_fk",
-          "tableFrom": "user_seed_titles",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "user_seed_titles_media_type_check": {
-          "name": "user_seed_titles_media_type_check",
-          "value": "\"user_seed_titles\".\"media_type\" IN (0, 1)"
-        }
-      }
-    },
-    "user_series": {
-      "name": "user_series",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
         },
         "series_id": {
           "name": "series_id",
@@ -1456,50 +1502,12 @@
           "notNull": true,
           "autoincrement": false
         },
-        "watch_status": {
-          "name": "watch_status",
+        "company_id": {
+          "name": "company_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "impression": {
-          "name": "impression",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
           "autoincrement": false
-        },
-        "last_watched_at": {
-          "name": "last_watched_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "completed_at": {
-          "name": "completed_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "total_number_of_episodes_watched": {
-          "name": "total_number_of_episodes_watched",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "total_number_of_seasons_watched": {
-          "name": "total_number_of_seasons_watched",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
         },
         "created_at": {
           "name": "created_at",
@@ -1508,120 +1516,63 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(unixepoch())"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
-        "user_series_user_id_series_id_unique": {
-          "name": "user_series_user_id_series_id_unique",
+        "series_to_production_companies_unique": {
+          "name": "series_to_production_companies_unique",
           "columns": [
-            "user_id",
-            "series_id"
+            "series_id",
+            "company_id"
           ],
           "isUnique": true
         },
-        "user_series_user_id_index": {
-          "name": "user_series_user_id_index",
+        "series_to_production_companies_series_id_index": {
+          "name": "series_to_production_companies_series_id_index",
           "columns": [
-            "user_id"
+            "series_id"
           ],
           "isUnique": false
         },
-        "user_series_user_id_created_at_index": {
-          "name": "user_series_user_id_created_at_index",
+        "series_to_production_companies_company_id_index": {
+          "name": "series_to_production_companies_company_id_index",
           "columns": [
-            "user_id",
-            "created_at"
-          ],
-          "isUnique": false
-        },
-        "user_series_user_id_watch_status_index": {
-          "name": "user_series_user_id_watch_status_index",
-          "columns": [
-            "user_id",
-            "watch_status"
-          ],
-          "isUnique": false
-        },
-        "user_series_user_id_impression_index": {
-          "name": "user_series_user_id_impression_index",
-          "columns": [
-            "user_id",
-            "impression"
-          ],
-          "isUnique": false
-        },
-        "user_series_user_id_completed_at_index": {
-          "name": "user_series_user_id_completed_at_index",
-          "columns": [
-            "user_id",
-            "completed_at"
-          ],
-          "isUnique": false
-        },
-        "user_series_user_id_last_watched_at_index": {
-          "name": "user_series_user_id_last_watched_at_index",
-          "columns": [
-            "user_id",
-            "last_watched_at"
+            "company_id"
           ],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "user_series_user_id_users_id_fk": {
-          "name": "user_series_user_id_users_id_fk",
-          "tableFrom": "user_series",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "user_series_series_id_series_id_fk": {
-          "name": "user_series_series_id_series_id_fk",
-          "tableFrom": "user_series",
-          "tableTo": "series",
+        "series_to_production_companies_series_id_series_id_fk": {
+          "name": "series_to_production_companies_series_id_series_id_fk",
+          "tableFrom": "series_to_production_companies",
           "columnsFrom": [
             "series_id"
           ],
+          "tableTo": "series",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "series_to_production_companies_company_id_production_companies_id_fk": {
+          "name": "series_to_production_companies_company_id_production_companies_id_fk",
+          "tableFrom": "series_to_production_companies",
+          "columnsFrom": [
+            "company_id"
+          ],
+          "tableTo": "production_companies",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "user_series_watch_status_check": {
-          "name": "user_series_watch_status_check",
-          "value": "\"user_series\".\"watch_status\" IN (0, 1, 2, 3)"
-        },
-        "user_series_impression_check": {
-          "name": "user_series_impression_check",
-          "value": "\"user_series\".\"impression\" IS NULL OR \"user_series\".\"impression\" IN (0, 1, 2)"
-        },
-        "user_series_total_episodes_watched_check": {
-          "name": "user_series_total_episodes_watched_check",
-          "value": "\"user_series\".\"total_number_of_episodes_watched\" >= 0"
-        },
-        "user_series_total_seasons_watched_check": {
-          "name": "user_series_total_seasons_watched_check",
-          "value": "\"user_series\".\"total_number_of_seasons_watched\" >= 0"
-        }
-      }
+      "checkConstraints": {}
     },
     "users": {
       "name": "users",
@@ -1675,13 +1626,6 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        },
-        "onboarding_completed_at": {
-          "name": "onboarding_completed_at",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {
@@ -1709,9 +1653,9 @@
   "views": {},
   "enums": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {},
-    "columns": {}
+    "tables": {}
   },
   "internal": {
     "indexes": {}

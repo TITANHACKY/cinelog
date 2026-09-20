@@ -165,7 +165,7 @@ type LibrarySeries = {
 
 type CollectionFilterItem = {
   id?: number;
-  customCollectionId?: number;
+  smartCollectionId?: number;
   field: string;
   operator: number;
   value: string;
@@ -173,13 +173,13 @@ type CollectionFilterItem = {
 
 type CollectionSortItem = {
   id?: number;
-  customCollectionId?: number;
+  smartCollectionId?: number;
   field: string;
   direction: number;
   priority: number;
 };
 
-type CustomCollectionWithFilters = {
+type SmartCollectionWithFilters = {
   id: number;
   userId: number;
   name: string;
@@ -198,7 +198,6 @@ export type {
   CollectionFilterItem,
   CollectionSortItem,
   CreditMember,
-  CustomCollectionWithFilters,
   LibraryCount,
   LibraryGroup,
   LibraryMetadata,
@@ -208,4 +207,5 @@ export type {
   MovieDetails,
   SeriesDetails,
   SeriesSeason,
+  SmartCollectionWithFilters,
 };

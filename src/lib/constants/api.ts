@@ -16,7 +16,7 @@ export const DIRECT_VALIDATION_MESSAGES = new Set([
 
 export const MUTATING_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"]);
 
-export const CUSTOM_COLLECTIONS = {
+export const SMART_COLLECTIONS = {
   media_type: {
     0: { value: "movie", display_value: "Movie" },
     1: { value: "series", display_value: "Series" },

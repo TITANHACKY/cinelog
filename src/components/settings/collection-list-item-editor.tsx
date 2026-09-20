@@ -15,14 +15,14 @@ import { defaultFilterValue } from "@/lib/media/library-browse";
 import type {
   CollectionFilterItem,
   CollectionSortItem,
-  CustomCollectionWithFilters,
   LibraryMediaType,
+  SmartCollectionWithFilters,
 } from "@/lib/types";
 import { Loader2, Plus } from "lucide-react";
 import { useState } from "react";
 
 type CollectionListItemEditorProps = {
-  collection?: CustomCollectionWithFilters;
+  collection?: SmartCollectionWithFilters;
   onCancel: () => void;
   onSave: (payload: {
     name: string;

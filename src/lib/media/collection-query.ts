@@ -1,11 +1,11 @@
-import type { CustomCollectionWithFilters } from "@/lib/types";
+import type { SmartCollectionWithFilters } from "@/lib/types";
 import type {
   LibraryFilterClause,
   LibraryQueryInput,
 } from "@/lib/validations/library";
 
 export function collectionToLibraryQuery(
-  collection: CustomCollectionWithFilters,
+  collection: SmartCollectionWithFilters,
   options?: {
     offset?: number;
     limit?: number;

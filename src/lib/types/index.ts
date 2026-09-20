@@ -16,7 +16,7 @@ export type {
   CollectionFilterItem,
   CollectionSortItem,
   CreditMember,
-  CustomCollectionWithFilters,
+  SmartCollectionWithFilters,
   LibraryCount,
   LibraryGroup,
   LibraryMetadata,

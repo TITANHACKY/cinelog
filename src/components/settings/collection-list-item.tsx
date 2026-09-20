@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { FilterQueryChips } from "@/components/ui/filter-query-chips";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { LIBRARY_GROUP_OPTIONS } from "@/lib/constants";
-import type { CustomCollectionWithFilters } from "@/lib/types";
+import type { SmartCollectionWithFilters } from "@/lib/types";
 import { ChevronDown, GripVertical, Trash2 } from "lucide-react";
 import { useState, type DragEvent } from "react";
 
 type CollectionListItemProps = {
-  collection: CustomCollectionWithFilters;
+  collection: SmartCollectionWithFilters;
   index: number;
   isDragging: boolean;
   isExpanded: boolean;
