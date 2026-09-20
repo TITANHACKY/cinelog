@@ -5,11 +5,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { CollectionListItem } from "@/components/settings/collection-list-item";
 import { CollectionListItemEditor } from "@/components/settings/collection-list-item-editor";
-import { useCustomCollections } from "@/hooks/settings/use-custom-collections";
+import { useSmartCollections } from "@/hooks/settings/use-smart-collections";
 import { Layers, Plus } from "lucide-react";
 import { useState } from "react";
 
-export function CustomCollectionsSection() {
+export function SmartCollectionsSection() {
   const {
     collections,
     isLoading,
@@ -17,7 +17,7 @@ export function CustomCollectionsSection() {
     deleteCollection,
     reorderCollections,
     patchCollection,
-  } = useCustomCollections();
+  } = useSmartCollections();
 
   const [expandedId, setExpandedId] = useState<number | "create" | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -44,7 +44,7 @@ export function CustomCollectionsSection() {
 
   return (
     <section
-      aria-labelledby="custom-collections-heading"
+      aria-labelledby="smart-collections-heading"
       className="relative w-full space-y-6"
     >
       <div
@@ -56,9 +56,9 @@ export function CustomCollectionsSection() {
           <div className="flex flex-wrap items-center gap-3">
             <h2
               className="font-heading text-xl font-semibold tracking-tight text-on-surface sm:text-2xl"
-              id="custom-collections-heading"
+              id="smart-collections-heading"
             >
-              Custom Collections
+              Smart Collections
             </h2>
             <span className="inline-flex items-center rounded-md border border-brand-tertiary-accent/30 bg-brand-tertiary-accent/10 px-2.5 py-0.5 font-public-sans text-xs font-semibold text-brand-tertiary-accent">
               {activeCount} Active

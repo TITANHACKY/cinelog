@@ -1,13 +1,13 @@
 import { getCollectionLibraryItems, getUserCollections } from "@/services/collections";
 import { getLibrary } from "@/services/library";
 import type {
-  CustomCollectionWithFilters,
   LibraryMetadata,
   LibraryMovie,
   LibrarySeries,
+  SmartCollectionWithFilters,
 } from "@/lib/types";
 
-export type DashboardCollection = CustomCollectionWithFilters & {
+export type DashboardCollection = SmartCollectionWithFilters & {
   preview: {
     movies: LibraryMovie[];
     series: LibrarySeries[];

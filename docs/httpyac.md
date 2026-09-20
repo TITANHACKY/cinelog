@@ -136,7 +136,7 @@ Only the requested `type` array is filled. `metadata.count` is the **filtered** 
 | --- | --- | --- | --- |
 | PATCH | `/api/user/profile` | Cookie | At least one of `username`, `email`, `displayName`, `newPassword`. `currentPassword` is required to set a new password. 409 if username/email taken. Changing username refreshes the cookie. |
 
-### Custom collections
+### Smart collections
 
 | Method | Path | Auth | Notes |
 | --- | --- | --- | --- |

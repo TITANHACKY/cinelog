@@ -65,7 +65,7 @@ const FEATURES = [
     icon: ListFilter,
     title: "Smart Collections",
     description:
-      "Build custom filter-driven collections with auto-updating query pipelines that keep your lists fresh.",
+      "Build filter-driven smart collections with auto-updating query pipelines that keep your lists fresh.",
     color: "text-brand-tertiary",
     bg: "bg-brand-tertiary-container/15",
     border: "border-brand-tertiary/20",

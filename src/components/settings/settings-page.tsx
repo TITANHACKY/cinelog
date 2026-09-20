@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CustomCollectionsSection } from "@/components/settings/custom-collections-section";
+import { SmartCollectionsSection } from "@/components/settings/smart-collections-section";
 import { UserProfileSection } from "@/components/settings/user-profile-section";
 import { SlidersHorizontal, User } from "lucide-react";
 
@@ -37,7 +37,7 @@ export function SettingsPage() {
               }`}
             >
               <SlidersHorizontal className="h-4 w-4 shrink-0" />
-              Custom Collections
+              Smart Collections
             </button>
             <button
               type="button"
@@ -56,7 +56,7 @@ export function SettingsPage() {
 
         <div className="pt-2">
           {activeTab === "collections" ? (
-            <CustomCollectionsSection />
+            <SmartCollectionsSection />
           ) : (
             <UserProfileSection />
           )}
