@@ -36,7 +36,7 @@ export function HomePage() {
                   {displayName ? `Welcome ${displayName}!` : "Welcome"}
                 </h1>
                 <p className="mt-1 max-w-xl font-public-sans text-xs text-secondary sm:mt-2 sm:text-sm">
-                  Track your movies and series, and browse custom collection
+                  Track your movies and series, and browse smart collection
                   carousels from your watchlist.
                 </p>
               </div>
@@ -97,7 +97,7 @@ export function HomePage() {
                   Personalize Your Dashboard Streams
                 </h3>
                 <p className="mt-0.5 font-public-sans text-xs text-secondary">
-                  Create custom collections in Settings with filter rules
+                  Create smart collections in Settings with filter rules
                   (genres, years, ratings) to feature live rows right here.
                 </p>
               </div>

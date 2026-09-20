@@ -1,10 +1,10 @@
 import { z } from "zod";
 import {
-  CUSTOM_COLLECTIONS,
   IMPRESSION,
   LIBRARY_OPERATORS_BY_FIELD,
   LIBRARY_PAGE_SIZE,
   LIBRARY_PAGE_SIZE_MAX,
+  SMART_COLLECTIONS,
   WATCH_STATUS,
 } from "@/lib/constants";
 
@@ -98,13 +98,13 @@ function emptyToUndefined(value: unknown) {
   return value;
 }
 
-const filterFields = Object.keys(CUSTOM_COLLECTIONS.filter_field) as [
-  keyof typeof CUSTOM_COLLECTIONS.filter_field,
-  ...(keyof typeof CUSTOM_COLLECTIONS.filter_field)[],
+const filterFields = Object.keys(SMART_COLLECTIONS.filter_field) as [
+  keyof typeof SMART_COLLECTIONS.filter_field,
+  ...(keyof typeof SMART_COLLECTIONS.filter_field)[],
 ];
-const sortFields = Object.keys(CUSTOM_COLLECTIONS.sort_field) as [
-  keyof typeof CUSTOM_COLLECTIONS.sort_field,
-  ...(keyof typeof CUSTOM_COLLECTIONS.sort_field)[],
+const sortFields = Object.keys(SMART_COLLECTIONS.sort_field) as [
+  keyof typeof SMART_COLLECTIONS.sort_field,
+  ...(keyof typeof SMART_COLLECTIONS.sort_field)[],
 ];
 
 export const libraryQuerySchema = z

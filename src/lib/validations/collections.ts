@@ -1,13 +1,13 @@
 import { z } from "zod";
-import { CUSTOM_COLLECTIONS, MAX_COLLECTION_FILTERS } from "@/lib/constants/api";
+import { SMART_COLLECTIONS, MAX_COLLECTION_FILTERS } from "@/lib/constants/api";
 
-const filterFields = Object.keys(CUSTOM_COLLECTIONS.filter_field) as [
-  keyof typeof CUSTOM_COLLECTIONS.filter_field,
-  ...(keyof typeof CUSTOM_COLLECTIONS.filter_field)[],
+const filterFields = Object.keys(SMART_COLLECTIONS.filter_field) as [
+  keyof typeof SMART_COLLECTIONS.filter_field,
+  ...(keyof typeof SMART_COLLECTIONS.filter_field)[],
 ];
-const sortFields = Object.keys(CUSTOM_COLLECTIONS.sort_field) as [
-  keyof typeof CUSTOM_COLLECTIONS.sort_field,
-  ...(keyof typeof CUSTOM_COLLECTIONS.sort_field)[],
+const sortFields = Object.keys(SMART_COLLECTIONS.sort_field) as [
+  keyof typeof SMART_COLLECTIONS.sort_field,
+  ...(keyof typeof SMART_COLLECTIONS.sort_field)[],
 ];
 
 export const collectionFilterInputSchema = z.object({

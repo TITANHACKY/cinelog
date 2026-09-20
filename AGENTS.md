@@ -14,5 +14,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 2. **Constants vs components.** `src/lib/constants/custom.ts` holds CineLog-specific UI constants (assets, class strings). Never put React components there.
 3. **Hooks vs Redux.** Put event handlers, derived data, and UI-only state in `src/hooks/` (grouped by feature). Use Redux only for shared or async store slices (auth, library, search, content details, toast). Dropdowns, dialogs, tabs, and form drafts stay in local state.
 4. **No shadcn copies.** Do not use Radix, `cva`, `data-slot`, or shadcn compound-slot CSS. Variants are local class maps on the component. Prefer design tokens over hardcoded hex.
-5. **Split only when needed.** Split a feature file when it mixes unrelated responsibilities or becomes hard to maintain. Settings custom collections is the reference for that threshold.
+5. **Split only when needed.** Split a feature file when it mixes unrelated responsibilities or becomes hard to maintain. Settings smart collections is the reference for that threshold.
 6. **Mobile-first.** New UI uses wrapping flex, stacking grids, `min-w-0`, and `dvh` dialogs. Keep tap targets usable on small screens without breaking the desktop layout.

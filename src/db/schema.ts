@@ -342,8 +342,8 @@ export const seriesToGenres = sqliteTable(
   ],
 );
 
-export const customCollections = sqliteTable(
-  "custom_collections",
+export const smartCollections = sqliteTable(
+  "smart_collections",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     userId: integer("user_id")
@@ -366,65 +366,65 @@ export const customCollections = sqliteTable(
   },
   (table) => [
     check(
-      "custom_collections_group_by_check",
+      "smart_collections_group_by_check",
       sql`${table.groupBy} IS NULL OR (${table.showInDashboard} = 0 AND ${table.showInLibrary} = 1)`,
     ),
     check(
-      "custom_collections_group_by_values_check",
+      "smart_collections_group_by_values_check",
       sql`${table.groupBy} IS NULL OR ${table.groupBy} IN (0, 1, 2)`,
     ),
     check(
-      "custom_collections_media_type_check",
+      "smart_collections_media_type_check",
       sql`${table.mediaType} IN (0, 1)`,
     ),
     check(
-      "custom_collections_name_length_check",
+      "smart_collections_name_length_check",
       sql`length(${table.name}) <= 100`,
     ),
-    index("custom_collections_user_id_index").on(table.userId),
+    index("smart_collections_user_id_index").on(table.userId),
   ],
 );
 
-export const customCollectionFilters = sqliteTable(
-  "custom_collection_filters",
+export const smartCollectionFilters = sqliteTable(
+  "smart_collection_filters",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    customCollectionId: integer("custom_collection_id")
+    smartCollectionId: integer("smart_collection_id")
       .notNull()
-      .references(() => customCollections.id, { onDelete: "cascade" }),
+      .references(() => smartCollections.id, { onDelete: "cascade" }),
     field: text("field").notNull(),
     operator: integer("operator").notNull(),
     value: text("value").notNull(),
   },
   (table) => [
     check(
-      "custom_collection_filters_operator_check",
+      "smart_collection_filters_operator_check",
       sql`${table.operator} BETWEEN 0 AND 5`,
     ),
-    index("custom_collection_filters_collection_id_index").on(
-      table.customCollectionId,
+    index("smart_collection_filters_collection_id_index").on(
+      table.smartCollectionId,
     ),
   ],
 );
 
-export const customCollectionSorts = sqliteTable(
-  "custom_collection_sorts",
+export const smartCollectionSorts = sqliteTable(
+  "smart_collection_sorts",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    customCollectionId: integer("custom_collection_id")
+    smartCollectionId: integer("smart_collection_id")
       .notNull()
-      .references(() => customCollections.id, { onDelete: "cascade" }),
+      .references(() => smartCollections.id, { onDelete: "cascade" }),
     field: text("field").notNull(),
     direction: integer("direction").notNull(),
     priority: integer("priority").notNull(),
   },
   (table) => [
     check(
-      "custom_collection_sorts_direction_check",
+      "smart_collection_sorts_direction_check",
       sql`${table.direction} IN (0, 1)`,
     ),
-    index("custom_collection_sorts_collection_id_index").on(
-      table.customCollectionId,
+    index("smart_collection_sorts_collection_id_index").on(
+      table.smartCollectionId,
     ),
   ],
 );
@@ -449,11 +449,9 @@ export type UserSeasonProgress = typeof userSeasonProgress.$inferSelect;
 export type NewUserSeasonProgress = typeof userSeasonProgress.$inferInsert;
 export type SeriesToGenre = typeof seriesToGenres.$inferSelect;
 export type NewSeriesToGenre = typeof seriesToGenres.$inferInsert;
-export type CustomCollection = typeof customCollections.$inferSelect;
-export type NewCustomCollection = typeof customCollections.$inferInsert;
-export type CustomCollectionFilter =
-  typeof customCollectionFilters.$inferSelect;
-export type NewCustomCollectionFilter =
-  typeof customCollectionFilters.$inferInsert;
-export type CustomCollectionSort = typeof customCollectionSorts.$inferSelect;
-export type NewCustomCollectionSort = typeof customCollectionSorts.$inferInsert;
+export type SmartCollection = typeof smartCollections.$inferSelect;
+export type NewSmartCollection = typeof smartCollections.$inferInsert;
+export type SmartCollectionFilter = typeof smartCollectionFilters.$inferSelect;
+export type NewSmartCollectionFilter = typeof smartCollectionFilters.$inferInsert;
+export type SmartCollectionSort = typeof smartCollectionSorts.$inferSelect;
+export type NewSmartCollectionSort = typeof smartCollectionSorts.$inferInsert;

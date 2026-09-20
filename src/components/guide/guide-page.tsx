@@ -89,9 +89,9 @@ const FEATURE_GUIDES = [
     icon: ListFilter,
     title: "Smart Collections",
     description:
-      "Smart Collections are filter-driven, auto-updating lists. Define rules based on genre, watch status, rating, or custom criteria, and CineLog keeps the collection current without manual curation.",
+      "Smart Collections are filter-driven, auto-updating lists. Define rules based on genre, watch status, rating, or specific criteria, and CineLog keeps the collection current without manual curation.",
     tips: [
-      "Create collections from Settings → Custom Collections",
+      "Create collections from Settings → Smart Collections",
       "Each collection can have multiple filter clauses",
       "Collections update automatically as your library changes",
     ],
@@ -122,9 +122,9 @@ const FEATURE_GUIDES = [
     icon: Settings,
     title: "Settings",
     description:
-      "Configure your CineLog experience. Manage your custom collections with advanced filter pipelines, update your display name, email, and password in User Profile & Credentials.",
+      "Configure your CineLog experience. Manage your smart collections with advanced filter pipelines, update your display name, email, and password in User Profile & Credentials.",
     tips: [
-      "Use the tabs to switch between Custom Collections and User Profile",
+      "Use the tabs to switch between Smart Collections and User Profile",
       "Collection filters support nested AND/OR logic",
     ],
   },
@@ -154,7 +154,7 @@ const NAV_ITEMS = [
     icon: Settings,
     label: "Settings",
     path: "/settings",
-    description: "Custom collections, profile, and preferences",
+    description: "Smart collections, profile, and preferences",
   },
 ];
 

@@ -10,7 +10,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useLibraryBrowse } from "@/hooks/library/use-library-browse";
 import { DEFAULT_LIBRARY_BROWSE_QUERY, MEDIA_TYPES } from "@/lib/constants";
 import { browseQueriesEqual } from "@/lib/media/library-browse";
-import type { CustomCollectionWithFilters, LibraryBrowseQuery, LibraryMediaType } from "@/lib/types";
+import type { LibraryBrowseQuery, LibraryMediaType, SmartCollectionWithFilters } from "@/lib/types";
 import { useCallback } from "react";
 
 export type { LibraryMediaType };
@@ -20,7 +20,7 @@ type LibraryFilterControlsProps = {
   seriesCount: number;
   mediaType: LibraryMediaType;
   onMediaTypeChange?: (mediaType: LibraryMediaType) => void;
-  libraryCollections: CustomCollectionWithFilters[];
+  libraryCollections: SmartCollectionWithFilters[];
   selectedCollectionId: number | null;
   onCollectionChange: (collectionId: number | null) => void;
 };

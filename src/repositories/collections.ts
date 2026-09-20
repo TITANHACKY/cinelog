@@ -1,21 +1,21 @@
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { asBatch, getDb, type SqliteBatchQuery } from "@/db";
 import {
-  customCollectionFilters,
-  customCollections,
-  customCollectionSorts,
+  smartCollectionFilters,
+  smartCollections,
+  smartCollectionSorts,
 } from "@/db/schema";
 import type {
   CreateCollectionInput,
   UpdateCollectionInput,
 } from "@/lib/validations/collections";
-import type { CustomCollectionWithFilters } from "@/lib/types";
+import type { SmartCollectionWithFilters } from "@/lib/types";
 
 function mapCollection(
-  col: typeof customCollections.$inferSelect,
-  filters: (typeof customCollectionFilters.$inferSelect)[],
-  sorts: (typeof customCollectionSorts.$inferSelect)[],
-): CustomCollectionWithFilters {
+  col: typeof smartCollections.$inferSelect,
+  filters: (typeof smartCollectionFilters.$inferSelect)[],
+  sorts: (typeof smartCollectionSorts.$inferSelect)[],
+): SmartCollectionWithFilters {
   return {
     id: col.id,
     userId: col.userId,
@@ -29,14 +29,14 @@ function mapCollection(
     updatedAt: col.updatedAt,
     filters: filters.map((f) => ({
       id: f.id,
-      customCollectionId: f.customCollectionId,
+      smartCollectionId: f.smartCollectionId,
       field: f.field,
       operator: f.operator,
       value: f.value,
     })),
     sorts: sorts.map((s) => ({
       id: s.id,
-      customCollectionId: s.customCollectionId,
+      smartCollectionId: s.smartCollectionId,
       field: s.field,
       direction: s.direction,
       priority: s.priority,
@@ -46,53 +46,53 @@ function mapCollection(
 
 export async function listUserCollections(
   userId: number,
-): Promise<CustomCollectionWithFilters[]> {
+): Promise<SmartCollectionWithFilters[]> {
   const db = getDb();
   const [collections, filters, sorts] = await db.batch([
     db
       .select()
-      .from(customCollections)
-      .where(eq(customCollections.userId, userId))
+      .from(smartCollections)
+      .where(eq(smartCollections.userId, userId))
       .orderBy(
-        asc(customCollections.displayOrder),
-        desc(customCollections.createdAt),
+        asc(smartCollections.displayOrder),
+        desc(smartCollections.createdAt),
       ),
     db
       .select({
-        id: customCollectionFilters.id,
-        customCollectionId: customCollectionFilters.customCollectionId,
-        field: customCollectionFilters.field,
-        operator: customCollectionFilters.operator,
-        value: customCollectionFilters.value,
+        id: smartCollectionFilters.id,
+        smartCollectionId: smartCollectionFilters.smartCollectionId,
+        field: smartCollectionFilters.field,
+        operator: smartCollectionFilters.operator,
+        value: smartCollectionFilters.value,
       })
-      .from(customCollectionFilters)
+      .from(smartCollectionFilters)
       .innerJoin(
-        customCollections,
-        eq(customCollectionFilters.customCollectionId, customCollections.id),
+        smartCollections,
+        eq(smartCollectionFilters.smartCollectionId, smartCollections.id),
       )
-      .where(eq(customCollections.userId, userId)),
+      .where(eq(smartCollections.userId, userId)),
     db
       .select({
-        id: customCollectionSorts.id,
-        customCollectionId: customCollectionSorts.customCollectionId,
-        field: customCollectionSorts.field,
-        direction: customCollectionSorts.direction,
-        priority: customCollectionSorts.priority,
+        id: smartCollectionSorts.id,
+        smartCollectionId: smartCollectionSorts.smartCollectionId,
+        field: smartCollectionSorts.field,
+        direction: smartCollectionSorts.direction,
+        priority: smartCollectionSorts.priority,
       })
-      .from(customCollectionSorts)
+      .from(smartCollectionSorts)
       .innerJoin(
-        customCollections,
-        eq(customCollectionSorts.customCollectionId, customCollections.id),
+        smartCollections,
+        eq(smartCollectionSorts.smartCollectionId, smartCollections.id),
       )
-      .where(eq(customCollections.userId, userId))
-      .orderBy(asc(customCollectionSorts.priority)),
+      .where(eq(smartCollections.userId, userId))
+      .orderBy(asc(smartCollectionSorts.priority)),
   ]);
 
   return collections.map((col) =>
     mapCollection(
       col,
-      filters.filter((f) => f.customCollectionId === col.id),
-      sorts.filter((s) => s.customCollectionId === col.id),
+      filters.filter((f) => f.smartCollectionId === col.id),
+      sorts.filter((s) => s.smartCollectionId === col.id),
     ),
   );
 }
@@ -100,24 +100,24 @@ export async function listUserCollections(
 export async function findUserCollectionById(
   id: number,
   userId: number,
-): Promise<CustomCollectionWithFilters | null> {
+): Promise<SmartCollectionWithFilters | null> {
   const db = getDb();
   const [collectionRows, filters, sorts] = await db.batch([
     db
       .select()
-      .from(customCollections)
+      .from(smartCollections)
       .where(
-        and(eq(customCollections.id, id), eq(customCollections.userId, userId)),
+        and(eq(smartCollections.id, id), eq(smartCollections.userId, userId)),
       ),
     db
       .select()
-      .from(customCollectionFilters)
-      .where(eq(customCollectionFilters.customCollectionId, id)),
+      .from(smartCollectionFilters)
+      .where(eq(smartCollectionFilters.smartCollectionId, id)),
     db
       .select()
-      .from(customCollectionSorts)
-      .where(eq(customCollectionSorts.customCollectionId, id))
-      .orderBy(asc(customCollectionSorts.priority)),
+      .from(smartCollectionSorts)
+      .where(eq(smartCollectionSorts.smartCollectionId, id))
+      .orderBy(asc(smartCollectionSorts.priority)),
   ]);
 
   const collection = collectionRows[0];
@@ -129,13 +129,13 @@ export async function findUserCollectionById(
 export async function insertUserCollection(
   userId: number,
   data: CreateCollectionInput,
-): Promise<CustomCollectionWithFilters> {
+): Promise<SmartCollectionWithFilters> {
   const db = getDb();
-  const collectionIdSql = sql`(select max(${customCollections.id}) from ${customCollections} where ${customCollections.userId} = ${userId})`;
+  const collectionIdSql = sql`(select max(${smartCollections.id}) from ${smartCollections} where ${smartCollections.userId} = ${userId})`;
 
   const queries: SqliteBatchQuery[] = [
     db
-      .insert(customCollections)
+      .insert(smartCollections)
       .values({
         userId,
         name: data.name,
@@ -151,10 +151,10 @@ export async function insertUserCollection(
   if (data.filters.length > 0) {
     queries.push(
       db
-        .insert(customCollectionFilters)
+        .insert(smartCollectionFilters)
         .values(
           data.filters.map((filter) => ({
-            customCollectionId: collectionIdSql,
+            smartCollectionId: collectionIdSql,
             field: filter.field,
             operator: filter.operator,
             value: filter.value,
@@ -167,10 +167,10 @@ export async function insertUserCollection(
   if (data.sorts && data.sorts.length > 0) {
     queries.push(
       db
-        .insert(customCollectionSorts)
+        .insert(smartCollectionSorts)
         .values(
           data.sorts.map((sort, i) => ({
-            customCollectionId: collectionIdSql,
+            smartCollectionId: collectionIdSql,
             field: sort.field,
             direction: sort.direction,
             priority: sort.priority ?? i,
@@ -183,18 +183,18 @@ export async function insertUserCollection(
   const results = await db.batch(asBatch(queries));
   let resultIndex = 0;
   const createdCollections = results[resultIndex++] as (
-    typeof customCollections.$inferSelect
+    typeof smartCollections.$inferSelect
   )[];
-  let createdFilters: (typeof customCollectionFilters.$inferSelect)[] = [];
+  let createdFilters: (typeof smartCollectionFilters.$inferSelect)[] = [];
   if (data.filters.length > 0) {
     createdFilters = results[resultIndex++] as (
-      typeof customCollectionFilters.$inferSelect
+      typeof smartCollectionFilters.$inferSelect
     )[];
   }
-  let createdSorts: (typeof customCollectionSorts.$inferSelect)[] = [];
+  let createdSorts: (typeof smartCollectionSorts.$inferSelect)[] = [];
   if (data.sorts && data.sorts.length > 0) {
     createdSorts = results[resultIndex++] as (
-      typeof customCollectionSorts.$inferSelect
+      typeof smartCollectionSorts.$inferSelect
     )[];
   }
 
@@ -209,12 +209,12 @@ export async function updateUserCollection(
   id: number,
   userId: number,
   data: UpdateCollectionInput,
-): Promise<CustomCollectionWithFilters | null> {
+): Promise<SmartCollectionWithFilters | null> {
   const db = getDb();
   const existing = await findUserCollectionById(id, userId);
   if (!existing) return null;
 
-  const updates: Partial<typeof customCollections.$inferInsert> = {
+  const updates: Partial<typeof smartCollections.$inferInsert> = {
     updatedAt: String(Math.floor(Date.now() / 1000)),
   };
 
@@ -229,10 +229,10 @@ export async function updateUserCollection(
 
   const queries: SqliteBatchQuery[] = [
     db
-      .update(customCollections)
+      .update(smartCollections)
       .set(updates)
       .where(
-        and(eq(customCollections.id, id), eq(customCollections.userId, userId)),
+        and(eq(smartCollections.id, id), eq(smartCollections.userId, userId)),
       )
       .returning(),
   ];
@@ -240,17 +240,17 @@ export async function updateUserCollection(
   if (data.filters !== undefined) {
     queries.push(
       db
-        .delete(customCollectionFilters)
-        .where(eq(customCollectionFilters.customCollectionId, id)),
+        .delete(smartCollectionFilters)
+        .where(eq(smartCollectionFilters.smartCollectionId, id)),
     );
 
     if (data.filters.length > 0) {
       queries.push(
         db
-          .insert(customCollectionFilters)
+          .insert(smartCollectionFilters)
           .values(
             data.filters.map((filter) => ({
-              customCollectionId: id,
+              smartCollectionId: id,
               field: filter.field,
               operator: filter.operator,
               value: filter.value,
@@ -264,17 +264,17 @@ export async function updateUserCollection(
   if (data.sorts !== undefined) {
     queries.push(
       db
-        .delete(customCollectionSorts)
-        .where(eq(customCollectionSorts.customCollectionId, id)),
+        .delete(smartCollectionSorts)
+        .where(eq(smartCollectionSorts.smartCollectionId, id)),
     );
 
     if (data.sorts.length > 0) {
       queries.push(
         db
-          .insert(customCollectionSorts)
+          .insert(smartCollectionSorts)
           .values(
             data.sorts.map((sort, i) => ({
-              customCollectionId: id,
+              smartCollectionId: id,
               field: sort.field,
               direction: sort.direction,
               priority: sort.priority ?? i,
@@ -286,7 +286,7 @@ export async function updateUserCollection(
   }
 
   const results = await db.batch(asBatch(queries));
-  const updated = (results[0] as (typeof customCollections.$inferSelect)[])[0];
+  const updated = (results[0] as (typeof smartCollections.$inferSelect)[])[0];
 
   let finalFilters = existing.filters;
   let finalSorts = existing.sorts ?? [];
@@ -296,10 +296,10 @@ export async function updateUserCollection(
     resultIndex += 1;
     if (data.filters.length > 0) {
       finalFilters = (
-        results[resultIndex] as (typeof customCollectionFilters.$inferSelect)[]
+        results[resultIndex] as (typeof smartCollectionFilters.$inferSelect)[]
       ).map((created) => ({
         id: created.id,
-        customCollectionId: created.customCollectionId,
+        smartCollectionId: created.smartCollectionId,
         field: created.field,
         operator: created.operator,
         value: created.value,
@@ -314,10 +314,10 @@ export async function updateUserCollection(
     resultIndex += 1;
     if (data.sorts.length > 0) {
       finalSorts = (
-        results[resultIndex] as (typeof customCollectionSorts.$inferSelect)[]
+        results[resultIndex] as (typeof smartCollectionSorts.$inferSelect)[]
       ).map((created) => ({
         id: created.id,
-        customCollectionId: created.customCollectionId,
+        smartCollectionId: created.smartCollectionId,
         field: created.field,
         direction: created.direction,
         priority: created.priority,
@@ -354,26 +354,26 @@ export async function deleteUserCollection(
   await db.batch(
     asBatch([
       db
-        .delete(customCollectionFilters)
-        .where(eq(customCollectionFilters.customCollectionId, id)),
+        .delete(smartCollectionFilters)
+        .where(eq(smartCollectionFilters.smartCollectionId, id)),
       db
-        .delete(customCollectionSorts)
-        .where(eq(customCollectionSorts.customCollectionId, id)),
+        .delete(smartCollectionSorts)
+        .where(eq(smartCollectionSorts.smartCollectionId, id)),
       db
-        .delete(customCollections)
+        .delete(smartCollections)
         .where(
-          and(eq(customCollections.id, id), eq(customCollections.userId, userId)),
+          and(eq(smartCollections.id, id), eq(smartCollections.userId, userId)),
         ),
     ]),
   );
 
   const remaining = await db
-    .select({ id: customCollections.id })
-    .from(customCollections)
-    .where(eq(customCollections.userId, userId))
+    .select({ id: smartCollections.id })
+    .from(smartCollections)
+    .where(eq(smartCollections.userId, userId))
     .orderBy(
-      asc(customCollections.displayOrder),
-      desc(customCollections.createdAt),
+      asc(smartCollections.displayOrder),
+      desc(smartCollections.createdAt),
     );
 
   if (remaining.length > 0) {
@@ -381,12 +381,12 @@ export async function deleteUserCollection(
       asBatch(
         remaining.map((row, index) =>
           db
-            .update(customCollections)
+            .update(smartCollections)
             .set({
               displayOrder: index,
               updatedAt: String(Math.floor(Date.now() / 1000)),
             })
-            .where(eq(customCollections.id, row.id)),
+            .where(eq(smartCollections.id, row.id)),
         ),
       ),
     );
@@ -398,7 +398,7 @@ export async function deleteUserCollection(
 export async function reorderUserCollections(
   userId: number,
   orderedIds: number[],
-): Promise<CustomCollectionWithFilters[]> {
+): Promise<SmartCollectionWithFilters[]> {
   const db = getDb();
   const existing = await listUserCollections(userId);
   const existingIds = new Set(existing.map((col) => col.id));
@@ -414,15 +414,15 @@ export async function reorderUserCollections(
     asBatch(
       orderedIds.map((id, index) =>
         db
-          .update(customCollections)
+          .update(smartCollections)
           .set({
             displayOrder: index,
             updatedAt: String(Math.floor(Date.now() / 1000)),
           })
           .where(
             and(
-              eq(customCollections.id, id),
-              eq(customCollections.userId, userId),
+              eq(smartCollections.id, id),
+              eq(smartCollections.userId, userId),
             ),
           ),
       ),
@@ -435,10 +435,10 @@ export async function reorderUserCollections(
 export async function nextDisplayOrder(userId: number) {
   const db = getDb();
   const rows = await db
-    .select({ value: customCollections.displayOrder })
-    .from(customCollections)
-    .where(eq(customCollections.userId, userId))
-    .orderBy(desc(customCollections.displayOrder))
+    .select({ value: smartCollections.displayOrder })
+    .from(smartCollections)
+    .where(eq(smartCollections.userId, userId))
+    .orderBy(desc(smartCollections.displayOrder))
     .limit(1);
 
   return Number(rows[0]?.value ?? -1) + 1;

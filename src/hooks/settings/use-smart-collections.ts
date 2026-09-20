@@ -5,14 +5,14 @@ import { apiFetch } from "@/lib/http/client";
 import type {
   CollectionFilterItem,
   CollectionSortItem,
-  CustomCollectionWithFilters,
+  SmartCollectionWithFilters,
 } from "@/lib/types";
 import { useAppDispatch } from "@/store";
 import { showToast } from "@/store/slices/toastSlice";
 
-export function useCustomCollections() {
+export function useSmartCollections() {
   const dispatch = useAppDispatch();
-  const [collections, setCollections] = useState<CustomCollectionWithFilters[]>(
+  const [collections, setCollections] = useState<SmartCollectionWithFilters[]>(
     [],
   );
   const [isLoading, setIsLoading] = useState(true);
@@ -32,10 +32,10 @@ export function useCustomCollections() {
         const data = await res.json();
         setCollections(data.collections ?? data.data?.collections ?? []);
       } else {
-        notify("Failed to load custom collections.", "error");
+        notify("Failed to load smart collections.", "error");
       }
     } catch {
-      notify("Failed to load custom collections.", "error");
+      notify("Failed to load smart collections.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -52,11 +52,11 @@ export function useCustomCollections() {
           const data = await res.json();
           setCollections(data.collections ?? data.data?.collections ?? []);
         } else {
-          notify("Failed to load custom collections.", "error");
+          notify("Failed to load smart collections.", "error");
         }
       } catch {
         if (!ignore) {
-          notify("Failed to load custom collections.", "error");
+          notify("Failed to load smart collections.", "error");
         }
       } finally {
         if (!ignore) setIsLoading(false);
@@ -149,7 +149,7 @@ export function useCustomCollections() {
           const col = map.get(id);
           return col ? { ...col, displayOrder: index } : null;
         })
-        .filter((col): col is CustomCollectionWithFilters => col !== null);
+        .filter((col): col is SmartCollectionWithFilters => col !== null);
     });
 
     try {

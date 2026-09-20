@@ -8,15 +8,15 @@ import { MovieCard } from "@/components/ui/movie-card";
 import { SeriesCard } from "@/components/ui/series-card";
 import { apiFetch } from "@/lib/http/client";
 import type {
-  CustomCollectionWithFilters,
   LibraryMovie,
   LibrarySeries,
+  SmartCollectionWithFilters,
 } from "@/lib/types";
 
 const MINIMUM_COLLECTION_PAGE_SIZE = 15;
 
 type CollectionCarouselProps = {
-  collection: CustomCollectionWithFilters;
+  collection: SmartCollectionWithFilters;
   initialItems: Array<LibraryMovie | LibrarySeries>;
   initialCount: number;
   initialHasMore: boolean;

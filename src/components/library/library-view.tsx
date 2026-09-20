@@ -17,9 +17,9 @@ import {
   LIBRARY_ERROR_TITLE,
 } from "@/lib/constants";
 import type {
-  CustomCollectionWithFilters,
   LibraryGroupBy,
   LibraryMediaType,
+  SmartCollectionWithFilters,
 } from "@/lib/types";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
@@ -55,7 +55,7 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     status,
   } = useAppSelector((state) => state.library);
 
-  const [collections, setCollections] = useState<CustomCollectionWithFilters[]>(
+  const [collections, setCollections] = useState<SmartCollectionWithFilters[]>(
     [],
   );
 

@@ -9,16 +9,16 @@ import {
   withGroupHasMore,
 } from "@/lib/media/library-browse";
 import type {
-  CustomCollectionWithFilters,
   LibraryGroup,
   LibraryGroupBy,
   LibraryMetadata,
   LibraryMovie,
   LibrarySeries,
+  SmartCollectionWithFilters,
 } from "@/lib/types";
 
 type CollectionItemsResponse = {
-  collection: CustomCollectionWithFilters;
+  collection: SmartCollectionWithFilters;
   movies: LibraryMovie[];
   series: LibrarySeries[];
   metadata: LibraryMetadata;
@@ -54,7 +54,7 @@ export function useLibraryCollectionPreset(
   searchQ: string,
 ) {
   const [collection, setCollection] =
-    useState<CustomCollectionWithFilters | null>(null);
+    useState<SmartCollectionWithFilters | null>(null);
   const [items, setItems] = useState<Array<LibraryMovie | LibrarySeries>>([]);
   const [groups, setGroups] = useState<LibraryGroup[] | undefined>();
   const [metadata, setMetadata] = useState<LibraryMetadata | null>(null);
