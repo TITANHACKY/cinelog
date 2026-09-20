@@ -55,6 +55,24 @@ function isLibraryFetchRoute() {
   return window.location.pathname.startsWith("/library");
 }
 
+function currentLibraryMediaType(): "movie" | "series" {
+  if (typeof window === "undefined") return "movie";
+  return window.location.pathname.includes("/library/series")
+    ? "series"
+    : "movie";
+}
+
+function isStaleLibraryFetch(
+  library: LibraryState,
+  requestNonce: number,
+  mediaType: "movie" | "series",
+) {
+  return (
+    library.queryNonce !== requestNonce ||
+    mediaType !== currentLibraryMediaType()
+  );
+}
+
 function* fetchLibrary(
   action: ReturnType<typeof libraryRequested>,
 ): SagaIterator {
@@ -91,7 +109,7 @@ function* fetchLibrary(
     const current: LibraryState = yield select(
       (state: LibraryRoot) => state.library,
     );
-    if (current.queryNonce !== requestNonce) return;
+    if (isStaleLibraryFetch(current, requestNonce, mediaType)) return;
 
     yield put(
       librarySucceeded({
@@ -105,7 +123,7 @@ function* fetchLibrary(
     const current: LibraryState = yield select(
       (state: LibraryRoot) => state.library,
     );
-    if (current.queryNonce !== requestNonce) return;
+    if (isStaleLibraryFetch(current, requestNonce, mediaType)) return;
 
     const message =
       error instanceof Error ? error.message : "Library request failed";
