@@ -3,45 +3,39 @@
 import { useState } from "react";
 import Image from "next/image";
 import {
-  BookOpen,
   ChevronDown,
   Download,
   Film,
+  ImageIcon,
   LayoutDashboard,
   Library,
   ListFilter,
+  Maximize2,
   Search,
   Settings,
   Star,
+  X,
+  type LucideIcon,
 } from "lucide-react";
 
-/* ── Preview data ── */
-const PREVIEWS = [
-  {
-    src: "/mockup_dashboard.jpg",
-    alt: "CineLog Dashboard — personalized welcome, stats, and continue watching",
-    label: "Dashboard",
-    description:
-      "Your home base. See a personalized welcome, quick stats on your movie and series count, and pick up where you left off with Continue Watching.",
-  },
-  {
-    src: "/mockup_library.jpg",
-    alt: "CineLog Library — filterable grid of your saved movies and series",
-    label: "Library",
-    description:
-      "Your entire watchlist in one place. Filter by movies or series, search by title, apply advanced filters, or group by status, genre, or year.",
-  },
-  {
-    src: "/mockup_detail.jpg",
-    alt: "CineLog Movie Detail — hero header with poster, metadata, cast and crew",
-    label: "Title Detail",
-    description:
-      "Dive deep into any title. See the cinematic hero header, genre pills, runtime, rating, and full cast & crew. Add to your watchlist or log your impression.",
-  },
-];
+/* ── Types ── */
+export interface GuideScreenshot {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
+export interface FeatureGuide {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  tips: string[];
+  screenshot?: GuideScreenshot;
+  screenshots?: GuideScreenshot[];
+}
 
 /* ── Feature guide data ── */
-const FEATURE_GUIDES = [
+const FEATURE_GUIDES: FeatureGuide[] = [
   {
     icon: LayoutDashboard,
     title: "Dashboard",
@@ -51,6 +45,12 @@ const FEATURE_GUIDES = [
       "Your movie and series counts update in real-time as you add titles",
       "The \"Continue Watching\" section shows titles with in-progress status",
     ],
+    screenshot: {
+      src: "/mockup_dashboard.jpg",
+      alt: "CineLog Dashboard — personalized welcome, stats, and continue watching",
+      caption:
+        "Dashboard home showing your cinema tracking metrics and continue watching carousel.",
+    },
   },
   {
     icon: Library,
@@ -62,6 +62,12 @@ const FEATURE_GUIDES = [
       "Apply multiple filters for precise browsing (e.g. 'Sci-Fi' + 'Watched')",
       "Scroll to load more — the library paginates automatically",
     ],
+    screenshot: {
+      src: "/mockup_library.jpg",
+      alt: "CineLog Library — filterable grid of your saved movies and series",
+      caption:
+        "Watchlist with filterable tabs, search by title, and multi-criteria grouping.",
+    },
   },
   {
     icon: Search,
@@ -73,6 +79,12 @@ const FEATURE_GUIDES = [
       "Click any result to view full details and add it to your library",
       "Use the filter dropdown to narrow results by genre or year",
     ],
+    // Provision for screenshot sample:
+    // screenshot: {
+    //   src: "/mockup_search.jpg",
+    //   alt: "CineLog Search & Discover dialog",
+    //   caption: "Search dialog with live suggestions and TMDB integration.",
+    // },
   },
   {
     icon: Film,
@@ -84,6 +96,12 @@ const FEATURE_GUIDES = [
       "Share titles directly from the share button",
       "Tap genre pills to discover similar titles",
     ],
+    screenshot: {
+      src: "/mockup_detail.jpg",
+      alt: "CineLog Movie Detail — hero header with poster, metadata, cast and crew",
+      caption:
+        "Title detail page featuring backdrop hero, specifications, reactions, and cast grid.",
+    },
   },
   {
     icon: ListFilter,
@@ -95,6 +113,12 @@ const FEATURE_GUIDES = [
       "Each collection can have multiple filter clauses",
       "Collections update automatically as your library changes",
     ],
+    // Provision for screenshot sample:
+    // screenshot: {
+    //   src: "/mockup_collections.jpg",
+    //   alt: "CineLog Smart Collections manager",
+    //   caption: "Dynamic rule builder for auto-updating watchlists.",
+    // },
   },
   {
     icon: Star,
@@ -106,6 +130,12 @@ const FEATURE_GUIDES = [
       "You can change your impression at any time",
       "Filter your library by impression to find your favorites",
     ],
+    // Provision for screenshot sample:
+    // screenshot: {
+    //   src: "/mockup_impressions.jpg",
+    //   alt: "CineLog Impressions & Reactions",
+    //   caption: "Sentiment and reaction logging for every watched film.",
+    // },
   },
   {
     icon: Download,
@@ -117,6 +147,12 @@ const FEATURE_GUIDES = [
       "On Android Chrome, tap the three-dot menu → Install app",
       "On desktop Chrome/Edge, look for the install icon in the address bar",
     ],
+    // Provision for screenshot sample:
+    // screenshot: {
+    //   src: "/mockup_pwa.jpg",
+    //   alt: "CineLog PWA Installation instructions",
+    //   caption: "Install prompts and native web app setup.",
+    // },
   },
   {
     icon: Settings,
@@ -127,34 +163,12 @@ const FEATURE_GUIDES = [
       "Use the tabs to switch between Custom Collections and User Profile",
       "Collection filters support nested AND/OR logic",
     ],
-  },
-];
-
-/* ── Navigation overview ── */
-const NAV_ITEMS = [
-  {
-    icon: LayoutDashboard,
-    label: "Dashboard",
-    path: "/",
-    description: "Home screen with welcome, stats, and continue watching",
-  },
-  {
-    icon: Library,
-    label: "My Library",
-    path: "/library",
-    description: "Your saved movies & series with filters and grouping",
-  },
-  {
-    icon: BookOpen,
-    label: "Guide",
-    path: "/guide",
-    description: "This page — app walkthrough and feature tutorials",
-  },
-  {
-    icon: Settings,
-    label: "Settings",
-    path: "/settings",
-    description: "Custom collections, profile, and preferences",
+    // Provision for screenshot sample:
+    // screenshot: {
+    //   src: "/mockup_settings.jpg",
+    //   alt: "CineLog Settings panel",
+    //   caption: "Custom collection filter pipelines and account profile management.",
+    // },
   },
 ];
 
@@ -164,13 +178,20 @@ function ExpandableGuide({
   title,
   description,
   tips,
+  screenshot,
+  screenshots,
+  onImageClick,
 }: {
-  icon: typeof LayoutDashboard;
+  icon: LucideIcon;
   title: string;
   description: string;
   tips: string[];
+  screenshot?: GuideScreenshot;
+  screenshots?: GuideScreenshot[];
+  onImageClick?: (screenshot: GuideScreenshot) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const items = screenshots ?? (screenshot ? [screenshot] : []);
 
   return (
     <div className="rounded-xl border border-outline-variant bg-surface-container-low transition-colors hover:bg-surface-container">
@@ -183,10 +204,16 @@ function ExpandableGuide({
         <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-primary-container/15 text-brand-primary">
           <Icon className="size-4.5" strokeWidth={1.8} />
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
           <span className="font-public-sans text-sm font-semibold text-on-surface sm:text-base">
             {title}
           </span>
+          {items.length > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-surface-container-high px-2 py-0.5 font-public-sans text-[11px] font-medium text-secondary">
+              <ImageIcon className="size-3 text-brand-primary" />
+              <span>Preview</span>
+            </span>
+          )}
         </div>
         <ChevronDown
           className={`size-4 shrink-0 text-secondary transition-transform duration-200 ${
@@ -200,12 +227,58 @@ function ExpandableGuide({
         }`}
       >
         <div className="overflow-hidden">
-          <div className="space-y-3 px-4 pb-4 sm:px-5 sm:pb-5">
+          <div className="space-y-4 px-4 pb-4 sm:px-5 sm:pb-5">
             <p className="font-public-sans text-sm leading-relaxed text-secondary">
               {description}
             </p>
+
+            {/* Screenshots section */}
+            {items.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <p className="font-public-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-outline-muted">
+                  Screenshots & Preview
+                </p>
+                <div className="grid gap-3 sm:grid-cols-1">
+                  {items.map((img, idx) => (
+                    <figure
+                      key={img.src + idx}
+                      className="group relative overflow-hidden rounded-xl border border-outline-variant bg-surface-container shadow-sm"
+                    >
+                      <button
+                        type="button"
+                        className="relative aspect-video w-full cursor-pointer bg-surface-container-lowest text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+                        onClick={() => onImageClick?.(img)}
+                        aria-label={`Enlarge screenshot: ${img.alt}`}
+                      >
+                        <Image
+                          src={img.src}
+                          alt={img.alt}
+                          fill
+                          className="object-cover object-top transition-transform duration-300 group-hover:scale-[1.01]"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/30 group-hover:opacity-100">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-container-highest/90 px-3 py-1.5 font-public-sans text-xs font-medium text-on-surface shadow-md backdrop-blur-sm">
+                            <Maximize2 className="size-3.5" />
+                            Click to expand
+                          </span>
+                        </div>
+                      </button>
+                      {img.caption && (
+                        <figcaption className="border-t border-outline-variant/60 bg-surface-container-low/70 px-3.5 py-2">
+                          <p className="font-public-sans text-xs text-secondary">
+                            {img.caption}
+                          </p>
+                        </figcaption>
+                      )}
+                    </figure>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {tips.length > 0 && (
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 pt-1">
                 <p className="font-public-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-outline-muted">
                   Tips
                 </p>
@@ -231,11 +304,11 @@ function ExpandableGuide({
 
 /* ── Main Guide Page ── */
 export function GuidePage() {
-  const [activePreview, setActivePreview] = useState(0);
+  const [activeModalImage, setActiveModalImage] = useState<GuideScreenshot | null>(null);
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 py-6 sm:px-8 lg:py-10">
-      <div className="mx-auto flex w-full max-w-[1720px] flex-col gap-8 sm:gap-10">
+      <div className="mx-auto flex w-full max-w-[1720px] flex-col gap-6 sm:gap-8">
         {/* Header */}
         <header className="space-y-2 border-b border-outline-alt/60 pb-6">
           <div>
@@ -243,108 +316,19 @@ export function GuidePage() {
               CineLog Guide
             </h1>
             <p className="mt-1 font-public-sans text-xs text-secondary sm:text-sm">
-              Explore features, learn what each section does, and get the most
-              out of your cinema tracking experience.
+              Explore features, section walkthroughs, and screenshot previews to get the most out of CineLog.
             </p>
           </div>
         </header>
 
-        {/* ── App Preview Section ── */}
-        <section className="space-y-5">
-          <div>
-            <h2 className="font-heading text-xl font-semibold tracking-tight text-on-surface sm:text-2xl">
-              App Preview
-            </h2>
-            <p className="mt-1 font-public-sans text-xs text-secondary sm:text-sm">
-              Visual walkthrough of CineLog&apos;s main screens.
-            </p>
-          </div>
-
-          {/* Preview tabs */}
-          <div className="flex flex-wrap gap-2">
-            {PREVIEWS.map((preview, i) => (
-              <button
-                key={preview.label}
-                type="button"
-                onClick={() => setActivePreview(i)}
-                className={`rounded-lg px-3.5 py-2 font-public-sans text-xs font-medium transition-colors sm:text-sm ${
-                  activePreview === i
-                    ? "bg-brand-primary-container/20 text-brand-primary border border-brand-primary/30"
-                    : "text-secondary hover:bg-surface-container hover:text-on-surface border border-transparent"
-                }`}
-              >
-                {preview.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Preview image + description */}
-          <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-low shadow-lg sm:rounded-2xl">
-            <div className="relative aspect-video w-full">
-              <Image
-                src={PREVIEWS[activePreview].src}
-                alt={PREVIEWS[activePreview].alt}
-                fill
-                className="object-cover object-top transition-opacity duration-300"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1152px"
-              />
-            </div>
-            <div className="p-4 sm:p-5">
-              <h3 className="font-heading text-base font-semibold text-on-surface sm:text-lg">
-                {PREVIEWS[activePreview].label}
-              </h3>
-              <p className="mt-1 font-public-sans text-xs leading-relaxed text-secondary sm:text-sm">
-                {PREVIEWS[activePreview].description}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Navigation Overview ── */}
-        <section className="space-y-5">
-          <div>
-            <h2 className="font-heading text-xl font-semibold tracking-tight text-on-surface sm:text-2xl">
-              Where is what?
-            </h2>
-            <p className="mt-1 font-public-sans text-xs text-secondary sm:text-sm">
-              Quick map of CineLog&apos;s main navigation.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {NAV_ITEMS.map(({ icon: Icon, label, path, description }) => (
-              <div
-                key={path}
-                className="flex items-start gap-3 rounded-xl border border-outline-variant bg-surface-container-low p-4"
-              >
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-primary-container/15 text-brand-primary">
-                  <Icon className="size-4.5" strokeWidth={1.8} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-public-sans text-sm font-semibold text-on-surface">
-                    {label}
-                  </p>
-                  <p className="mt-0.5 font-public-sans text-xs text-secondary">
-                    {description}
-                  </p>
-                  <p className="mt-1 font-mono text-[10px] text-outline-muted">
-                    {path}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Feature Tutorials ── */}
-        <section className="space-y-5">
+        {/* Feature Guides Section */}
+        <section className="space-y-4">
           <div>
             <h2 className="font-heading text-xl font-semibold tracking-tight text-on-surface sm:text-2xl">
               Feature Guide
             </h2>
             <p className="mt-1 font-public-sans text-xs text-secondary sm:text-sm">
-              Learn about each feature — expand any section for details and
-              tips.
+              Learn about each feature — expand any section for details, screenshot previews, and tips.
             </p>
           </div>
 
@@ -356,11 +340,59 @@ export function GuidePage() {
                 title={guide.title}
                 description={guide.description}
                 tips={guide.tips}
+                screenshot={guide.screenshot}
+                screenshots={guide.screenshots}
+                onImageClick={(img) => setActiveModalImage(img)}
               />
             ))}
           </div>
         </section>
       </div>
+
+      {/* Screenshot Lightbox Modal */}
+      {activeModalImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm sm:p-6"
+          onClick={() => setActiveModalImage(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="relative flex max-h-[90dvh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-outline-variant bg-surface-container-low shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-outline-variant/60 px-4 py-3 sm:px-6">
+              <span className="font-public-sans text-xs font-medium text-secondary sm:text-sm">
+                {activeModalImage.alt}
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveModalImage(null)}
+                className="rounded-lg p-1 text-secondary transition-colors hover:bg-surface-container-high hover:text-on-surface"
+                aria-label="Close image preview"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="relative aspect-video w-full flex-1 bg-surface-container-lowest">
+              <Image
+                src={activeModalImage.src}
+                alt={activeModalImage.alt}
+                fill
+                className="object-contain"
+                sizes="(max-width: 1200px) 100vw, 1200px"
+              />
+            </div>
+            {activeModalImage.caption && (
+              <div className="border-t border-outline-variant/60 bg-surface-container px-4 py-3 sm:px-6">
+                <p className="font-public-sans text-xs text-secondary sm:text-sm">
+                  {activeModalImage.caption}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
