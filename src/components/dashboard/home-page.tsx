@@ -87,28 +87,24 @@ export function HomePage() {
             })}
           </div>
         ) : !isLoading ? (
-          <section className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-outline-variant bg-surface-container-low p-6 text-center">
-            <div className="flex flex-col items-center gap-3.5 sm:flex-row sm:text-left">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-primary-container/20 text-brand-primary">
-                <Search className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-heading text-sm font-semibold text-on-surface sm:text-base">
-                  Start Tracking Titles
-                </h3>
-                <p className="mt-0.5 font-public-sans text-xs text-secondary">
-                  Click the search button in the bottom right corner to find
-                  movies and series and add them to your watchlist.
-                </p>
-              </div>
+          <section className="flex flex-col items-center gap-3.5 rounded-2xl border border-dashed border-outline-variant bg-surface-container-low p-6 text-center sm:gap-4 sm:p-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-primary-container/20 text-brand-primary sm:h-11 sm:w-11">
+              <Search className="h-5 w-5" />
             </div>
+            <h3 className="font-heading text-sm font-semibold text-on-surface sm:text-base">
+              Start Tracking Titles
+            </h3>
+            <p className="max-w-md font-public-sans text-xs text-secondary sm:text-sm">
+              Click the search button in the bottom right corner to find movies
+              and series and add them to your watchlist.
+            </p>
             <ButtonLink
               className="text-xs"
               href="/guide"
               variant="darkTonal"
             >
               <BookOpen className="mr-1.5 h-3.5 w-3.5" />
-              Go to this guide to getting started on how to use this app
+              New here? Read the guide
             </ButtonLink>
           </section>
         ) : null}
