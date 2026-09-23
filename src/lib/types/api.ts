@@ -21,6 +21,18 @@ type TmdbGenreList = {
   genres?: Array<{ id?: number; name?: string }> | null;
 };
 
+type TmdbConfigurationLanguage = {
+  iso_639_1?: string;
+  english_name?: string;
+  name?: string;
+};
+
+type TmdbConfigurationCountry = {
+  iso_3166_1?: string;
+  english_name?: string;
+  native_name?: string;
+};
+
 type TmdbReleaseDate = {
   certification?: string | null;
   descriptors?: string[];
@@ -153,6 +165,8 @@ export type {
   RouteContext,
   SearchType,
   TmdbCastMember,
+  TmdbConfigurationCountry,
+  TmdbConfigurationLanguage,
   TmdbContentRating,
   TmdbCrewMember,
   TmdbGenreList,

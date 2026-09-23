@@ -16,14 +16,17 @@ import {
   WATCH_STATUS,
 } from "@/lib/constants";
 import { useGenres } from "@/hooks/use-genres";
+import { useLocales } from "@/hooks/locales/use-locales";
 import { defaultFilterValue } from "@/lib/media/library-browse";
 import {
+  getCountryOptions,
+  getLanguageOptions,
   getSearchYears,
-  getTmdbLanguageOptions,
-  getTmdbRegionOptions,
 } from "@/lib/search/filters";
 import type { GenreOption } from "@/hooks/use-genres";
 import type {
+  CountryOption,
+  LanguageOption,
   LibraryBrowseQuery,
   LibraryFilterField,
   LibraryMediaType,
@@ -52,6 +55,8 @@ function filterValueOptions(
   field: LibraryFilterField | undefined,
   mediaType: LibraryMediaType,
   genres: GenreOption[],
+  languages: LanguageOption[],
+  countries: CountryOption[],
 ) {
   if (field === "watch_status") {
     return Object.values(WATCH_STATUS).map((status) => ({
@@ -86,11 +91,11 @@ function filterValueOptions(
   }
 
   if (field === "original_language") {
-    return getTmdbLanguageOptions();
+    return getLanguageOptions(languages);
   }
 
   if (field === "origin_country") {
-    return getTmdbRegionOptions();
+    return getCountryOptions(countries);
   }
 
   if (field === "release_year") {
@@ -111,6 +116,7 @@ export function LibraryBrowseFields({
   onChange,
 }: LibraryBrowseFieldsProps) {
   const { genres } = useGenres();
+  const { languages, countries } = useLocales();
   const operatorOptions = query.filterField
     ? LIBRARY_OPERATORS.filter((operator) =>
         LIBRARY_OPERATORS_BY_FIELD[query.filterField!].includes(operator.value),
@@ -123,7 +129,13 @@ export function LibraryBrowseFields({
     (option) => !option.seriesOnly || mediaType === "series",
   );
   const stacked = layout === "stack";
-  const valueOptions = filterValueOptions(query.filterField, mediaType, genres);
+  const valueOptions = filterValueOptions(
+    query.filterField,
+    mediaType,
+    genres,
+    languages,
+    countries,
+  );
   const searchableValue =
     query.filterField === "genre" ||
     query.filterField === "original_language" ||

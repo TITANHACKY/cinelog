@@ -4,6 +4,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { isAppError } from "@/lib/http/errors";
 import {
+  fetchTmdbCountries,
+  fetchTmdbLanguages,
   fetchTmdbMovieForCatalog,
   fetchTmdbMovieGenres,
   fetchTmdbSeriesForCatalog,
@@ -19,6 +21,12 @@ import {
   applyGenreSyncMutations,
   loadGenreSyncSnapshot,
 } from "@/repositories/genres";
+import {
+  applyCountrySyncMutations,
+  applyLanguageSyncMutations,
+  loadCountrySyncSnapshot,
+  loadLanguageSyncSnapshot,
+} from "@/repositories/locales";
 import {
   DIFF_CSV_HEADERS,
   ERROR_CSV_HEADERS,
@@ -38,6 +46,12 @@ import {
   mergeTmdbGenreLists,
   normalizeTmdbGenres,
 } from "./lib/genre-sync";
+import {
+  diffCatalogLocales,
+  localeMutationWriteCount,
+  normalizeTmdbCountries,
+  normalizeTmdbLanguages,
+} from "./lib/locale-sync";
 import { TmdbRequestLimiter } from "./lib/tmdb-rate-limit";
 
 type SyncMode = "dry-run" | "execute";
@@ -153,10 +167,59 @@ async function main() {
   const errors: ErrorRow[] = [];
   let moviesWithDiffs = 0;
   let seriesWithDiffs = 0;
+  let languageWritten = 0;
+  let countryWritten = 0;
   let genreWritten = 0;
+  let languageDbMs = 0;
+  let countryDbMs = 0;
   let genreDbMs = 0;
 
   const tmdbStarted = Date.now();
+
+  const [
+    tmdbLanguageList,
+    tmdbCountryList,
+    languageSnapshot,
+    countrySnapshot,
+  ] = await Promise.all([
+    limiter.run(() => fetchTmdbLanguages()),
+    limiter.run(() => fetchTmdbCountries()),
+    loadLanguageSyncSnapshot(),
+    loadCountrySyncSnapshot(),
+  ]);
+  const tmdbLanguages = normalizeTmdbLanguages(tmdbLanguageList);
+  const tmdbCountries = normalizeTmdbCountries(tmdbCountryList);
+  const { mutations: languageMutations, diffs: languageDiffs } =
+    diffCatalogLocales({
+      entity: "language",
+      dbRows: languageSnapshot,
+      tmdbRows: tmdbLanguages,
+    });
+  const { mutations: countryMutations, diffs: countryDiffs } =
+    diffCatalogLocales({
+      entity: "country",
+      dbRows: countrySnapshot,
+      tmdbRows: tmdbCountries,
+    });
+  diffs.push(...languageDiffs, ...countryDiffs);
+  console.log(
+    `Languages: TMDB ${tmdbLanguages.length}; DB ${languageSnapshot.length}; insert ${languageMutations.inserts.length}, update ${languageMutations.updates.length}`,
+  );
+  console.log(
+    `Countries: TMDB ${tmdbCountries.length}; DB ${countrySnapshot.length}; insert ${countryMutations.inserts.length}, update ${countryMutations.updates.length}`,
+  );
+
+  if (mode === "execute") {
+    const languageDbStarted = Date.now();
+    const languageWrite = await applyLanguageSyncMutations(languageMutations);
+    languageDbMs = Date.now() - languageDbStarted;
+    languageWritten = languageWrite.written;
+
+    const countryDbStarted = Date.now();
+    const countryWrite = await applyCountrySyncMutations(countryMutations);
+    countryDbMs = Date.now() - countryDbStarted;
+    countryWritten = countryWrite.written;
+  }
 
   const [movieGenreList, seriesGenreList, genreSnapshot] = await Promise.all([
     limiter.run(() => fetchTmdbMovieGenres()),
@@ -251,6 +314,8 @@ async function main() {
   const userSeriesWouldReopen = reopenPlans.length;
   const wouldWrite =
     catalogMutationWriteCount(mutations) +
+    localeMutationWriteCount(languageMutations) +
+    localeMutationWriteCount(countryMutations) +
     genreMutationWriteCount(genreMutations) +
     progressWouldInsert +
     userSeriesWouldReopen;
@@ -280,7 +345,8 @@ async function main() {
     const dbStarted = Date.now();
     const result = await applyCatalogSyncMutations(mutations);
     dbMs = Date.now() - dbStarted;
-    written = result.written + genreWritten;
+    written =
+      result.written + languageWritten + countryWritten + genreWritten;
     progressInserted = result.progressInserted;
     userSeriesReopened = result.userSeriesReopened;
   }
@@ -296,7 +362,9 @@ async function main() {
       total: totalMs,
       db_load: loadMs,
       tmdb: tmdbMs,
-      db_write: dbMs + genreDbMs,
+      db_write: dbMs + languageDbMs + countryDbMs + genreDbMs,
+      language_db_write: languageDbMs,
+      country_db_write: countryDbMs,
       genre_db_write: genreDbMs,
     },
     titles_scanned: {
@@ -318,6 +386,10 @@ async function main() {
       reopened: userSeriesReopened,
     },
     mutation_counts: {
+      language_inserts: languageMutations.inserts.length,
+      language_updates: languageMutations.updates.length,
+      country_inserts: countryMutations.inserts.length,
+      country_updates: countryMutations.updates.length,
       genre_inserts: genreMutations.inserts.length,
       genre_updates: genreMutations.updates.length,
       genre_deletes: genreMutations.deletes.length,
@@ -348,7 +420,7 @@ async function main() {
       : `Execute complete. Wrote ${written} row changes.`,
   );
   console.log(
-    `Timing: total ${totalMs}ms (tmdb ${tmdbMs}ms, db load ${loadMs}ms, db write ${dbMs + genreDbMs}ms)`,
+    `Timing: total ${totalMs}ms (tmdb ${tmdbMs}ms, db load ${loadMs}ms, db write ${dbMs + languageDbMs + countryDbMs + genreDbMs}ms)`,
   );
   console.log(
     `TMDB: ${limiter.stats.requests} requests, ${limiter.stats.retries} retries, ${limiter.stats.notFound} not found, throttle wait ${limiter.stats.throttleWaitMs}ms`,

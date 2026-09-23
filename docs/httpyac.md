@@ -68,10 +68,17 @@ Cookie = requires `auth_token` from Login or Signup. Optional cookie = extra wat
 
 | Method | Path | Auth | Query | Response |
 | --- | --- | --- | --- | --- |
-| GET | `/api/search/movie` | Optional | `query` (required), `year`, `region` (ISO 3166-1), `page` (default 1) | `{ results, page, total_pages, total_results }` |
-| GET | `/api/search/series` | Optional | `query` (required), `year` (first air year), `page` | Same shape |
+| GET | `/api/search/movie` | Optional | `query` (required), `year`, `language` (ISO 639-1), `page` (default 1) | `{ results, page, total_pages, total_results }` |
+| GET | `/api/search/series` | Optional | `query` (required), `year` (first air year), `language` (ISO 639-1), `page` | Same shape |
 
-Logged-in search results include `is_present_in_watchlist` and `watch_status`.
+Logged-in search results include `is_present_in_watchlist` and `watch_status`. Search `language` is validated against the cached locales list and post-filters TMDB results on `original_language`.
+
+### Reference lists
+
+| Method | Path | Auth | Notes |
+| --- | --- | --- | --- |
+| GET | `/api/genres` | Public | `{ genres: [{ tmdb_id, name }] }`. Cached 24h server-side. |
+| GET | `/api/locales` | Public | `{ languages: [{ iso_639_1, english_name }], countries: [{ iso_3166_1, english_name }] }`. Cached 24h server-side. Used for search/library/collection dropdowns, display names, and ISO code validation. |
 
 ### Library browse
 

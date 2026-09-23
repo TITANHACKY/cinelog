@@ -1,5 +1,11 @@
 import { tmdbFetch } from "@/lib/tmdb/client";
-import type { TmdbGenreList, TmdbMovie, TmdbSeries } from "@/lib/types";
+import type {
+  TmdbConfigurationCountry,
+  TmdbConfigurationLanguage,
+  TmdbGenreList,
+  TmdbMovie,
+  TmdbSeries,
+} from "@/lib/types";
 
 async function fetchTmdbGenreList(path: string, failedMessage: string) {
   const queryParams = new URLSearchParams({
@@ -18,6 +24,23 @@ export async function fetchTmdbMovieGenres() {
 
 export async function fetchTmdbSeriesGenres() {
   return fetchTmdbGenreList("/genre/tv/list", "TMDB series genre list failed");
+}
+
+export async function fetchTmdbLanguages() {
+  return tmdbFetch<TmdbConfigurationLanguage[]>("/configuration/languages", {
+    failedMessage: "TMDB language list failed",
+  });
+}
+
+export async function fetchTmdbCountries() {
+  const queryParams = new URLSearchParams({
+    language: "en-US",
+  });
+
+  return tmdbFetch<TmdbConfigurationCountry[]>("/configuration/countries", {
+    searchParams: queryParams,
+    failedMessage: "TMDB country list failed",
+  });
 }
 
 export async function fetchTmdbMovieForCatalog(tmdbId: number) {

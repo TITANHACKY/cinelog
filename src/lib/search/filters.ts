@@ -1,8 +1,5 @@
-import { SEARCH_YEAR_MIN, TMDB_LANGUAGES, TMDB_REGIONS } from "@/lib/constants";
-
-export type { TmdbLanguage, TmdbRegion } from "@/lib/constants";
-
-export { TMDB_LANGUAGES, TMDB_REGIONS };
+import { SEARCH_YEAR_MIN } from "@/lib/constants";
+import type { CountryOption, LanguageOption } from "@/lib/types";
 
 export function getSearchYears(now = new Date()) {
   const currentYear = now.getFullYear();
@@ -12,16 +9,16 @@ export function getSearchYears(now = new Date()) {
   );
 }
 
-export function getTmdbLanguageOptions() {
-  return TMDB_LANGUAGES.map((language) => ({
+export function getLanguageOptions(languages: LanguageOption[]) {
+  return languages.map((language) => ({
     value: language.iso_639_1,
     label: `${language.english_name} (${language.iso_639_1})`,
   }));
 }
 
-export function getTmdbRegionOptions() {
-  return TMDB_REGIONS.map((region) => ({
-    value: region.iso_3166_1,
-    label: `${region.english_name} (${region.iso_3166_1})`,
+export function getCountryOptions(countries: CountryOption[]) {
+  return countries.map((country) => ({
+    value: country.iso_3166_1,
+    label: `${country.english_name} (${country.iso_3166_1})`,
   }));
 }
