@@ -1,9 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import { AUTH_TOKEN_TTL_SECONDS } from "@/lib/constants";
+import { getJwtSecret } from "@/lib/auth/jwt-secret";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "default_super_secret_key_change_in_production"
-);
+const JWT_SECRET = getJwtSecret();
 
 export async function signToken(payload: { userId: number; username: string }) {
   const iat = Math.floor(Date.now() / 1000);

@@ -107,6 +107,9 @@ function getTrueSnapshot() {
 export function usePwa() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(
+    null,
+  );
 
   const isOnline = useSyncExternalStore(
     subscribeOnline,
@@ -155,20 +158,69 @@ export function usePwa() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
 
-    if ("serviceWorker" in navigator && process.env.NODE_ENV !== "test") {
-      navigator.serviceWorker
-        .register(PWA_SERVICE_WORKER_URL, { scope: "/" })
-        .catch((error) => {
-          console.error("[PWA] Service worker registration failed:", error);
-        });
-    }
-
     return () => {
       window.removeEventListener(
         "beforeinstallprompt",
         handleBeforeInstallPrompt,
       );
       window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      return;
+    }
+
+    if (!("serviceWorker" in navigator)) {
+      return;
+    }
+
+    let refreshing = false;
+
+    const handleControllerChange = () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    };
+
+    const handleWaitingWorker = (worker: ServiceWorker | null) => {
+      setWaitingWorker(worker);
+    };
+
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      handleControllerChange,
+    );
+
+    navigator.serviceWorker
+      .register(PWA_SERVICE_WORKER_URL, { scope: "/" })
+      .then((registration) => {
+        handleWaitingWorker(registration.waiting);
+
+        registration.addEventListener("updatefound", () => {
+          const installingWorker = registration.installing;
+          if (!installingWorker) return;
+
+          installingWorker.addEventListener("statechange", () => {
+            if (
+              installingWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
+              handleWaitingWorker(installingWorker);
+            }
+          });
+        });
+      })
+      .catch((error) => {
+        console.error("[PWA] Service worker registration failed:", error);
+      });
+
+    return () => {
+      navigator.serviceWorker.removeEventListener(
+        "controllerchange",
+        handleControllerChange,
+      );
     };
   }, []);
 
@@ -194,12 +246,18 @@ export function usePwa() {
     setDeferredPrompt(null);
   }, []);
 
+  const applyUpdate = useCallback(() => {
+    waitingWorker?.postMessage({ type: "SKIP_WAITING" });
+  }, [waitingWorker]);
+
   return {
     isInstallable: Boolean(deferredPrompt) && !hasDismissedPrompt && !isInstalled,
     isInstalled,
     isIOS: isIosDevice && !isInstalled && !hasDismissedPrompt,
     isOnline,
+    hasUpdate: Boolean(waitingWorker),
     promptInstall,
     dismissPrompt,
+    applyUpdate,
   };
 }
