@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { Clapperboard, TvMinimal } from "lucide-react";
 import { SearchFilterSelect } from "@/components/search-popup/search-filter-select";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { getSearchYears, getTmdbLanguageOptions } from "@/lib/search/filters";
+import { getSearchYears, getLanguageOptions } from "@/lib/search/filters";
+import { useLocales } from "@/hooks/locales/use-locales";
 
 export type SearchMediaType = "movie" | "series";
 
@@ -25,6 +26,7 @@ export function SearchControls({
   language,
   year,
 }: SearchControlsProps) {
+  const { languages } = useLocales();
   const yearOptions = useMemo(
     () => [
       { value: "", label: "Any year" },
@@ -38,9 +40,9 @@ export function SearchControls({
   const languageOptions = useMemo(
     () => [
       { value: "", label: "Any language" },
-      ...getTmdbLanguageOptions(),
+      ...getLanguageOptions(languages),
     ],
-    [],
+    [languages],
   );
 
   return (

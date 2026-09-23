@@ -9,8 +9,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { LibraryFilterControls } from "@/components/library/library-filter-controls";
 import { LibraryGroupCarousel } from "@/components/library/library-group-carousel";
 import { LibrarySection } from "@/components/library/library-section";
+import { useLibraryBrowseSession } from "@/hooks/library/use-library-browse-session";
 import { useLibraryCollectionPreset } from "@/hooks/library/use-library-collection-preset";
 import {
+  LIBRARY_DESCRIPTION,
   LIBRARY_EMPTY_DESCRIPTION,
   LIBRARY_EMPTY_TITLE,
   LIBRARY_ERROR_DESCRIPTION,
@@ -23,7 +25,6 @@ import type {
 } from "@/lib/types";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
-  libraryCollectionSelected,
   libraryGroupPageRequested,
   libraryPageRequested,
   libraryRequested,
@@ -34,6 +35,7 @@ type LibraryViewProps = {
 };
 
 export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
+  useLibraryBrowseSession();
   const dispatch = useAppDispatch();
   const {
     movies,
@@ -50,10 +52,13 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     seriesGroups,
     movieGroupPages,
     seriesGroupPages,
-    query,
-    selectedCollectionId,
+    queries,
+    selectedCollectionIds,
     status,
   } = useAppSelector((state) => state.library);
+
+  const query = queries[mediaType];
+  const selectedCollectionId = selectedCollectionIds[mediaType];
 
   const [collections, setCollections] = useState<SmartCollectionWithFilters[]>(
     [],
@@ -106,7 +111,7 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
   }, []);
 
   useEffect(() => {
-    dispatch(libraryRequested({ type: mediaType }));
+    dispatch(libraryRequested({ type: mediaType, refresh: true }));
   }, [dispatch, mediaType]);
 
   const isMovies = mediaType === "movie";
@@ -130,17 +135,14 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     isLoaded &&
     query.groupBy !== undefined &&
     Boolean(groups?.length);
-  const hasActiveBrowse =
-    validSelectedCollectionId !== null ||
-    Boolean(query.q.trim()) ||
-    Boolean(query.filterField) ||
-    query.groupBy !== undefined;
-  const headerTotal =
-    validSelectedCollectionId !== null
+  const tabMovieCount =
+    validSelectedCollectionId !== null && preset.collection?.mediaType === 0
       ? preset.count
-      : hasActiveBrowse
-        ? currentCount
-        : movieCount + seriesCount;
+      : movieCount;
+  const tabSeriesCount =
+    validSelectedCollectionId !== null && preset.collection?.mediaType === 1
+      ? preset.count
+      : seriesCount;
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 py-6 sm:px-8 lg:py-10">
@@ -156,23 +158,15 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
               My library
             </h1>
             <p className="mt-1 font-public-sans text-xs text-secondary sm:mt-2">
-              {isLoading
-                ? "Loading your watchlist"
-                : validSelectedCollectionId && preset.collection
-                  ? `${headerTotal} in ${preset.collection.name}`
-                  : hasActiveBrowse
-                    ? `${headerTotal} matching ${headerTotal === 1 ? "title" : "titles"}`
-                    : `${headerTotal} titles in your watchlist`}
+              {LIBRARY_DESCRIPTION}
             </p>
           </div>
 
           <LibraryFilterControls
             libraryCollections={libraryCollections}
             mediaType={mediaType}
-            movieCount={movieCount}
-            onCollectionChange={(id) => dispatch(libraryCollectionSelected(id))}
-            selectedCollectionId={validSelectedCollectionId}
-            seriesCount={seriesCount}
+            movieCount={tabMovieCount}
+            seriesCount={tabSeriesCount}
           />
         </header>
 

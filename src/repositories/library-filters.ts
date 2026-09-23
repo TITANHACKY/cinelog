@@ -247,15 +247,22 @@ function searchCondition(mediaType: "movie" | "series", query: LibraryQueryInput
   return likeContains(titleColumn, query.q);
 }
 
+export function libraryTotalWhere(
+  mediaType: "movie" | "series",
+  userId: number,
+) {
+  const userIdColumn =
+    mediaType === "movie" ? userMovies.userId : userSeries.userId;
+  return eq(userIdColumn, userId);
+}
+
 export function libraryWhere(
   mediaType: "movie" | "series",
   userId: number,
   query: LibraryQueryInput,
 ) {
-  const userIdColumn =
-    mediaType === "movie" ? userMovies.userId : userSeries.userId;
   const parts = [
-    eq(userIdColumn, userId),
+    libraryTotalWhere(mediaType, userId),
     searchCondition(mediaType, query),
     filterCondition(mediaType, query),
   ].filter((part): part is SQL => part !== undefined);

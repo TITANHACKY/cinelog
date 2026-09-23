@@ -55,6 +55,24 @@ function isLibraryFetchRoute() {
   return window.location.pathname.startsWith("/library");
 }
 
+function currentLibraryMediaType(): "movie" | "series" {
+  if (typeof window === "undefined") return "movie";
+  return window.location.pathname.includes("/library/series")
+    ? "series"
+    : "movie";
+}
+
+function isStaleLibraryFetch(
+  library: LibraryState,
+  requestNonce: number,
+  mediaType: "movie" | "series",
+) {
+  return (
+    library.queryNonces[mediaType] !== requestNonce ||
+    mediaType !== currentLibraryMediaType()
+  );
+}
+
 function* fetchLibrary(
   action: ReturnType<typeof libraryRequested>,
 ): SagaIterator {
@@ -66,14 +84,14 @@ function* fetchLibrary(
   );
   const alreadyLoaded =
     mediaType === "movie" ? library.moviesLoaded : library.seriesLoaded;
-  if (alreadyLoaded) return;
+  if (alreadyLoaded && !action.payload.refresh) return;
 
-  const requestNonce = library.queryNonce;
+  const requestNonce = library.queryNonces[mediaType];
   const params = toLibrarySearchParams(
     mediaType,
     0,
     LIBRARY_PAGE_SIZE,
-    library.query,
+    library.queries[mediaType],
   );
 
   try {
@@ -91,7 +109,7 @@ function* fetchLibrary(
     const current: LibraryState = yield select(
       (state: LibraryRoot) => state.library,
     );
-    if (current.queryNonce !== requestNonce) return;
+    if (isStaleLibraryFetch(current, requestNonce, mediaType)) return;
 
     yield put(
       librarySucceeded({
@@ -105,7 +123,7 @@ function* fetchLibrary(
     const current: LibraryState = yield select(
       (state: LibraryRoot) => state.library,
     );
-    if (current.queryNonce !== requestNonce) return;
+    if (isStaleLibraryFetch(current, requestNonce, mediaType)) return;
 
     const message =
       error instanceof Error ? error.message : "Library request failed";
@@ -132,14 +150,14 @@ function* fetchLibraryPage(
     return;
   }
 
-  const requestNonce = library.queryNonce;
+  const requestNonce = library.queryNonces[mediaType];
   const offset =
     mediaType === "movie" ? library.movies.length : library.series.length;
   const params = toLibrarySearchParams(
     mediaType,
     offset,
     LIBRARY_PAGE_SIZE,
-    library.query,
+    library.queries[mediaType],
   );
 
   try {
@@ -157,7 +175,7 @@ function* fetchLibraryPage(
     const current: LibraryState = yield select(
       (state: LibraryRoot) => state.library,
     );
-    if (current.queryNonce !== requestNonce) return;
+    if (current.queryNonces[mediaType] !== requestNonce) return;
 
     yield put(
       libraryPageSucceeded({
@@ -171,7 +189,7 @@ function* fetchLibraryPage(
     const current: LibraryState = yield select(
       (state: LibraryRoot) => state.library,
     );
-    if (current.queryNonce !== requestNonce) return;
+    if (current.queryNonces[mediaType] !== requestNonce) return;
 
     const message =
       error instanceof Error ? error.message : "Library request failed";
@@ -207,12 +225,12 @@ function* fetchLibraryGroupPage(
     return;
   }
 
-  const requestNonce = library.queryNonce;
+  const requestNonce = library.queryNonces[mediaType];
   const params = toLibrarySearchParams(
     mediaType,
     page.items.length,
     LIBRARY_PAGE_SIZE,
-    library.query,
+    library.queries[mediaType],
     groupKey,
   );
 
@@ -231,7 +249,7 @@ function* fetchLibraryGroupPage(
     const current: LibraryState = yield select(
       (state: LibraryRoot) => state.library,
     );
-    if (current.queryNonce !== requestNonce) return;
+    if (current.queryNonces[mediaType] !== requestNonce) return;
 
     yield put(
       libraryGroupPageSucceeded({
@@ -246,7 +264,7 @@ function* fetchLibraryGroupPage(
     const current: LibraryState = yield select(
       (state: LibraryRoot) => state.library,
     );
-    if (current.queryNonce !== requestNonce) return;
+    if (current.queryNonces[mediaType] !== requestNonce) return;
 
     const message =
       error instanceof Error ? error.message : "Library request failed";
@@ -312,7 +330,13 @@ function* mutateLibraryItem(
         : undefined;
 
     yield put(
-      libraryItemMutationSucceeded({ mediaType, tmdbId, seriesUpdate }),
+      libraryItemMutationSucceeded({
+        mediaType,
+        tmdbId,
+        watch_status,
+        impression,
+        seriesUpdate,
+      }),
     );
   } catch (error) {
     yield put(

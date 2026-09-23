@@ -28,7 +28,7 @@ export function StepLanguages({
         })}
       </div>
       <p className="font-public-sans text-xs text-secondary">
-        Optional — up to {LANGUAGE_MAX}.
+        Pick at least 1 (up to {LANGUAGE_MAX}).
       </p>
     </div>
   );

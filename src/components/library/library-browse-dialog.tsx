@@ -57,7 +57,7 @@ export function LibraryBrowseDialog({
             type="button"
             variant="darkFilled"
           >
-            Clear
+            Clear filters
           </Button>
           <Button
             disabled={disabled}

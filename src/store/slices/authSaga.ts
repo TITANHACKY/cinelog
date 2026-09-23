@@ -12,6 +12,7 @@ import {
   initAuthFailure,
 } from "./authSlice";
 import type { LoginInput, SignupInput } from "@/lib/validations/auth";
+import { purgeNavigationCacheOnLogout } from "@/lib/pwa/service-worker-client";
 
 async function loginApi(payload: LoginInput) {
   const res = await fetch("/api/auth/login", {
@@ -78,10 +79,12 @@ function* handleSignup(action: PayloadAction<SignupInput>): SagaIterator {
 function* handleLogout(): SagaIterator {
   try {
     yield call(logoutApi);
+    purgeNavigationCacheOnLogout();
     yield put(logoutSuccess());
     window.location.replace("/login");
   } catch {
     // Force logout on client even if API fails
+    purgeNavigationCacheOnLogout();
     yield put(logoutSuccess());
     window.location.replace("/login");
   }

@@ -17,6 +17,7 @@ import {
   libraryGroupMatch,
   libraryOrderBy,
   librarySortOrder,
+  libraryTotalWhere,
   libraryWhere,
 } from "@/repositories/library-filters";
 
@@ -178,25 +179,34 @@ export async function listLibraryRows(
     certificate: series.certificate,
   };
 
-  const pageQueries: SqliteBatchQuery[] = [];
+  const activeType = includeMovies ? "movie" : "series";
+  const inactiveType = includeMovies ? "series" : "movie";
+  const activeWhere = includeMovies ? movieWhere : seriesWhere;
 
-  if (includeMovies) {
-    pageQueries.push(
-      db
-        .select({ value: count() })
-        .from(userMovies)
-        .innerJoin(movies, eq(userMovies.movieId, movies.id))
-        .where(movieWhere),
-    );
-  } else {
-    pageQueries.push(
-      db
-        .select({ value: count() })
-        .from(userSeries)
-        .innerJoin(series, eq(userSeries.seriesId, series.id))
-        .where(seriesWhere),
-    );
-  }
+  const pageQueries: SqliteBatchQuery[] = [
+    activeType === "movie"
+      ? db
+          .select({ value: count() })
+          .from(userMovies)
+          .innerJoin(movies, eq(userMovies.movieId, movies.id))
+          .where(activeWhere)
+      : db
+          .select({ value: count() })
+          .from(userSeries)
+          .innerJoin(series, eq(userSeries.seriesId, series.id))
+          .where(activeWhere),
+    inactiveType === "movie"
+      ? db
+          .select({ value: count() })
+          .from(userMovies)
+          .innerJoin(movies, eq(userMovies.movieId, movies.id))
+          .where(libraryTotalWhere("movie", userId))
+      : db
+          .select({ value: count() })
+          .from(userSeries)
+          .innerJoin(series, eq(userSeries.seriesId, series.id))
+          .where(libraryTotalWhere("series", userId)),
+  ];
 
   if (groupKey) {
     if (includeMovies) {
@@ -222,10 +232,11 @@ export async function listLibraryRows(
 
   const pageResults = await db.batch(asBatch(pageQueries));
   const typeCount = asCount(pageResults[0] as { value: number }[]);
-  const movieCount = includeMovies ? typeCount : 0;
-  const seriesCount = includeSeries ? typeCount : 0;
+  const otherTypeCount = asCount(pageResults[1] as { value: number }[]);
+  const movieCount = includeMovies ? typeCount : otherTypeCount;
+  const seriesCount = includeSeries ? typeCount : otherTypeCount;
 
-  let resultIndex = 1;
+  let resultIndex = 2;
   const groups = groupKey
     ? ((pageResults[resultIndex++] as LibraryGroupRow[]) ?? []).map((row) => ({
         key: String(row.key),

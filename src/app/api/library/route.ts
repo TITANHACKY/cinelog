@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth/session";
 import { parseSchema } from "@/lib/http/request";
 import { ok, toErrorResponse } from "@/lib/http/response";
 import { libraryQuerySchema } from "@/lib/validations/library";
+import { assertLocaleFilterValue } from "@/lib/validations/locales";
 import { getLibrary } from "@/services/library";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export async function GET(request: Request) {
       group_by: searchParams.get("group_by") ?? undefined,
       group_key: searchParams.get("group_key") ?? undefined,
     });
+    await assertLocaleFilterValue(query.filter_field, query.filter_value);
     const library = await getLibrary(session.userId, query);
     return ok(library);
   } catch (error) {

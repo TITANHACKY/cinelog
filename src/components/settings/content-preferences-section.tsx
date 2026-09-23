@@ -70,18 +70,25 @@ export function ContentPreferencesSection() {
         <h2 className="font-public-sans text-sm font-semibold text-on-surface">
           Titles you love
         </h2>
+        <p className="font-public-sans text-xs text-secondary">
+          Add titles straight to your watchlist.
+        </p>
         <StepTitles
           genreIds={draft.genreIds}
           mediaLean={draft.mediaLean}
           languages={draft.languages}
-          seedTitles={draft.seedTitles}
-          onAdd={actions.addSeedTitle}
-          onRemove={actions.removeSeedTitle}
+          minRating={draft.minRating}
+          eras={draft.eras}
         />
       </section>
 
       <div>
-        <Button onClick={save} disabled={isSaving || draft.genreIds.length < 1}>
+        <Button
+          onClick={save}
+          disabled={
+            isSaving || draft.genreIds.length < 1 || draft.languages.length < 1
+          }
+        >
           {isSaving ? "Saving…" : "Save preferences"}
         </Button>
       </div>

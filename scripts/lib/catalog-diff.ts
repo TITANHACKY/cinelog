@@ -10,9 +10,11 @@ import {
   type CatalogSeriesFields,
 } from "@/lib/tmdb/catalog-fields";
 import type { TmdbMovie, TmdbSeries } from "@/lib/types";
-import type {
-  CatalogSyncMutations,
-  CatalogSyncSnapshot,
+import {
+  markSeriesForWatchStatusReopen,
+  type CatalogSyncMutations,
+  type CatalogSyncSnapshot,
+  type UserSeriesReopenPlan,
 } from "@/repositories/catalog-sync";
 
 export type DiffRow = {
@@ -252,6 +254,7 @@ export function emptyMutations(): CatalogSyncMutations {
     seriesGenreLinks: [],
     movieGenreUnlinks: [],
     seriesGenreUnlinks: [],
+    reopenWatchStatusSeriesIds: [],
   };
 }
 
@@ -379,6 +382,14 @@ export function diffCatalogSeries(input: {
         field.oldValue,
         field.newValue,
       );
+      if (
+        field.field === "totalNumberOfEpisodes" &&
+        typeof field.oldValue === "number" &&
+        typeof field.newValue === "number" &&
+        field.newValue > field.oldValue
+      ) {
+        markSeriesForWatchStatusReopen(input.mutations, input.show.id);
+      }
     }
   }
 
@@ -455,6 +466,7 @@ export function diffCatalogSeries(input: {
         ...season,
         seriesId: input.show.id,
       });
+      markSeriesForWatchStatusReopen(input.mutations, input.show.id);
       pushFieldDiff(
         input.diffs,
         "season",
@@ -503,8 +515,28 @@ export function diffCatalogSeries(input: {
         field.oldValue,
         field.newValue,
       );
+      if (
+        field.field === "episodeCount" &&
+        typeof field.oldValue === "number" &&
+        typeof field.newValue === "number" &&
+        field.newValue > field.oldValue
+      ) {
+        markSeriesForWatchStatusReopen(input.mutations, input.show.id);
+      }
     }
   }
+}
+
+export function userSeriesReopenDiffRows(plans: UserSeriesReopenPlan[]): DiffRow[] {
+  return plans.map((plan) => ({
+    entity: "user_series",
+    dbId: String(plan.userSeriesId),
+    tmdbId: String(plan.seriesId),
+    field: "watch_status",
+    oldValue: "2",
+    newValue: "1",
+    action: "update" as const,
+  }));
 }
 
 export const DIFF_CSV_HEADERS = [

@@ -16,7 +16,6 @@ export function SmartCollectionsSection() {
     saveCollection,
     deleteCollection,
     reorderCollections,
-    patchCollection,
   } = useSmartCollections();
 
   const [expandedId, setExpandedId] = useState<number | "create" | null>(null);
@@ -120,23 +119,10 @@ export function SmartCollectionsSection() {
                 if (saved) setExpandedId(null);
                 return saved;
               }}
-              onToggleDashboard={() =>
-                void patchCollection(collection.id, {
-                  showInDashboard: !collection.showInDashboard,
-                  groupBy: !collection.showInDashboard
-                    ? null
-                    : collection.groupBy,
-                })
-              }
               onToggleExpand={() =>
                 setExpandedId((prev) =>
                   prev === collection.id ? null : collection.id,
                 )
-              }
-              onToggleLibrary={() =>
-                void patchCollection(collection.id, {
-                  showInLibrary: !collection.showInLibrary,
-                })
               }
             />
           ))}

@@ -42,6 +42,18 @@ export const genres = sqliteTable("genres", {
   createdAt: numeric("created_at").default(sql`(unixepoch())`),
 });
 
+export const languages = sqliteTable("languages", {
+  iso6391: text("iso_639_1").primaryKey(),
+  englishName: text("english_name").notNull(),
+  createdAt: numeric("created_at").default(sql`(unixepoch())`),
+});
+
+export const countries = sqliteTable("countries", {
+  iso31661: text("iso_3166_1").primaryKey(),
+  englishName: text("english_name").notNull(),
+  createdAt: numeric("created_at").default(sql`(unixepoch())`),
+});
+
 export const movies = sqliteTable(
   "movies",
   {
@@ -494,34 +506,12 @@ export const userPreferredLanguages = sqliteTable(
   ],
 );
 
-export const userSeedTitles = sqliteTable(
-  "user_seed_titles",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    userId: integer("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    tmdbId: integer("tmdb_id").notNull(),
-    mediaType: integer("media_type").notNull(),
-    title: text("title").notNull(),
-    posterPath: text("poster_path"),
-  },
-  (table) => [
-    check(
-      "user_seed_titles_media_type_check",
-      sql`${table.mediaType} IN (0, 1)`,
-    ),
-    uniqueIndex("user_seed_titles_user_tmdb_media_unique").on(
-      table.userId,
-      table.tmdbId,
-      table.mediaType,
-    ),
-    index("user_seed_titles_user_id_index").on(table.userId),
-  ],
-);
-
 export type Genre = typeof genres.$inferSelect;
 export type NewGenre = typeof genres.$inferInsert;
+export type Language = typeof languages.$inferSelect;
+export type NewLanguage = typeof languages.$inferInsert;
+export type Country = typeof countries.$inferSelect;
+export type NewCountry = typeof countries.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Movie = typeof movies.$inferSelect;
@@ -553,5 +543,3 @@ export type NewUserPreferredGenre = typeof userPreferredGenres.$inferInsert;
 export type UserPreferredLanguage = typeof userPreferredLanguages.$inferSelect;
 export type NewUserPreferredLanguage =
   typeof userPreferredLanguages.$inferInsert;
-export type UserSeedTitle = typeof userSeedTitles.$inferSelect;
-export type NewUserSeedTitle = typeof userSeedTitles.$inferInsert;

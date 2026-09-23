@@ -17,7 +17,7 @@ const STEP_TITLES = [
   { title: "Pick your genres", subtitle: "We use these to tailor CineLog to you." },
   {
     title: "Preferred languages",
-    subtitle: "Optional — helps us surface the right titles.",
+    subtitle: "Pick at least one — helps us surface the right titles.",
   },
   { title: "Era & rating", subtitle: "Optional — set the vibe and a quality floor." },
   { title: "Titles you love", subtitle: "Optional — pick a few to seed your taste." },
@@ -26,7 +26,8 @@ const STEP_TITLES = [
 export function OnboardingWizard() {
   const w = useOnboardingWizard();
   const meta = STEP_TITLES[w.stepIndex];
-  const isSkippable = w.stepIndex >= 2;
+  // Languages (step 2) is now required; only era-rating and titles are skippable.
+  const isSkippable = w.stepIndex >= 3;
 
   // Wait for the saved draft to be restored before rendering a step, so we
   // never flash step 1 while resuming a later step on reload.
@@ -86,9 +87,8 @@ export function OnboardingWizard() {
             genreIds={w.draft.genreIds}
             mediaLean={w.draft.mediaLean}
             languages={w.draft.languages}
-            seedTitles={w.draft.seedTitles}
-            onAdd={w.actions.addSeedTitle}
-            onRemove={w.actions.removeSeedTitle}
+            minRating={w.draft.minRating}
+            eras={w.draft.eras}
           />
         ) : null}
       </div>

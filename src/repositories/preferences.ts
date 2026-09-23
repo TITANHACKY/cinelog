@@ -4,7 +4,6 @@ import {
   userPreferences,
   userPreferredGenres,
   userPreferredLanguages,
-  userSeedTitles,
   users,
 } from "@/db/schema";
 import type { UserPreferences, UserPreferencesInput } from "@/lib/types";
@@ -13,7 +12,7 @@ export async function loadUserPreferences(
   userId: number,
 ): Promise<UserPreferences | null> {
   const db = getDb();
-  const [prefsRows, genreRows, languageRows, seedRows] = await db.batch([
+  const [prefsRows, genreRows, languageRows] = await db.batch([
     db.select().from(userPreferences).where(eq(userPreferences.userId, userId)),
     db
       .select({ genreTmdbId: userPreferredGenres.genreTmdbId })
@@ -23,15 +22,6 @@ export async function loadUserPreferences(
       .select({ languageCode: userPreferredLanguages.languageCode })
       .from(userPreferredLanguages)
       .where(eq(userPreferredLanguages.userId, userId)),
-    db
-      .select({
-        tmdbId: userSeedTitles.tmdbId,
-        mediaType: userSeedTitles.mediaType,
-        title: userSeedTitles.title,
-        posterPath: userSeedTitles.posterPath,
-      })
-      .from(userSeedTitles)
-      .where(eq(userSeedTitles.userId, userId)),
   ]);
 
   const prefs = prefsRows[0];
@@ -43,12 +33,6 @@ export async function loadUserPreferences(
     eras: prefs.eras ? (JSON.parse(prefs.eras) as string[]) : [],
     genreIds: genreRows.map((row) => row.genreTmdbId),
     languages: languageRows.map((row) => row.languageCode),
-    seedTitles: seedRows.map((row) => ({
-      tmdbId: row.tmdbId,
-      mediaType: row.mediaType as 0 | 1,
-      title: row.title,
-      posterPath: row.posterPath,
-    })),
   };
 }
 
@@ -81,7 +65,6 @@ export async function replaceUserPreferences(
     db
       .delete(userPreferredLanguages)
       .where(eq(userPreferredLanguages.userId, userId)),
-    db.delete(userSeedTitles).where(eq(userSeedTitles.userId, userId)),
   ];
 
   if (input.genreIds.length > 0) {
@@ -96,19 +79,6 @@ export async function replaceUserPreferences(
       db
         .insert(userPreferredLanguages)
         .values(input.languages.map((languageCode) => ({ userId, languageCode }))),
-    );
-  }
-  if (input.seedTitles.length > 0) {
-    statements.push(
-      db.insert(userSeedTitles).values(
-        input.seedTitles.map((seed) => ({
-          userId,
-          tmdbId: seed.tmdbId,
-          mediaType: seed.mediaType,
-          title: seed.title,
-          posterPath: seed.posterPath,
-        })),
-      ),
     );
   }
 

@@ -1,0 +1,56 @@
+name: Catalog Sync
+
+on:
+  schedule:
+    # Daily at 06:00 UTC. GitHub may start the job several minutes later.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Sync mode
+        required: true
+        default: execute
+        type: choice
+        options:
+          - dry-run
+          - execute
+
+jobs:
+  sync:
+    name: Sync catalog from TMDB
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+
+      - name: Install Dependencies
+        run: yarn install --immutable
+
+      - name: Run catalog sync
+        env:
+          TURSO_CONNECTION_URL: ${{ secrets.TURSO_CONNECTION_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          MODE="${{ github.event.inputs.mode || 'execute' }}"
+          echo "Catalog sync mode: ${MODE}"
+          yarn tsx scripts/sync-catalog.ts --mode "${MODE}"
+
+      - name: Upload sync reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-sync-reports
+          path: temp/catalog-sync-*
+          if-no-files-found: warn
+          retention-days: 10

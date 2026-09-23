@@ -1,7 +1,39 @@
-import { TMDB_POSTER_BASE_URL } from "@/lib/constants";
+import { ERA_BUCKETS } from "@/lib/constants";
 import { getYearString } from "@/lib/media/display";
 import { discoverTitles, type TmdbDiscoverResult } from "@/lib/tmdb/discover";
 import type { TitleCandidate } from "@/lib/types";
+
+// Collapse the selected era buckets into one inclusive [gteYear, lteYear]
+// window. TMDB's discover date filters can't express disjoint ranges, so we
+// take the outer bounds of everything the user picked. A `null` bound means
+// "open-ended" (pre-1980 has no lower bound, 2020s has no upper bound).
+function eraWindow(eras: string[]): {
+  gteYear: number | null;
+  lteYear: number | null;
+} {
+  const buckets = ERA_BUCKETS.filter((bucket) =>
+    eras.includes(bucket.value),
+  );
+  if (buckets.length === 0) return { gteYear: null, lteYear: null };
+
+  let gteYear: number | null = Infinity;
+  let lteYear: number | null = -Infinity;
+  for (const bucket of buckets) {
+    // A null lower/upper bound opens that side entirely.
+    gteYear =
+      bucket.gteYear === null || gteYear === null
+        ? null
+        : Math.min(gteYear, bucket.gteYear);
+    lteYear =
+      bucket.lteYear === null || lteYear === null
+        ? null
+        : Math.max(lteYear, bucket.lteYear);
+  }
+  return {
+    gteYear: gteYear === Infinity ? null : gteYear,
+    lteYear: lteYear === -Infinity ? null : lteYear,
+  };
+}
 
 const PER_TYPE_LIMIT = 12;
 const TOTAL_LIMIT = 24;
@@ -15,10 +47,10 @@ function toCandidate(result: TmdbDiscoverResult, mediaType: 0 | 1): TitleCandida
     tmdbId: result.id,
     mediaType,
     title: (result.title ?? result.name ?? "").trim(),
-    posterPath: result.poster_path
-      ? `${TMDB_POSTER_BASE_URL}${result.poster_path}`
-      : null,
+    // Raw TMDB path — the media-card builds the full poster URL.
+    posterPath: result.poster_path,
     year: getYearString(result.release_date ?? result.first_air_date),
+    rating: result.vote_average ?? null,
   };
 }
 
@@ -51,9 +83,14 @@ export async function getTitleSuggestions(input: {
   genreIds: number[];
   mediaLean: 0 | 1 | 2;
   languages?: string[];
+  minRating?: number | null;
+  eras?: string[];
 }): Promise<TitleCandidate[]> {
   const wantMovies = input.mediaLean === 0 || input.mediaLean === 2;
   const wantSeries = input.mediaLean === 1 || input.mediaLean === 2;
+
+  const { gteYear, lteYear } = eraWindow(input.eras ?? []);
+  const minRating = input.minRating ?? null;
 
   // Empty -> a single unfiltered pass (represented as one "no language" bucket).
   const languages = (input.languages ?? []).slice(0, SUGGESTION_LANGUAGE_LIMIT);
@@ -67,9 +104,14 @@ export async function getTitleSuggestions(input: {
       // A single flaky discover call must not sink the whole suggestions
       // response — degrade it to an empty list so the other calls still render.
       const safeDiscover = (type: "movie" | "tv") =>
-        discoverTitles({ type, genreIds: input.genreIds, language }).catch(
-          (): TmdbDiscoverResult[] => [],
-        );
+        discoverTitles({
+          type,
+          genreIds: input.genreIds,
+          language,
+          minRating,
+          gteYear,
+          lteYear,
+        }).catch((): TmdbDiscoverResult[] => []);
 
       const [movies, series] = await Promise.all([
         wantMovies ? safeDiscover("movie") : Promise.resolve([]),

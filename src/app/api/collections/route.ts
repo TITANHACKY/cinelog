@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/auth/session";
 import { readJsonBody } from "@/lib/http/request";
 import { ok, toErrorResponse } from "@/lib/http/response";
 import { createCollectionSchema } from "@/lib/validations/collections";
+import { assertLocaleFilterValue } from "@/lib/validations/locales";
 import {
   createUserCollection,
   getUserCollections,
@@ -27,6 +28,9 @@ export async function POST(request: Request) {
   try {
     const session = await requireSession();
     const body = await readJsonBody(request, createCollectionSchema);
+    for (const filter of body.filters) {
+      await assertLocaleFilterValue(filter.field, filter.value);
+    }
 
     const collection = await createUserCollection(session.userId, body);
     return ok({ collection }, 201);

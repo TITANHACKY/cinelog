@@ -6,7 +6,7 @@ import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { CollectionCarousel } from "@/components/library/collection-carousel";
 import { useDashboard } from "@/hooks/dashboard/use-dashboard";
 import { useAppSelector } from "@/store";
-import { Film, Layers, Plus, Sparkles, Tv } from "lucide-react";
+import { BookOpen, Film, Search, Sparkles, Tv } from "lucide-react";
 
 export function HomePage() {
   const { user } = useAppSelector((state) => state.auth);
@@ -87,28 +87,24 @@ export function HomePage() {
             })}
           </div>
         ) : !isLoading ? (
-          <section className="flex flex-col items-center justify-between gap-4 rounded-2xl border border-dashed border-outline-variant bg-surface-container-low p-6 text-center sm:flex-row sm:text-left">
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-primary-container/20 text-brand-primary">
-                <Layers className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-heading text-sm font-semibold text-on-surface sm:text-base">
-                  Personalize Your Dashboard Streams
-                </h3>
-                <p className="mt-0.5 font-public-sans text-xs text-secondary">
-                  Create smart collections in Settings with filter rules
-                  (genres, years, ratings) to feature live rows right here.
-                </p>
-              </div>
+          <section className="flex flex-col items-center gap-3.5 rounded-2xl border border-dashed border-outline-variant bg-surface-container-low p-6 text-center sm:gap-4 sm:p-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-primary-container/20 text-brand-primary sm:h-11 sm:w-11">
+              <Search className="h-5 w-5" />
             </div>
+            <h3 className="font-heading text-sm font-semibold text-on-surface sm:text-base">
+              Start Tracking Titles
+            </h3>
+            <p className="max-w-md font-public-sans text-xs text-secondary sm:text-sm">
+              Click the search button in the bottom right corner to find movies
+              and series and add them to your watchlist.
+            </p>
             <ButtonLink
-              className="shrink-0 text-xs"
-              href="/settings"
-              variant="primaryFilled"
+              className="text-xs"
+              href="/guide"
+              variant="darkTonal"
             >
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Create Stream Collection
+              <BookOpen className="mr-1.5 h-3.5 w-3.5" />
+              New here? Read the guide
             </ButtonLink>
           </section>
         ) : null}

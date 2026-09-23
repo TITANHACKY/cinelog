@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
+import { Tooltip } from "@/components/ui/tooltip";
 import {
   LIBRARY_GROUP_OPTIONS,
   LIBRARY_SORT_OPTIONS,
@@ -18,8 +19,9 @@ import type {
   LibraryMediaType,
   SmartCollectionWithFilters,
 } from "@/lib/types";
-import { Loader2, Plus } from "lucide-react";
-import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Info, Loader2, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 type CollectionListItemEditorProps = {
   collection?: SmartCollectionWithFilters;
@@ -48,6 +50,11 @@ const defaultFilter = (mediaType: LibraryMediaType): CollectionFilterItem => ({
   value: defaultFilterValue("genre", mediaType),
 });
 
+const MEDIA_TYPE_OPTIONS = [
+  { value: "0", label: "Movies" },
+  { value: "1", label: "Series" },
+];
+
 export function CollectionListItemEditor({
   collection,
   onCancel,
@@ -73,6 +80,35 @@ export function CollectionListItemEditor({
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [groupTooltipOpen, setGroupTooltipOpen] = useState(false);
+  const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  function triggerGroupTooltip(duration = 5000) {
+    if (tooltipTimeoutRef.current) {
+      clearTimeout(tooltipTimeoutRef.current);
+    }
+    setGroupTooltipOpen(true);
+    tooltipTimeoutRef.current = setTimeout(() => {
+      setGroupTooltipOpen(false);
+      tooltipTimeoutRef.current = null;
+    }, duration);
+  }
+
+  function handleGroupTooltipChange(open: boolean) {
+    if (tooltipTimeoutRef.current) {
+      clearTimeout(tooltipTimeoutRef.current);
+      tooltipTimeoutRef.current = null;
+    }
+    setGroupTooltipOpen(open);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const mediaTypeKey: LibraryMediaType = mediaType === 0 ? "movie" : "series";
   const sortOptions = LIBRARY_SORT_OPTIONS.filter(
@@ -146,23 +182,32 @@ export function CollectionListItemEditor({
           />
         </FormField>
         <FormField id="collection-media-type" label="Media type">
-          <select
-            className="h-8 w-full rounded-lg border border-outline-alt bg-surface-container px-2.5 font-public-sans text-xs text-on-surface outline-none"
-            id="collection-media-type"
-            onChange={(event) => {
-              const next = Number(event.target.value);
+          <SearchFilterSelect
+            aria-label="Media type"
+            heading="Media type"
+            menuMinWidth={220}
+            onChange={(value) => {
+              const next = Number(value);
               setMediaType(next);
               setFilters([]);
             }}
-            value={mediaType}
-          >
-            <option value={0}>Movies</option>
-            <option value={1}>Series</option>
-          </select>
+            options={MEDIA_TYPE_OPTIONS}
+            placeholder="Media type"
+            triggerClassName="min-w-full"
+            value={String(mediaType)}
+          />
         </FormField>
       </div>
 
-      <FormField id="collection-filters" label="Filters">
+      <FormField
+        id="collection-filters"
+        label="Filters"
+        labelSuffix={
+          <span className="rounded border border-outline-alt/60 bg-surface-container px-1.5 py-0.5 font-mono text-[11px] font-medium text-secondary">
+            {filters.length}/{MAX_COLLECTION_FILTERS}
+          </span>
+        }
+      >
         <div className="space-y-2">
           {filters.length === 0 ? (
             <p className="font-public-sans text-xs text-secondary">
@@ -222,7 +267,32 @@ export function CollectionListItemEditor({
             value={`${sort.field}:${sort.direction}`}
           />
         </FormField>
-        <FormField id="collection-group" label="Group">
+        <FormField
+          id="collection-group"
+          label="Group"
+          labelSuffix={
+            <Tooltip
+              align="responsive"
+              content="Collections displayed on the dashboard cannot be grouped. Disable 'Show in dashboard' to enable grouping."
+              contentClassName="w-64 sm:w-72"
+              isOpen={groupTooltipOpen}
+              onOpenChange={handleGroupTooltipChange}
+              side="top"
+            >
+              <button
+                aria-label="Grouping restriction info"
+                className="inline-flex size-4 cursor-pointer items-center justify-center rounded-full text-secondary transition-colors hover:bg-surface-container-high hover:text-on-surface focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-primary"
+                onClick={(event) => {
+                  event.preventDefault();
+                  handleGroupTooltipChange(!groupTooltipOpen);
+                }}
+                type="button"
+              >
+                <Info className="size-3.5" />
+              </button>
+            </Tooltip>
+          }
+        >
           <SearchFilterSelect
             aria-label="Group collection"
             disabled={groupDisabled}
@@ -250,14 +320,27 @@ export function CollectionListItemEditor({
             Show in library
           </span>
         </label>
-        <label className="flex items-center gap-2.5">
+        <div
+          className={cn(
+            "flex items-center gap-2.5",
+            dashboardDisabled ? "cursor-not-allowed" : "cursor-pointer",
+          )}
+          onClick={() => {
+            if (dashboardDisabled) {
+              triggerGroupTooltip();
+            }
+          }}
+        >
           <ToggleSwitch
             checked={showInDashboard}
             disabled={dashboardDisabled}
             onChange={() =>
               setShowInDashboard((prev) => {
                 const next = !prev;
-                if (next) setGroupBy(null);
+                if (next) {
+                  setGroupBy(null);
+                  triggerGroupTooltip();
+                }
                 return next;
               })
             }
@@ -267,10 +350,24 @@ export function CollectionListItemEditor({
                 : "Show on dashboard"
             }
           />
-          <span className="font-public-sans text-xs text-on-surface">
+          <span
+            className="font-public-sans text-xs text-on-surface select-none"
+            onClick={() => {
+              if (!dashboardDisabled) {
+                setShowInDashboard((prev) => {
+                  const next = !prev;
+                  if (next) {
+                    setGroupBy(null);
+                    triggerGroupTooltip();
+                  }
+                  return next;
+                });
+              }
+            }}
+          >
             Show in dashboard
           </span>
-        </label>
+        </div>
       </div>
 
       {error ? (

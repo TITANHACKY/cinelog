@@ -30,17 +30,4 @@ CREATE TABLE `user_preferred_languages` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `user_preferred_languages_user_lang_unique` ON `user_preferred_languages` (`user_id`,`language_code`);--> statement-breakpoint
 CREATE INDEX `user_preferred_languages_user_id_index` ON `user_preferred_languages` (`user_id`);--> statement-breakpoint
-CREATE TABLE `user_seed_titles` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`user_id` integer NOT NULL,
-	`tmdb_id` integer NOT NULL,
-	`media_type` integer NOT NULL,
-	`title` text NOT NULL,
-	`poster_path` text,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade,
-	CONSTRAINT "user_seed_titles_media_type_check" CHECK("user_seed_titles"."media_type" IN (0, 1))
-);
---> statement-breakpoint
-CREATE UNIQUE INDEX `user_seed_titles_user_tmdb_media_unique` ON `user_seed_titles` (`user_id`,`tmdb_id`,`media_type`);--> statement-breakpoint
-CREATE INDEX `user_seed_titles_user_id_index` ON `user_seed_titles` (`user_id`);--> statement-breakpoint
 ALTER TABLE `users` ADD `onboarding_completed_at` numeric;

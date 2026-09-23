@@ -179,6 +179,16 @@ type CollectionSortItem = {
   priority: number;
 };
 
+type LanguageOption = {
+  iso_639_1: string;
+  english_name: string;
+};
+
+type CountryOption = {
+  iso_3166_1: string;
+  english_name: string;
+};
+
 type SmartCollectionWithFilters = {
   id: number;
   userId: number;
@@ -197,7 +207,9 @@ type SmartCollectionWithFilters = {
 export type {
   CollectionFilterItem,
   CollectionSortItem,
+  CountryOption,
   CreditMember,
+  LanguageOption,
   LibraryCount,
   LibraryGroup,
   LibraryMetadata,

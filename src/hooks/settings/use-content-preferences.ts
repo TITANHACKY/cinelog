@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/http/client";
-import { GENRE_MAX, LANGUAGE_MAX, SEED_TITLE_MAX } from "@/lib/constants";
-import type { MediaLean, SeedTitle, UserPreferencesInput } from "@/lib/types";
+import { GENRE_MAX, LANGUAGE_MAX } from "@/lib/constants";
+import type { MediaLean, UserPreferencesInput } from "@/lib/types";
 
 const emptyDraft: UserPreferencesInput = {
   mediaLean: 2,
@@ -11,7 +11,6 @@ const emptyDraft: UserPreferencesInput = {
   eras: [],
   genreIds: [],
   languages: [],
-  seedTitles: [],
 };
 
 function toggle<T>(list: T[], value: T, max: number): T[] {
@@ -61,21 +60,6 @@ export function useContentPreferences() {
         setDraft((p) => ({ ...p, eras: toggle(p.eras, era, p.eras.length + 1) })),
       setMinRating: (value: number | null) =>
         setDraft((p) => ({ ...p, minRating: value })),
-      addSeedTitle: (seed: SeedTitle) =>
-        setDraft((p) =>
-          p.seedTitles.some(
-            (s) => s.tmdbId === seed.tmdbId && s.mediaType === seed.mediaType,
-          ) || p.seedTitles.length >= SEED_TITLE_MAX
-            ? p
-            : { ...p, seedTitles: [...p.seedTitles, seed] },
-        ),
-      removeSeedTitle: (tmdbId: number, mediaType: 0 | 1) =>
-        setDraft((p) => ({
-          ...p,
-          seedTitles: p.seedTitles.filter(
-            (s) => !(s.tmdbId === tmdbId && s.mediaType === mediaType),
-          ),
-        })),
     }),
     [],
   );

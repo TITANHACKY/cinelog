@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { fail, ok, toErrorResponse } from "@/lib/http/response";
+import { isValidLanguageCode } from "@/lib/validations/locales";
 import { parseSearchQuery } from "@/lib/validations/search";
 import { searchTitles } from "@/services/search";
 
@@ -23,6 +24,10 @@ export async function GET(request: Request) {
 
     const session = await getSession();
     const { query, year, language, page } = parsedQuery.data;
+
+    if (language && !(await isValidLanguageCode(language))) {
+      return fail("Invalid search parameters", 400);
+    }
 
     return ok(
       await searchTitles({

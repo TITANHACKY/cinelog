@@ -1,3 +1,5 @@
+"use client";
+
 import { Languages, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,7 +9,8 @@ import {
   WATCH_STATUS_INDICATOR,
   WATCH_STATUS_INDICATOR_TEXT,
 } from "@/lib/media/watch-status";
-import { cn, formatLanguage, formatRating } from "@/lib/utils";
+import { cn, formatRating } from "@/lib/utils";
+import { useLocales } from "@/hooks/locales/use-locales";
 
 type MovieItemProps = {
   id?: number;
@@ -49,6 +52,7 @@ function MovieItem({
     watchStatus != null
       ? WATCH_STATUS[watchStatus as keyof typeof WATCH_STATUS]
       : undefined;
+  const { formatLanguage } = useLocales();
   const statusIndicator =
     watchStatus != null
       ? (WATCH_STATUS_INDICATOR[watchStatus] ?? WATCH_STATUS_INDICATOR[0])

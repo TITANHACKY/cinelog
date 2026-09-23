@@ -2,7 +2,8 @@
 
 import { Clock, Languages, Shield } from "lucide-react";
 import type { MovieDetails, SeriesDetails } from "@/lib/types";
-import { formatLanguage, orFallback } from "@/lib/utils";
+import { orFallback } from "@/lib/utils";
+import { useLocales } from "@/hooks/locales/use-locales";
 
 type SpecificationsMetaProps = {
   movie?: MovieDetails | null;
@@ -17,6 +18,7 @@ export function SpecificationsMeta({
 }: SpecificationsMetaProps) {
   const isMovie = type === "movie" || Boolean(movie);
   const media = movie ?? series;
+  const { formatLanguage } = useLocales();
 
   if (!media) return null;
 

@@ -6,8 +6,10 @@ import { Carousel } from "@/components/ui/carousel";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MovieCard } from "@/components/ui/movie-card";
 import { SeriesCard } from "@/components/ui/series-card";
+import { usePatchCollectionItemsOnMutationSuccess } from "@/hooks/library/use-patch-collection-items-on-mutation-success";
 import { apiFetch } from "@/lib/http/client";
 import type {
+  LibraryMediaType,
   LibraryMovie,
   LibrarySeries,
   SmartCollectionWithFilters,
@@ -35,6 +37,14 @@ export function CollectionCarousel({
   const [count, setCount] = useState(initialCount);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  const mediaType: LibraryMediaType =
+    collection.mediaType === 0 ? "movie" : "series";
+
+  usePatchCollectionItemsOnMutationSuccess({
+    mediaType,
+    setItems,
+  });
 
   const handleNearEnd = useCallback(async () => {
     if (!hasMore || loadingMore) return;

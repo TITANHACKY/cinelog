@@ -5,15 +5,7 @@ import {
   LANGUAGE_CODES,
   LANGUAGE_MAX,
   MIN_RATING_VALUES,
-  SEED_TITLE_MAX,
 } from "@/lib/constants";
-
-const seedTitleSchema = z.object({
-  tmdbId: z.number().int().positive(),
-  mediaType: z.union([z.literal(0), z.literal(1)]),
-  title: z.string().min(1).max(300),
-  posterPath: z.string().max(500).nullable(),
-});
 
 export const preferencesSchema = z.object({
   mediaLean: z.union([z.literal(0), z.literal(1), z.literal(2)]),
@@ -26,8 +18,10 @@ export const preferencesSchema = z.object({
     .nullable(),
   eras: z.array(z.enum(ERA_VALUES as [string, ...string[]])).max(ERA_VALUES.length),
   genreIds: z.array(z.number().int().positive()).min(1).max(GENRE_MAX),
-  languages: z.array(z.enum(LANGUAGE_CODES as [string, ...string[]])).max(LANGUAGE_MAX),
-  seedTitles: z.array(seedTitleSchema).max(SEED_TITLE_MAX),
+  languages: z
+    .array(z.enum(LANGUAGE_CODES as [string, ...string[]]))
+    .min(1)
+    .max(LANGUAGE_MAX),
 });
 
 export type PreferencesInput = z.infer<typeof preferencesSchema>;
@@ -58,5 +52,23 @@ export const titleSuggestionsQuerySchema = z.object({
             .filter((value) => /^[a-z]{2}$/.test(value)),
         ),
       ),
+    ),
+  minRating: z
+    .string()
+    .optional()
+    .transform((raw) => {
+      const value = Number(raw);
+      return raw && Number.isFinite(value) && value >= 0 && value <= 10
+        ? value
+        : null;
+    }),
+  eras: z
+    .string()
+    .optional()
+    .transform((raw) =>
+      (raw ?? "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter((value) => (ERA_VALUES as string[]).includes(value)),
     ),
 });

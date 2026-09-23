@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/http/client";
-import { GENRE_MAX, LANGUAGE_MAX, SEED_TITLE_MAX } from "@/lib/constants";
-import type { MediaLean, SeedTitle, UserPreferencesInput } from "@/lib/types";
+import { GENRE_MAX, LANGUAGE_MAX } from "@/lib/constants";
+import type { MediaLean, UserPreferencesInput } from "@/lib/types";
 
 const STEP_COUNT = 5; // media-lean, genres, languages, era-rating, titles
 
@@ -22,7 +22,6 @@ const emptyDraft: UserPreferencesInput = {
   eras: [],
   genreIds: [],
   languages: [],
-  seedTitles: [],
 };
 
 function toggle<T>(list: T[], value: T, max: number): T[] {
@@ -112,21 +111,6 @@ export function useOnboardingWizard() {
         })),
       setMinRating: (value: number | null) =>
         setDraft((prev) => ({ ...prev, minRating: value })),
-      addSeedTitle: (seed: SeedTitle) =>
-        setDraft((prev) =>
-          prev.seedTitles.some(
-            (s) => s.tmdbId === seed.tmdbId && s.mediaType === seed.mediaType,
-          ) || prev.seedTitles.length >= SEED_TITLE_MAX
-            ? prev
-            : { ...prev, seedTitles: [...prev.seedTitles, seed] },
-        ),
-      removeSeedTitle: (tmdbId: number, mediaType: 0 | 1) =>
-        setDraft((prev) => ({
-          ...prev,
-          seedTitles: prev.seedTitles.filter(
-            (s) => !(s.tmdbId === tmdbId && s.mediaType === mediaType),
-          ),
-        })),
     }),
     [],
   );
@@ -134,8 +118,9 @@ export function useOnboardingWizard() {
   const canProceed = useMemo(() => {
     if (stepIndex === 0) return mediaLeanChosen;
     if (stepIndex === 1) return draft.genreIds.length >= 1;
-    return true; // languages, era-rating, titles are skippable
-  }, [stepIndex, mediaLeanChosen, draft.genreIds.length]);
+    if (stepIndex === 2) return draft.languages.length >= 1;
+    return true; // era-rating and titles are skippable
+  }, [stepIndex, mediaLeanChosen, draft.genreIds.length, draft.languages.length]);
 
   const next = useCallback(
     () => setStepIndex((i) => Math.min(i + 1, STEP_COUNT - 1)),

@@ -13,6 +13,8 @@ export async function GET(request: Request) {
       genres: url.searchParams.get("genres") ?? undefined,
       mediaType: url.searchParams.get("mediaType") ?? undefined,
       languages: url.searchParams.get("languages") ?? undefined,
+      minRating: url.searchParams.get("minRating") ?? undefined,
+      eras: url.searchParams.get("eras") ?? undefined,
     });
     if (!parsed.success) {
       return fail("Invalid suggestion parameters", 400);
@@ -22,6 +24,8 @@ export async function GET(request: Request) {
       genreIds: parsed.data.genres,
       mediaLean: parsed.data.mediaType,
       languages: parsed.data.languages,
+      minRating: parsed.data.minRating,
+      eras: parsed.data.eras,
     });
     return ok({ titles });
   } catch (error) {
