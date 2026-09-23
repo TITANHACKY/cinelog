@@ -10,6 +10,7 @@ import {
 import {
   applyCatalogSyncMutations,
   loadCatalogSyncSnapshot,
+  previewUserSeriesReopens,
 } from "@/repositories/catalog-sync";
 import {
   DIFF_CSV_HEADERS,
@@ -20,6 +21,7 @@ import {
   emptyMutations,
   errorRowRecord,
   toCsv,
+  userSeriesReopenDiffRows,
   type DiffRow,
   type ErrorRow,
 } from "./lib/catalog-diff";
@@ -186,10 +188,16 @@ async function main() {
   });
 
   const tmdbMs = Date.now() - tmdbStarted;
+  const reopenPlans = await previewUserSeriesReopens(mutations, snapshot);
+  diffs.push(...userSeriesReopenDiffRows(reopenPlans));
   const progressWouldInsert = diffs.filter(
     (row) => row.entity === "user_season_progress",
   ).length;
-  const wouldWrite = mutationWriteCount(mutations) + progressWouldInsert;
+  const userSeriesWouldReopen = reopenPlans.length;
+  const wouldWrite =
+    mutationWriteCount(mutations) +
+    progressWouldInsert +
+    userSeriesWouldReopen;
 
   const tempDir = path.join(process.cwd(), "temp");
   await mkdir(tempDir, { recursive: true });
@@ -210,6 +218,7 @@ async function main() {
   let dbMs = 0;
   let written = 0;
   let progressInserted = 0;
+  let userSeriesReopened = 0;
 
   if (mode === "execute") {
     const dbStarted = Date.now();
@@ -217,6 +226,7 @@ async function main() {
     dbMs = Date.now() - dbStarted;
     written = result.written;
     progressInserted = result.progressInserted;
+    userSeriesReopened = result.userSeriesReopened;
   }
 
   const finishedAt = new Date();
@@ -245,6 +255,10 @@ async function main() {
     progress_rows: {
       would_insert: progressWouldInsert,
       inserted: progressInserted,
+    },
+    user_series_reopened: {
+      would_reopen: userSeriesWouldReopen,
+      reopened: userSeriesReopened,
     },
     mutation_counts: {
       movie_updates: mutations.movieUpdates.length,
