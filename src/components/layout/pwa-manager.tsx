@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Download, Share, WifiOff, X } from "lucide-react";
+import { Download, RefreshCw, Share, WifiOff, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePwa } from "@/hooks/layout/use-pwa";
 import {
@@ -52,8 +52,15 @@ function DismissButton({
 }
 
 export function PwaManager() {
-  const { isInstallable, isIOS, isOnline, promptInstall, dismissPrompt } =
-    usePwa();
+  const {
+    isInstallable,
+    isIOS,
+    isOnline,
+    hasUpdate,
+    promptInstall,
+    dismissPrompt,
+    applyUpdate,
+  } = usePwa();
 
   return (
     <>
@@ -64,7 +71,34 @@ export function PwaManager() {
           className={PWA_OFFLINE_TOAST_CLASS}
         >
           <WifiOff className="size-3.5 shrink-0" />
-          <span>You are currently offline. Cached content is available.</span>
+          <span>You are offline. Some features may be unavailable.</span>
+        </div>
+      ) : null}
+
+      {hasUpdate ? (
+        <div
+          role="dialog"
+          aria-label="Update CineLog"
+          className={PWA_INSTALL_BANNER_CLASS}
+        >
+          <div className={cardClass.install}>
+            <div className="flex min-w-0 items-center gap-3">
+              <PwaAppIcon />
+              <p className="min-w-0 text-sm font-semibold text-on-surface">
+                A new version of CineLog is available
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Button
+                variant="primaryFilled"
+                onClick={applyUpdate}
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold"
+              >
+                <RefreshCw className="size-3.5" />
+                <span>Update</span>
+              </Button>
+            </div>
+          </div>
         </div>
       ) : null}
 

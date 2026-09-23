@@ -1,4 +1,6 @@
-const CACHE_NAME = "cinelog-v2";
+const CACHE_NAME = "cinelog-v3";
+
+const PUBLIC_NAV_PATHS = new Set(["/", "/login", "/signup"]);
 
 const PRECACHE_ASSETS = [
   "/",
@@ -10,10 +12,6 @@ const PRECACHE_ASSETS = [
   "/icon-512x512.png",
   "/icon-maskable-192x192.png",
   "/icon-maskable-512x512.png",
-  "/logo-dark-192x192.png",
-  "/logo-dark-512x512.png",
-  "/logo-light-192x192.png",
-  "/logo-light-512x512.png",
   "/apple-touch-icon.png",
   "/favicon-32x32.png",
   "/favicon-16x16.png",
@@ -22,20 +20,59 @@ const PRECACHE_ASSETS = [
   "/imdb_logo.svg",
 ];
 
+function isPublicNavigation(pathname) {
+  return PUBLIC_NAV_PATHS.has(pathname);
+}
+
+function isStaticAssetPath(pathname) {
+  return (
+    pathname.startsWith("/_next/static/") ||
+    pathname.endsWith(".svg") ||
+    pathname.endsWith(".png") ||
+    pathname.endsWith(".ico") ||
+    pathname.endsWith(".webp") ||
+    pathname.endsWith(".js") ||
+    pathname.endsWith(".css")
+  );
+}
+
+function shouldClearNavigationEntry(url) {
+  if (url.pathname.startsWith("/api/")) {
+    return true;
+  }
+
+  if (isStaticAssetPath(url.pathname)) {
+    return false;
+  }
+
+  return !isPublicNavigation(url.pathname);
+}
+
+async function precacheAssets(cache) {
+  await Promise.allSettled(PRECACHE_ASSETS.map((asset) => cache.add(asset)));
+}
+
+async function clearNavigationCache() {
+  const cache = await caches.open(CACHE_NAME);
+  const keys = await cache.keys();
+
+  await Promise.all(
+    keys.map(async (request) => {
+      const url = new URL(request.url);
+      if (shouldClearNavigationEntry(url)) {
+        await cache.delete(request);
+      }
+    }),
+  );
+}
+
 // Install event: pre-cache critical shell assets
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(PRECACHE_ASSETS);
-      })
-      .then(() => {
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error("[ServiceWorker] Pre-cache failed:", error);
-      }),
+      .then((cache) => precacheAssets(cache))
+      .then(() => self.skipWaiting()),
   );
 });
 
@@ -44,18 +81,16 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((cacheNames) => {
-        return Promise.all(
+      .then((cacheNames) =>
+        Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME) {
               return caches.delete(cacheName);
             }
           }),
-        );
-      })
-      .then(() => {
-        return self.clients.claim();
-      }),
+        ),
+      )
+      .then(() => self.clients.claim()),
   );
 });
 
@@ -67,17 +102,19 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET requests
   if (request.method !== "GET") return;
 
-  // Don't intercept API requests or dynamic auth endpoints with cache
+  // Don't intercept API requests
   if (url.pathname.startsWith("/api/")) {
     return;
   }
 
-  // Navigation requests: Network-first with cache fallback
+  // Navigation requests: cache only public pages; never serve stale auth pages
   if (request.mode === "navigate") {
+    const isPublic = isPublicNavigation(url.pathname);
+
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response && response.status === 200) {
+          if (isPublic && response && response.status === 200) {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(request, responseToCache);
@@ -86,11 +123,13 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(async () => {
-          const cachedResponse = await caches.match(request);
-          if (cachedResponse) {
-            return cachedResponse;
+          if (isPublic) {
+            const cachedResponse = await caches.match(request);
+            if (cachedResponse) {
+              return cachedResponse;
+            }
           }
-          // Fallback to cached home/shell
+
           return caches.match("/");
         }),
     );
@@ -98,14 +137,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Static assets (images, png, svg, fonts, css, js): Stale-While-Revalidate / Cache-first
-  if (
-    url.origin === self.location.origin &&
-    (url.pathname.endsWith(".svg") ||
-      url.pathname.endsWith(".png") ||
-      url.pathname.endsWith(".ico") ||
-      url.pathname.endsWith(".webp") ||
-      url.pathname.startsWith("/_next/static/"))
-  ) {
+  if (url.origin === self.location.origin && isStaticAssetPath(url.pathname)) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
         const fetchPromise = fetch(request)
@@ -126,61 +158,20 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Default: Network with cache fallback
-  event.respondWith(
-    fetch(request).catch(async () => {
-      return caches.match(request);
-    }),
-  );
+  // Default: Network only (no cache fallback for dynamic RSC payloads)
+  event.respondWith(fetch(request));
 });
 
-// Message event: allow skip waiting from client
+// Message event: skip waiting and clear auth-gated navigation cache on logout
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
-
-// Push notification support
-self.addEventListener("push", (event) => {
   if (!event.data) return;
 
-  try {
-    const data = event.data.json();
-    const options = {
-      body: data.body || "New update from CineLog",
-      icon: data.icon || "/icon-192x192.png",
-      badge: "/icon-192x192.png",
-      vibrate: [100, 50, 100],
-      data: {
-        url: data.url || "/",
-        dateOfArrival: Date.now(),
-      },
-    };
-    event.waitUntil(
-      self.registration.showNotification(data.title || "CineLog", options),
-    );
-  } catch (err) {
-    console.error("[ServiceWorker] Push event error:", err);
+  if (event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+    return;
   }
-});
 
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-  const targetUrl = event.notification.data?.url || "/";
-
-  event.waitUntil(
-    clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clientList) => {
-        for (const client of clientList) {
-          if (client.url === targetUrl && "focus" in client) {
-            return client.focus();
-          }
-        }
-        if (clients.openWindow) {
-          return clients.openWindow(targetUrl);
-        }
-      }),
-  );
+  if (event.data.type === "CLEAR_NAV_CACHE") {
+    event.waitUntil(clearNavigationCache());
+  }
 });
