@@ -13,15 +13,18 @@ import {
   WATCH_STATUS,
 } from "@/lib/constants";
 import { useGenres } from "@/hooks/use-genres";
+import { useLocales } from "@/hooks/locales/use-locales";
 import { defaultFilterValue } from "@/lib/media/library-browse";
 import {
+  getCountryOptions,
+  getLanguageOptions,
   getSearchYears,
-  getTmdbLanguageOptions,
-  getTmdbRegionOptions,
 } from "@/lib/search/filters";
 import type { GenreOption } from "@/hooks/use-genres";
 import type {
   CollectionFilterItem,
+  CountryOption,
+  LanguageOption,
   LibraryFilterField,
   LibraryMediaType,
   LibraryOperator,
@@ -50,6 +53,8 @@ function filterValueOptions(
   field: LibraryFilterField | undefined,
   mediaType: LibraryMediaType,
   genres: GenreOption[],
+  languages: LanguageOption[],
+  countries: CountryOption[],
 ) {
   if (field === "watch_status") {
     return Object.values(WATCH_STATUS).map((status) => ({
@@ -84,11 +89,11 @@ function filterValueOptions(
   }
 
   if (field === "original_language") {
-    return getTmdbLanguageOptions();
+    return getLanguageOptions(languages);
   }
 
   if (field === "origin_country") {
-    return getTmdbRegionOptions();
+    return getCountryOptions(countries);
   }
 
   if (field === "release_year") {
@@ -108,12 +113,19 @@ export function FilterClauseRow({
   onRemove,
 }: FilterClauseRowProps) {
   const { genres } = useGenres();
+  const { languages, countries } = useLocales();
   const field = clause.field as LibraryFilterField;
   const operatorOptions = LIBRARY_OPERATORS.filter((operator) =>
     LIBRARY_OPERATORS_BY_FIELD[field]?.includes(operator.value),
   );
   const isInOperator = clause.operator === 4;
-  const valueOptions = filterValueOptions(field, mediaType, genres);
+  const valueOptions = filterValueOptions(
+    field,
+    mediaType,
+    genres,
+    languages,
+    countries,
+  );
   const searchableValue =
     field === "genre" ||
     field === "original_language" ||

@@ -106,3 +106,14 @@ yarn start
 silently when there are no ESLint errors or warnings. Use `yarn lint:fix` to
 apply safe automatic fixes. `yarn typecheck` reports TypeScript errors; those
 errors do not have a reliable automatic fixer and must be corrected in source.
+
+## Catalog sync
+
+Local dry-run and execute:
+
+```bash
+yarn catalog:sync
+yarn catalog:sync:execute
+```
+
+To run the same job on a daily GitHub Actions schedule (and on demand from the Actions tab), follow [docs/catalog-sync-github-actions.md](docs/catalog-sync-github-actions.md).

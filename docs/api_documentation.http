@@ -58,6 +58,14 @@ GET /api/search/series?query={{query}}&year=2024&language=ja&page=1
 # Response: { "genres": [{ "tmdb_id": number, "name": string }] }
 GET /api/genres
 
+### List languages and countries
+# Public. Cached 24h server-side.
+# Response: {
+#   "languages": [{ "iso_639_1": string, "english_name": string }],
+#   "countries": [{ "iso_3166_1": string, "english_name": string }]
+# }
+GET /api/locales
+
 ### Get library
 # Requires cookie
 # Query:

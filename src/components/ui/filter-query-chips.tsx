@@ -1,5 +1,27 @@
+"use client";
+
 import { FIELD_LABELS, OPERATOR_SYMBOLS } from "@/lib/constants";
+import { useLocales } from "@/hooks/locales/use-locales";
 import type { CollectionFilterItem } from "@/lib/types";
+
+function formatChipValue(
+  field: string,
+  value: string,
+  formatLanguage: (code?: string | null) => string,
+  formatCountry: (code?: string | null) => string,
+) {
+  if (field !== "original_language" && field !== "origin_country") {
+    return value;
+  }
+
+  const format = field === "original_language" ? formatLanguage : formatCountry;
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((code) => format(code) || code)
+    .join(", ");
+}
 
 export function FilterQueryChips({
   filters,
@@ -8,6 +30,8 @@ export function FilterQueryChips({
   filters: CollectionFilterItem[];
   onAddClause?: () => void;
 }) {
+  const { formatLanguage, formatCountry } = useLocales();
+
   if (filters.length === 0 && !onAddClause) {
     return null;
   }
@@ -24,7 +48,12 @@ export function FilterQueryChips({
             <span className="text-brand-primary">
               {OPERATOR_SYMBOLS[filter.operator] || "="}
             </span>{" "}
-            {filter.value}
+            {formatChipValue(
+              filter.field,
+              filter.value,
+              formatLanguage,
+              formatCountry,
+            )}
           </span>
           {index < filters.length - 1 ? (
             <span className="text-[10px] font-bold text-outline-muted">AND</span>

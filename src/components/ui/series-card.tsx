@@ -6,6 +6,7 @@ import { CardImpressionToggle } from "@/components/ui/card-impression-toggle";
 import { MediaCard } from "@/components/ui/media-card";
 import { Progress } from "@/components/ui/progress";
 import { useLibraryItemMutation } from "@/hooks/library/use-library-item-mutation";
+import { useLocales } from "@/hooks/locales/use-locales";
 import { formatMediaMeta, getYearString } from "@/lib/media/display";
 import { calculateSeriesProgress } from "@/lib/media/series-progress";
 import { canUpdateSeriesWatchActivity } from "@/lib/media/status";
@@ -52,6 +53,7 @@ export function SeriesCard({ series }: { series: LibrarySeries }) {
   const currentSeasonTotalEpisodes =
     currentSeason?.episode_count ?? totalEpisodes;
   const canUpdateWatchActivity = canUpdateSeriesWatchActivity(series.status);
+  const { formatLanguage, formatCountry } = useLocales();
   const isNextDisabled =
     isPending || !canUpdateWatchActivity || nextEpisode === null;
   const nextEpisodeLabel = nextEpisode
@@ -111,7 +113,10 @@ export function SeriesCard({ series }: { series: LibrarySeries }) {
         </div>
       }
       href={`/series/${series.tmdb_id}`}
-      meta={formatMediaMeta(series.original_language, series.origin_country)}
+      meta={formatMediaMeta(
+        formatLanguage(series.original_language),
+        formatCountry(series.origin_country),
+      )}
       posterPath={series.poster_path}
       rating={(series.vote_average ?? 0).toFixed(1)}
       title={series.name}

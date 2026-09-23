@@ -41,6 +41,18 @@ export const genres = sqliteTable("genres", {
   createdAt: numeric("created_at").default(sql`(unixepoch())`),
 });
 
+export const languages = sqliteTable("languages", {
+  iso6391: text("iso_639_1").primaryKey(),
+  englishName: text("english_name").notNull(),
+  createdAt: numeric("created_at").default(sql`(unixepoch())`),
+});
+
+export const countries = sqliteTable("countries", {
+  iso31661: text("iso_3166_1").primaryKey(),
+  englishName: text("english_name").notNull(),
+  createdAt: numeric("created_at").default(sql`(unixepoch())`),
+});
+
 export const movies = sqliteTable(
   "movies",
   {
@@ -431,6 +443,10 @@ export const smartCollectionSorts = sqliteTable(
 
 export type Genre = typeof genres.$inferSelect;
 export type NewGenre = typeof genres.$inferInsert;
+export type Language = typeof languages.$inferSelect;
+export type NewLanguage = typeof languages.$inferInsert;
+export type Country = typeof countries.$inferSelect;
+export type NewCountry = typeof countries.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Movie = typeof movies.$inferSelect;

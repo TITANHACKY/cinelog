@@ -10,6 +10,8 @@ export const MAX_COLLECTION_FILTERS = 3;
 export const DIRECT_VALIDATION_MESSAGES = new Set([
   "Invalid watch_status",
   "Invalid impression",
+  "Invalid language",
+  "Invalid origin country",
   "No valid fields to update",
   "Current password is required to set a new password",
 ]);

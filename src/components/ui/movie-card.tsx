@@ -4,6 +4,7 @@ import { CardImpressionToggle } from "@/components/ui/card-impression-toggle";
 import { CardStatusToggle } from "@/components/ui/card-status-toggle";
 import { MediaCard } from "@/components/ui/media-card";
 import { useLibraryItemMutation } from "@/hooks/library/use-library-item-mutation";
+import { useLocales } from "@/hooks/locales/use-locales";
 import { formatMediaMeta, getYearString } from "@/lib/media/display";
 import { canUpdateMovieWatchActivity } from "@/lib/media/status";
 import type { LibraryMovie } from "@/lib/types";
@@ -16,6 +17,7 @@ export function MovieCard({ movie }: { movie: LibraryMovie }) {
     requestMutation,
   } = useLibraryItemMutation("movie", movie.tmdb_id);
   const canUpdateWatchActivity = canUpdateMovieWatchActivity(movie.status);
+  const { formatLanguage, formatCountry } = useLocales();
 
   return (
     <MediaCard
@@ -38,7 +40,10 @@ export function MovieCard({ movie }: { movie: LibraryMovie }) {
         </>
       }
       href={`/movie/${movie.tmdb_id}`}
-      meta={formatMediaMeta(movie.original_language, movie.origin_country)}
+      meta={formatMediaMeta(
+        formatLanguage(movie.original_language),
+        formatCountry(movie.origin_country),
+      )}
       posterPath={movie.poster_path}
       rating={(movie.vote_average ?? 0).toFixed(1)}
       title={movie.title}

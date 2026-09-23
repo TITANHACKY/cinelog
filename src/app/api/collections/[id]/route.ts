@@ -3,6 +3,7 @@ import { parsePositiveIntId, readJsonBody } from "@/lib/http/request";
 import { ok, toErrorResponse } from "@/lib/http/response";
 import type { RouteContext } from "@/lib/types";
 import { updateCollectionSchema } from "@/lib/validations/collections";
+import { assertLocaleFilterValue } from "@/lib/validations/locales";
 import {
   deleteUserCollection,
   getUserCollection,
@@ -34,6 +35,9 @@ export async function PUT(request: Request, { params }: RouteContext) {
     const collectionId = parsePositiveIntId(id, "collection");
     const session = await requireSession();
     const body = await readJsonBody(request, updateCollectionSchema);
+    for (const filter of body.filters ?? []) {
+      await assertLocaleFilterValue(filter.field, filter.value);
+    }
 
     const collection = await updateUserCollection(
       collectionId,

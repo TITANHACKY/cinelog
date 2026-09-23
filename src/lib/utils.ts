@@ -2,20 +2,6 @@ export function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-export function formatLanguage(languageCode: string) {
-  return (
-    new Intl.DisplayNames(["en"], { type: "language" }).of(languageCode) ??
-    languageCode
-  );
-}
-
-export function formatCountry(countryCode: string) {
-  return (
-    new Intl.DisplayNames(["en"], { type: "region" }).of(countryCode) ??
-    countryCode
-  );
-}
-
 export function orFallback(value: string | null | undefined, fallback = "N/A") {
   return value?.trim() ? value : fallback;
 }
