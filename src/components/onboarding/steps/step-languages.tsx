@@ -1,6 +1,7 @@
 "use client";
 
-import { LANGUAGE_MAX, LANGUAGE_OPTIONS } from "@/lib/constants";
+import { COMMON_LANGUAGE_CODES, LANGUAGE_MAX } from "@/lib/constants";
+import { useLocales } from "@/hooks/locales/use-locales";
 import { SelectableChip } from "@/components/onboarding/selectable-chip";
 
 export function StepLanguages({
@@ -10,19 +11,22 @@ export function StepLanguages({
   selected: string[];
   onToggle: (code: string) => void;
 }) {
+  // Names come from the locales table so nothing language-specific is hardcoded;
+  // if a code isn't found yet, formatLanguage falls back to the code itself.
+  const { formatLanguage } = useLocales();
   const atMax = selected.length >= LANGUAGE_MAX;
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
-        {LANGUAGE_OPTIONS.map((lang) => {
-          const isSelected = selected.includes(lang.code);
+        {COMMON_LANGUAGE_CODES.map((code) => {
+          const isSelected = selected.includes(code);
           return (
             <SelectableChip
-              key={lang.code}
-              label={lang.label}
+              key={code}
+              label={formatLanguage(code) || code}
               selected={isSelected}
               disabled={!isSelected && atMax}
-              onToggle={() => onToggle(lang.code)}
+              onToggle={() => onToggle(code)}
             />
           );
         })}
