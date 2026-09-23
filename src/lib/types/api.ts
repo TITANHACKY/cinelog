@@ -17,6 +17,10 @@ type TmdbCrewMember = {
   [key: string]: unknown;
 };
 
+type TmdbGenreList = {
+  genres?: Array<{ id?: number; name?: string }> | null;
+};
+
 type TmdbReleaseDate = {
   certification?: string | null;
   descriptors?: string[];
@@ -151,6 +155,7 @@ export type {
   TmdbCastMember,
   TmdbContentRating,
   TmdbCrewMember,
+  TmdbGenreList,
   TmdbMovie,
   TmdbReleaseDate,
   TmdbResult,

@@ -1,5 +1,24 @@
 import { tmdbFetch } from "@/lib/tmdb/client";
-import type { TmdbMovie, TmdbSeries } from "@/lib/types";
+import type { TmdbGenreList, TmdbMovie, TmdbSeries } from "@/lib/types";
+
+async function fetchTmdbGenreList(path: string, failedMessage: string) {
+  const queryParams = new URLSearchParams({
+    language: "en-US",
+  });
+
+  return tmdbFetch<TmdbGenreList>(path, {
+    searchParams: queryParams,
+    failedMessage,
+  });
+}
+
+export async function fetchTmdbMovieGenres() {
+  return fetchTmdbGenreList("/genre/movie/list", "TMDB movie genre list failed");
+}
+
+export async function fetchTmdbSeriesGenres() {
+  return fetchTmdbGenreList("/genre/tv/list", "TMDB series genre list failed");
+}
 
 export async function fetchTmdbMovieForCatalog(tmdbId: number) {
   const queryParams = new URLSearchParams({

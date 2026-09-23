@@ -5,6 +5,7 @@ export type {
   TmdbCastMember,
   TmdbContentRating,
   TmdbCrewMember,
+  TmdbGenreList,
   TmdbMovie,
   TmdbReleaseDate,
   TmdbResult,

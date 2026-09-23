@@ -5,13 +5,20 @@ import path from "node:path";
 import { isAppError } from "@/lib/http/errors";
 import {
   fetchTmdbMovieForCatalog,
+  fetchTmdbMovieGenres,
   fetchTmdbSeriesForCatalog,
+  fetchTmdbSeriesGenres,
 } from "@/lib/tmdb/catalog-fetch";
 import {
   applyCatalogSyncMutations,
   loadCatalogSyncSnapshot,
   previewUserSeriesReopens,
+  type CatalogSyncSnapshot,
 } from "@/repositories/catalog-sync";
+import {
+  applyGenreSyncMutations,
+  loadGenreSyncSnapshot,
+} from "@/repositories/genres";
 import {
   DIFF_CSV_HEADERS,
   ERROR_CSV_HEADERS,
@@ -25,6 +32,12 @@ import {
   type DiffRow,
   type ErrorRow,
 } from "./lib/catalog-diff";
+import {
+  diffCatalogGenres,
+  genreMutationWriteCount,
+  mergeTmdbGenreLists,
+  normalizeTmdbGenres,
+} from "./lib/genre-sync";
 import { TmdbRequestLimiter } from "./lib/tmdb-rate-limit";
 
 type SyncMode = "dry-run" | "execute";
@@ -56,7 +69,9 @@ function databaseHost() {
   }
 }
 
-function mutationWriteCount(mutations: ReturnType<typeof emptyMutations>) {
+function catalogMutationWriteCount(
+  mutations: ReturnType<typeof emptyMutations>,
+) {
   return (
     mutations.movieUpdates.length +
     mutations.seriesUpdates.length +
@@ -67,6 +82,17 @@ function mutationWriteCount(mutations: ReturnType<typeof emptyMutations>) {
     mutations.movieGenreUnlinks.length +
     mutations.seriesGenreUnlinks.length
   );
+}
+
+function rememberNewGenres(
+  snapshot: CatalogSyncSnapshot,
+  inserts: Array<{ tmdbId: number }>,
+) {
+  for (const genre of inserts) {
+    if (!snapshot.genreIdByTmdbId.has(genre.tmdbId)) {
+      snapshot.genreIdByTmdbId.set(genre.tmdbId, 0);
+    }
+  }
 }
 
 async function mapWithProgress<T>(
@@ -121,21 +147,50 @@ async function main() {
   console.log(`Catalog sync mode: ${mode}`);
   console.log(`Database host: ${databaseHost()}`);
 
-  const loadStarted = Date.now();
-  const snapshot = await loadCatalogSyncSnapshot();
-  const loadMs = Date.now() - loadStarted;
-  console.log(
-    `Loaded ${snapshot.movies.length} movies, ${snapshot.series.length} series from DB in ${loadMs}ms`,
-  );
-
   const limiter = new TmdbRequestLimiter();
   const mutations = emptyMutations();
   const diffs: DiffRow[] = [];
   const errors: ErrorRow[] = [];
   let moviesWithDiffs = 0;
   let seriesWithDiffs = 0;
+  let genreWritten = 0;
+  let genreDbMs = 0;
 
   const tmdbStarted = Date.now();
+
+  const [movieGenreList, seriesGenreList, genreSnapshot] = await Promise.all([
+    limiter.run(() => fetchTmdbMovieGenres()),
+    limiter.run(() => fetchTmdbSeriesGenres()),
+    loadGenreSyncSnapshot(),
+  ]);
+  const tmdbGenres = mergeTmdbGenreLists(
+    normalizeTmdbGenres(movieGenreList.genres),
+    normalizeTmdbGenres(seriesGenreList.genres),
+  );
+  const { mutations: genreMutations, diffs: genreDiffs } = diffCatalogGenres({
+    dbGenres: genreSnapshot.genres,
+    tmdbGenres,
+    usedGenreIds: genreSnapshot.usedGenreIds,
+  });
+  diffs.push(...genreDiffs);
+  console.log(
+    `Genres: TMDB ${tmdbGenres.length} unique (movie ${movieGenreList.genres?.length ?? 0}, series ${seriesGenreList.genres?.length ?? 0}); DB ${genreSnapshot.genres.length}; insert ${genreMutations.inserts.length}, update ${genreMutations.updates.length}, delete ${genreMutations.deletes.length}, skipped in-use ${genreMutations.skippedDeletes.length}`,
+  );
+
+  if (mode === "execute") {
+    const genreDbStarted = Date.now();
+    const genreWrite = await applyGenreSyncMutations(genreMutations);
+    genreDbMs = Date.now() - genreDbStarted;
+    genreWritten = genreWrite.written;
+  }
+
+  const loadStarted = Date.now();
+  const snapshot = await loadCatalogSyncSnapshot();
+  const loadMs = Date.now() - loadStarted;
+  rememberNewGenres(snapshot, genreMutations.inserts);
+  console.log(
+    `Loaded ${snapshot.movies.length} movies, ${snapshot.series.length} series from DB in ${loadMs}ms`,
+  );
 
   await mapWithProgress(snapshot.movies, "movies", async (movie) => {
     const titleDiffs: DiffRow[] = [];
@@ -195,7 +250,8 @@ async function main() {
   ).length;
   const userSeriesWouldReopen = reopenPlans.length;
   const wouldWrite =
-    mutationWriteCount(mutations) +
+    catalogMutationWriteCount(mutations) +
+    genreMutationWriteCount(genreMutations) +
     progressWouldInsert +
     userSeriesWouldReopen;
 
@@ -224,7 +280,7 @@ async function main() {
     const dbStarted = Date.now();
     const result = await applyCatalogSyncMutations(mutations);
     dbMs = Date.now() - dbStarted;
-    written = result.written;
+    written = result.written + genreWritten;
     progressInserted = result.progressInserted;
     userSeriesReopened = result.userSeriesReopened;
   }
@@ -240,7 +296,8 @@ async function main() {
       total: totalMs,
       db_load: loadMs,
       tmdb: tmdbMs,
-      db_write: dbMs,
+      db_write: dbMs + genreDbMs,
+      genre_db_write: genreDbMs,
     },
     titles_scanned: {
       movies: snapshot.movies.length,
@@ -261,6 +318,10 @@ async function main() {
       reopened: userSeriesReopened,
     },
     mutation_counts: {
+      genre_inserts: genreMutations.inserts.length,
+      genre_updates: genreMutations.updates.length,
+      genre_deletes: genreMutations.deletes.length,
+      genre_deletes_skipped_in_use: genreMutations.skippedDeletes.length,
       movie_updates: mutations.movieUpdates.length,
       series_updates: mutations.seriesUpdates.length,
       season_updates: mutations.seasonUpdates.length,
@@ -287,7 +348,7 @@ async function main() {
       : `Execute complete. Wrote ${written} row changes.`,
   );
   console.log(
-    `Timing: total ${totalMs}ms (tmdb ${tmdbMs}ms, db load ${loadMs}ms, db write ${dbMs}ms)`,
+    `Timing: total ${totalMs}ms (tmdb ${tmdbMs}ms, db load ${loadMs}ms, db write ${dbMs + genreDbMs}ms)`,
   );
   console.log(
     `TMDB: ${limiter.stats.requests} requests, ${limiter.stats.retries} retries, ${limiter.stats.notFound} not found, throttle wait ${limiter.stats.throttleWaitMs}ms`,
