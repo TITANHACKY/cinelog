@@ -138,24 +138,30 @@ export async function getTitleSuggestions(input: {
     .slice(0, TOTAL_LIMIT);
 
   // Flag any that are already on the user's watchlist so the UI shows them as
-  // added (a check) instead of an add button.
+  // added (a check) instead of an add button. This is a best-effort enrichment:
+  // a DB hiccup must not sink the whole suggestions response — the "+" still
+  // works (a duplicate add resolves to a 409, handled as "added").
   if (input.userId) {
-    const movieTmdbIds = candidates
-      .filter((c) => c.mediaType === 0)
-      .map((c) => c.tmdbId);
-    const seriesTmdbIds = candidates
-      .filter((c) => c.mediaType === 1)
-      .map((c) => c.tmdbId);
-    const watchlisted = await findWatchlistedTmdbIds(
-      input.userId,
-      movieTmdbIds,
-      seriesTmdbIds,
-    );
-    for (const candidate of candidates) {
-      candidate.inWatchlist =
-        candidate.mediaType === 0
-          ? watchlisted.movies.has(candidate.tmdbId)
-          : watchlisted.series.has(candidate.tmdbId);
+    try {
+      const movieTmdbIds = candidates
+        .filter((c) => c.mediaType === 0)
+        .map((c) => c.tmdbId);
+      const seriesTmdbIds = candidates
+        .filter((c) => c.mediaType === 1)
+        .map((c) => c.tmdbId);
+      const watchlisted = await findWatchlistedTmdbIds(
+        input.userId,
+        movieTmdbIds,
+        seriesTmdbIds,
+      );
+      for (const candidate of candidates) {
+        candidate.inWatchlist =
+          candidate.mediaType === 0
+            ? watchlisted.movies.has(candidate.tmdbId)
+            : watchlisted.series.has(candidate.tmdbId);
+      }
+    } catch {
+      // Leave inWatchlist unset; suggestions still render.
     }
   }
 
