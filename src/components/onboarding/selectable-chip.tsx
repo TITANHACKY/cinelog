@@ -27,11 +27,9 @@ export function SelectableChip({
       )}
     >
       <Badge
+        // Keep the Badge's own compact padding — only the state colour changes.
         variant={selected ? "selected" : "default"}
-        className={cn(
-          "min-h-11 px-3.5 py-2 text-xs sm:text-sm",
-          selected ? "text-on-surface" : "text-secondary",
-        )}
+        className={selected ? "text-on-surface" : "text-secondary"}
         // Always render the check slot (invisible when unselected) so toggling
         // selection doesn't shift the chip's width.
         inlineStart={
