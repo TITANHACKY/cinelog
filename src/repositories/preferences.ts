@@ -1,12 +1,57 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { asBatch, getDb, type SqliteBatchQuery } from "@/db";
 import {
+  movies,
+  series,
+  userMovies,
   userPreferences,
   userPreferredGenres,
   userPreferredLanguages,
+  userSeries,
   users,
 } from "@/db/schema";
 import type { UserPreferences, UserPreferencesInput } from "@/lib/types";
+
+// Given candidate TMDB ids, return the subset already on the user's watchlist,
+// split by media type, so onboarding suggestions can render the "added" state.
+export async function findWatchlistedTmdbIds(
+  userId: number,
+  movieTmdbIds: number[],
+  seriesTmdbIds: number[],
+): Promise<{ movies: Set<number>; series: Set<number> }> {
+  const db = getDb();
+
+  const movieRows = movieTmdbIds.length
+    ? await db
+        .select({ tmdbId: movies.tmdbId })
+        .from(userMovies)
+        .innerJoin(movies, eq(userMovies.movieId, movies.id))
+        .where(
+          and(
+            eq(userMovies.userId, userId),
+            inArray(movies.tmdbId, movieTmdbIds),
+          ),
+        )
+    : [];
+
+  const seriesRows = seriesTmdbIds.length
+    ? await db
+        .select({ tmdbId: series.tmdbId })
+        .from(userSeries)
+        .innerJoin(series, eq(userSeries.seriesId, series.id))
+        .where(
+          and(
+            eq(userSeries.userId, userId),
+            inArray(series.tmdbId, seriesTmdbIds),
+          ),
+        )
+    : [];
+
+  return {
+    movies: new Set(movieRows.map((row) => row.tmdbId)),
+    series: new Set(seriesRows.map((row) => row.tmdbId)),
+  };
+}
 
 export async function loadUserPreferences(
   userId: number,

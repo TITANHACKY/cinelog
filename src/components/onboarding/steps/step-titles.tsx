@@ -102,7 +102,13 @@ export function StepTitles({
     apiFetch(`/api/onboarding/title-suggestions?${params.toString()}`)
       .then((res) => (res.ok ? res.json() : { titles: [] }))
       .then((json: { titles?: TitleCandidate[] }) => {
-        if (!ignore) setSuggestions(json.titles ?? []);
+        if (ignore) return;
+        const titles = json.titles ?? [];
+        setSuggestions(titles);
+        // Show titles already on the watchlist as added (check) on load.
+        for (const candidate of titles) {
+          if (candidate.inWatchlist) markAdded(candidateKey(candidate));
+        }
       })
       .catch(() => {})
       .finally(() => {
@@ -111,6 +117,8 @@ export function StepTitles({
     return () => {
       ignore = true;
     };
+    // markAdded is stable enough here; re-run only when the filters change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [genreKey, mediaLean, languageKey, eraKey, minRating]);
 
   function markAdded(key: string) {

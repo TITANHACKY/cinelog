@@ -1,6 +1,7 @@
 import { ERA_BUCKETS } from "@/lib/constants";
 import { getYearString } from "@/lib/media/display";
 import { discoverTitles, type TmdbDiscoverResult } from "@/lib/tmdb/discover";
+import { findWatchlistedTmdbIds } from "@/repositories/preferences";
 import type { TitleCandidate } from "@/lib/types";
 
 // Collapse the selected era buckets into one inclusive [gteYear, lteYear]
@@ -85,6 +86,7 @@ export async function getTitleSuggestions(input: {
   languages?: string[];
   minRating?: number | null;
   eras?: string[];
+  userId?: number;
 }): Promise<TitleCandidate[]> {
   const wantMovies = input.mediaLean === 0 || input.mediaLean === 2;
   const wantSeries = input.mediaLean === 1 || input.mediaLean === 2;
@@ -131,7 +133,31 @@ export async function getTitleSuggestions(input: {
 
   // Merge across languages (first-picked leads), drop dupes and empty titles,
   // then cap so the suggestions grid stays snappy.
-  return dedupeByKey(interleave(buckets))
+  const candidates = dedupeByKey(interleave(buckets))
     .filter((candidate) => candidate.title.length > 0)
     .slice(0, TOTAL_LIMIT);
+
+  // Flag any that are already on the user's watchlist so the UI shows them as
+  // added (a check) instead of an add button.
+  if (input.userId) {
+    const movieTmdbIds = candidates
+      .filter((c) => c.mediaType === 0)
+      .map((c) => c.tmdbId);
+    const seriesTmdbIds = candidates
+      .filter((c) => c.mediaType === 1)
+      .map((c) => c.tmdbId);
+    const watchlisted = await findWatchlistedTmdbIds(
+      input.userId,
+      movieTmdbIds,
+      seriesTmdbIds,
+    );
+    for (const candidate of candidates) {
+      candidate.inWatchlist =
+        candidate.mediaType === 0
+          ? watchlisted.movies.has(candidate.tmdbId)
+          : watchlisted.series.has(candidate.tmdbId);
+    }
+  }
+
+  return candidates;
 }

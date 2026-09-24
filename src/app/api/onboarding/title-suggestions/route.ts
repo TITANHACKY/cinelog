@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    await requireSession();
+    const session = await requireSession();
     const url = new URL(request.url);
     const parsed = titleSuggestionsQuerySchema.safeParse({
       genres: url.searchParams.get("genres") ?? undefined,
@@ -26,6 +26,7 @@ export async function GET(request: Request) {
       languages: parsed.data.languages,
       minRating: parsed.data.minRating,
       eras: parsed.data.eras,
+      userId: session.userId,
     });
     return ok({ titles });
   } catch (error) {
