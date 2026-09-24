@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { COMMON_LANGUAGES, LANGUAGE_MAX } from "@/lib/constants";
 import { useLocales } from "@/hooks/locales/use-locales";
 import { SelectableChip } from "@/components/onboarding/selectable-chip";
@@ -11,10 +12,16 @@ export function StepLanguages({
   selected: string[];
   onToggle: (code: string) => void;
 }) {
-  // Prefer the live locales name when the table is populated; otherwise fall
-  // back to the curated label so a chip always reads as a language name, never
-  // a bare ISO code.
-  const { formatLanguage } = useLocales();
+  // Use the live locales name only when the table actually has the code; the
+  // curated label is the fallback. (We can't use formatLanguage here — it
+  // returns the raw code when a name is missing, which would defeat the
+  // fallback and leave bare codes on the screen.)
+  const { languages } = useLocales();
+  const liveNameByCode = useMemo(
+    () => new Map(languages.map((lang) => [lang.iso_639_1, lang.english_name])),
+    [languages],
+  );
+
   const atMax = selected.length >= LANGUAGE_MAX;
   return (
     <div className="flex flex-col gap-3">
@@ -24,7 +31,7 @@ export function StepLanguages({
           return (
             <SelectableChip
               key={code}
-              label={formatLanguage(code) || label}
+              label={liveNameByCode.get(code) ?? label}
               selected={isSelected}
               disabled={!isSelected && atMax}
               onToggle={() => onToggle(code)}
