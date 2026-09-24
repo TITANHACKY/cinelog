@@ -24,27 +24,29 @@ export const MIN_RATING_OPTIONS = [
   { value: 8, label: "8+" },
 ] as const;
 
-// Common ISO-639-1 codes rendered as chips during onboarding. Only the "which
-// languages are common" curation lives here — the human-readable names are
-// resolved at render time from the locales table (see useLocales), so nothing
-// language-specific is hardcoded. Order here is the display/priority order.
-export const COMMON_LANGUAGE_CODES = [
-  "en", // English
-  "hi", // Hindi
-  "ta", // Tamil
-  "te", // Telugu
-  "ml", // Malayalam
-  "kn", // Kannada
-  "bn", // Bengali
-  "mr", // Marathi
-  "es", // Spanish
-  "fr", // French
-  "de", // German
-  "ja", // Japanese
-  "ko", // Korean
-  "zh", // Chinese
-  "pt", // Portuguese
+// Common languages rendered as chips during onboarding, in display/priority
+// order (global + Indian regional). The live locales table is preferred for the
+// display name when it's populated; `label` is the reliable fallback so a chip
+// never degrades to a bare ISO code.
+export const COMMON_LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "hi", label: "Hindi" },
+  { code: "ta", label: "Tamil" },
+  { code: "te", label: "Telugu" },
+  { code: "ml", label: "Malayalam" },
+  { code: "kn", label: "Kannada" },
+  { code: "bn", label: "Bengali" },
+  { code: "mr", label: "Marathi" },
+  { code: "es", label: "Spanish" },
+  { code: "fr", label: "French" },
+  { code: "de", label: "German" },
+  { code: "ja", label: "Japanese" },
+  { code: "ko", label: "Korean" },
+  { code: "zh", label: "Chinese" },
+  { code: "pt", label: "Portuguese" },
 ] as const;
+
+export const COMMON_LANGUAGE_CODES = COMMON_LANGUAGES.map((lang) => lang.code);
 
 export const ERA_VALUES = ERA_BUCKETS.map((era) => era.value);
 export const LANGUAGE_CODES: string[] = [...COMMON_LANGUAGE_CODES];
