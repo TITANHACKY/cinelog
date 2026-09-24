@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/http/client";
-import { GENRE_MAX, LANGUAGE_MAX } from "@/lib/constants";
+import { GENRE_MAX, LANGUAGE_MAX, MIN_WATCHLIST_TITLES } from "@/lib/constants";
 import type { MediaLean, UserPreferencesInput } from "@/lib/types";
 
 const STEP_COUNT = 5; // media-lean, genres, languages, era-rating, titles
@@ -37,6 +37,14 @@ export function useOnboardingWizard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  // Titles the user has added to their watchlist this session (keyed
+  // `${mediaType}-${tmdbId}`). Lives here, not in StepTitles, so the count
+  // survives navigating between steps and can gate "Finish".
+  const [addedTitleKeys, setAddedTitleKeys] = useState<Set<string>>(new Set());
+
+  const markTitleAdded = useCallback((key: string) => {
+    setAddedTitleKeys((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
+  }, []);
 
   // Restore an in-progress draft saved on a previous visit (same browser).
   // We deliberately initialize to `emptyDraft` and hydrate from storage in a
@@ -115,11 +123,14 @@ export function useOnboardingWizard() {
     [],
   );
 
+  const addedTitleCount = addedTitleKeys.size;
+  const canFinish = addedTitleCount >= MIN_WATCHLIST_TITLES;
+
   const canProceed = useMemo(() => {
     if (stepIndex === 0) return mediaLeanChosen;
     if (stepIndex === 1) return draft.genreIds.length >= 1;
     if (stepIndex === 2) return draft.languages.length >= 1;
-    return true; // era-rating and titles are skippable
+    return true; // era-rating is skippable (titles is the gated last step)
   }, [stepIndex, mediaLeanChosen, draft.genreIds.length, draft.languages.length]);
 
   const next = useCallback(
@@ -166,6 +177,11 @@ export function useOnboardingWizard() {
     hydrated,
     isSubmitting,
     errorMessage,
+    addedTitleKeys,
+    markTitleAdded,
+    addedTitleCount,
+    canFinish,
+    minWatchlistTitles: MIN_WATCHLIST_TITLES,
     next,
     back,
     submit,

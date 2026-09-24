@@ -10,6 +10,7 @@ import { StepGenres } from "@/components/onboarding/steps/step-genres";
 import { StepLanguages } from "@/components/onboarding/steps/step-languages";
 import { StepEraRating } from "@/components/onboarding/steps/step-era-rating";
 import { StepTitles } from "@/components/onboarding/steps/step-titles";
+import { MIN_WATCHLIST_TITLES } from "@/lib/constants";
 import { useOnboardingWizard } from "@/hooks/onboarding/use-onboarding-wizard";
 
 const STEP_TITLES = [
@@ -20,7 +21,10 @@ const STEP_TITLES = [
     subtitle: "Pick at least one — helps us surface the right titles.",
   },
   { title: "Era & rating", subtitle: "Optional — set the vibe and a quality floor." },
-  { title: "Titles you love", subtitle: "Optional — pick a few to seed your taste." },
+  {
+    title: "Add titles you love",
+    subtitle: `Add at least ${MIN_WATCHLIST_TITLES} to your watchlist to finish.`,
+  },
 ];
 
 export function OnboardingWizard() {
@@ -89,6 +93,8 @@ export function OnboardingWizard() {
             languages={w.draft.languages}
             minRating={w.draft.minRating}
             eras={w.draft.eras}
+            addedKeys={w.addedTitleKeys}
+            onAdded={w.markTitleAdded}
           />
         ) : null}
       </div>
@@ -108,13 +114,23 @@ export function OnboardingWizard() {
             </Button>
           ) : null}
           {w.isLastStep ? (
-            <Button onClick={w.submit} disabled={w.isSubmitting}>
-              {w.isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                "Finish"
-              )}
-            </Button>
+            <div className="flex items-center gap-3">
+              {!w.canFinish ? (
+                <span className="font-public-sans text-xs text-secondary">
+                  {w.addedTitleCount}/{w.minWatchlistTitles} added
+                </span>
+              ) : null}
+              <Button
+                onClick={w.submit}
+                disabled={w.isSubmitting || !w.canFinish}
+              >
+                {w.isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Finish"
+                )}
+              </Button>
+            </div>
           ) : (
             <Button
               onClick={w.next}

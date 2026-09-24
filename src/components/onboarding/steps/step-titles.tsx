@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2, Plus } from "lucide-react";
 import { apiFetch } from "@/lib/http/client";
-import { Badge } from "@/components/ui/badge";
 import { MediaCard } from "@/components/ui/media-card";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
-import { TMDB_POSTER_BASE_URL } from "@/lib/constants";
+import { TMDB_POSTER_BASE_URL, TRIGGER_CLASS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import type { MediaLean, TitleCandidate } from "@/lib/types";
 
 type SearchResult = {
@@ -62,21 +62,29 @@ export function StepTitles({
   languages,
   minRating,
   eras,
+  addedKeys,
+  onAdded,
 }: {
   genreIds: number[];
   mediaLean: MediaLean;
   languages?: string[];
   minRating?: number | null;
   eras?: string[];
+  // When the wizard drives the added set (to gate "Finish"), it passes these;
+  // in Settings the step manages its own local set.
+  addedKeys?: Set<string>;
+  onAdded?: (key: string) => void;
 }) {
   const [suggestions, setSuggestions] = useState<TitleCandidate[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<TitleCandidate[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [addedKeys, setAddedKeys] = useState<Set<string>>(new Set());
+  const [localAdded, setLocalAdded] = useState<Set<string>>(new Set());
   const [pendingKeys, setPendingKeys] = useState<Set<string>>(new Set());
   const [errorKey, setErrorKey] = useState<string | null>(null);
+
+  const added = addedKeys ?? localAdded;
 
   // Stable primitive keys so the effect only re-runs when the values change,
   // not on every parent re-render that hands us a fresh array reference.
@@ -105,6 +113,11 @@ export function StepTitles({
     };
   }, [genreKey, mediaLean, languageKey, eraKey, minRating]);
 
+  function markAdded(key: string) {
+    setLocalAdded((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
+    onAdded?.(key);
+  }
+
   // Search as the user types, debounced (project standard: 500ms, see
   // use-search-dialog). Empty query clears results back to suggestions.
   const trimmedQuery = query.trim();
@@ -126,14 +139,10 @@ export function StepTitles({
         wantSeries ? searchType(trimmedQuery, "series", 1) : Promise.resolve([]),
       ]);
       if (!ignore) {
-        const merged = [...movies, ...series];
-        setResults(merged);
-        // Pre-mark anything the search says is already on the watchlist.
-        const preAdded = merged
-          .filter((candidate) => candidate.inWatchlist)
-          .map(candidateKey);
-        if (preAdded.length > 0) {
-          setAddedKeys((prev) => new Set([...prev, ...preAdded]));
+        setResults([...movies, ...series]);
+        // Reflect anything the search says is already on the watchlist.
+        for (const candidate of [...movies, ...series]) {
+          if (candidate.inWatchlist) markAdded(candidateKey(candidate));
         }
         setIsSearching(false);
       }
@@ -142,11 +151,14 @@ export function StepTitles({
       ignore = true;
       window.clearTimeout(timeoutId);
     };
+    // markAdded is stable enough for this effect's purpose; keying on the query
+    // and media lean matches the original debounce contract.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trimmedQuery, mediaLean]);
 
   async function handleAdd(candidate: TitleCandidate) {
     const key = candidateKey(candidate);
-    if (addedKeys.has(key) || pendingKeys.has(key)) return;
+    if (added.has(key) || pendingKeys.has(key)) return;
 
     setErrorKey(null);
     setPendingKeys((prev) => new Set(prev).add(key));
@@ -157,7 +169,7 @@ export function StepTitles({
       );
       // 409 = already in the library, which is the same end state we want.
       if (res.ok || res.status === 409) {
-        setAddedKeys((prev) => new Set(prev).add(key));
+        markAdded(key);
       } else {
         setErrorKey(key);
       }
@@ -172,62 +184,69 @@ export function StepTitles({
     }
   }
 
-  const addedCount = addedKeys.size;
+  function renderCardAction(candidate: TitleCandidate) {
+    const key = candidateKey(candidate);
+    const isAdded = added.has(key);
+    const isPending = pendingKeys.has(key);
+    const hasError = errorKey === key;
+
+    if (isAdded) {
+      return (
+        <span
+          className={cn(TRIGGER_CLASS, "text-status-success")}
+          aria-label={`${candidate.title} is on your watchlist`}
+          title="On your watchlist"
+        >
+          <Check className="h-4 w-4" />
+        </span>
+      );
+    }
+    return (
+      <button
+        type="button"
+        onClick={() => handleAdd(candidate)}
+        disabled={isPending}
+        aria-label={`Add ${candidate.title} to your watchlist`}
+        title={hasError ? "Retry adding to watchlist" : "Add to watchlist"}
+        className={cn(
+          TRIGGER_CLASS,
+          hasError ? "text-status-error" : "text-brand-primary",
+        )}
+      >
+        {isPending ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Plus className="h-4 w-4" />
+        )}
+      </button>
+    );
+  }
 
   function renderGrid(items: TitleCandidate[]) {
     return (
       <div className="grid grid-cols-2 justify-items-stretch gap-3 sm:grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] sm:gap-4">
-        {items.map((candidate) => {
-          const key = candidateKey(candidate);
-          const isAdded = addedKeys.has(key);
-          const isPending = pendingKeys.has(key);
-          const hasError = errorKey === key;
-          return (
-            <MediaCard
-              key={key}
-              href={`/${MEDIA_SEGMENT[candidate.mediaType]}/${candidate.tmdbId}`}
-              title={candidate.title}
-              posterPath={candidate.posterPath}
-              year={candidate.year ?? ""}
-              rating={candidate.rating != null ? candidate.rating.toFixed(1) : "–"}
-              actionsPosition="below"
-              actions={
-                isAdded ? (
-                  <Badge
-                    className="w-full justify-center border-status-success/40"
-                    indicator="success"
-                    inlineStart={<Check />}
-                    text="Added"
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleAdd(candidate)}
-                    disabled={isPending}
-                    aria-label={`Add ${candidate.title} to your watchlist`}
-                    className="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-full border border-outline-alt bg-surface-container-low px-3 py-1 font-public-sans text-xs font-medium text-on-surface transition-colors hover:border-brand-primary hover:text-brand-primary disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isPending ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <Plus className="size-3.5" />
-                    )}
-                    <span>{hasError ? "Retry" : "Watchlist"}</span>
-                  </button>
-                )
-              }
-            />
-          );
-        })}
+        {items.map((candidate) => (
+          <MediaCard
+            key={candidateKey(candidate)}
+            href={`/${MEDIA_SEGMENT[candidate.mediaType]}/${candidate.tmdbId}`}
+            title={candidate.title}
+            posterPath={candidate.posterPath}
+            year={candidate.year ?? ""}
+            rating={candidate.rating != null ? candidate.rating.toFixed(1) : "–"}
+            meta={candidate.title}
+            actions={renderCardAction(candidate)}
+          />
+        ))}
       </div>
     );
   }
 
+  const addedCount = added.size;
   const helperText = useMemo(
     () =>
       addedCount > 0
-        ? `${addedCount} added to your watchlist`
-        : "Optional — add any you like to your watchlist.",
+        ? `${addedCount} on your watchlist`
+        : "Tap + to add titles to your watchlist.",
     [addedCount],
   );
 

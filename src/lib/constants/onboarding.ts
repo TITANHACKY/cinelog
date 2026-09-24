@@ -1,5 +1,8 @@
 export const GENRE_MAX = 10;
 export const LANGUAGE_MAX = 6;
+// Onboarding requires the user to seed their watchlist with at least this many
+// titles before they can finish.
+export const MIN_WATCHLIST_TITLES = 3;
 
 export const MEDIA_LEAN_OPTIONS = [
   { value: 0, label: "Mostly movies", description: "Films are my thing" },
