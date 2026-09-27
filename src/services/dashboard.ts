@@ -1,4 +1,7 @@
-import { getCollectionLibraryItems, getUserCollections } from "@/services/collections";
+import {
+  getCollectionLibraryItems,
+  getUserCollections,
+} from "@/services/collections";
 import { getLibrary } from "@/services/library";
 import type {
   LibraryMetadata,
@@ -47,17 +50,15 @@ export async function getDashboardData(userId: number): Promise<DashboardData> {
     }),
   );
 
-  const counts = previews[0]?.preview.metadata.count ??
-    (
-      await getLibrary(userId, {
-        type: "movie",
-        offset: 0,
-        limit: 1,
-        sort_field: "created_at",
-        sort_direction: 1,
-      })
-    ).metadata.count;
+  const libraryTotals = await getLibrary(userId, {
+    type: "movie",
+    offset: 0,
+    limit: 1, // limit: 1 ensures it returns quickly while fetching the counts
+    sort_field: "created_at",
+    sort_direction: 1,
+  });
 
+  const counts = libraryTotals.metadata.count;
   return {
     counts,
     collections: previews,
