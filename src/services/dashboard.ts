@@ -59,7 +59,6 @@ export async function getDashboardData(userId: number): Promise<DashboardData> {
   });
 
   const counts = libraryTotals.metadata.count;
-  console.log(counts);
   return {
     counts,
     collections: previews,
