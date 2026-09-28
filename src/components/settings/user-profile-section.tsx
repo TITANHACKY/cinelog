@@ -143,10 +143,7 @@ function UserProfileForm({ user }: { user: User | null }) {
                 value={form.newPassword}
               />
             </FormField>
-            <FormField
-              id="confirm-password-input"
-              label="Confirm New Password"
-            >
+            <FormField id="confirm-password-input" label="Confirm New Password">
               <Input
                 autoComplete="new-password"
                 className="border-outline-alt text-on-surface"

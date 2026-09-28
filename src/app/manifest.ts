@@ -101,14 +101,18 @@ export default function manifest(): MetadataRoute.Manifest {
         short_name: "Library",
         description: "View your saved movies, series, and custom lists",
         url: "/library",
-        icons: [{ src: "/icon-192x192.png", sizes: "192x192", type: "image/png" }],
+        icons: [
+          { src: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+        ],
       },
       {
         name: "Settings",
         short_name: "Settings",
         description: "Customize theme, profile, and collections",
         url: "/settings",
-        icons: [{ src: "/icon-192x192.png", sizes: "192x192", type: "image/png" }],
+        icons: [
+          { src: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+        ],
       },
     ],
   };

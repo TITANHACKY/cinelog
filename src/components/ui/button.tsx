@@ -16,7 +16,8 @@ type ButtonSize = "default" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
 const variantClasses: Record<ButtonVariant, string> = {
   primaryFilled:
     "bg-brand-primary-container text-white hover:bg-brand-primary-container/85 active:bg-brand-primary-container",
-  accentFilled: "bg-brand-primary text-brand-on-primary hover:bg-brand-primary/85",
+  accentFilled:
+    "bg-brand-primary text-brand-on-primary hover:bg-brand-primary/85",
   darkFilled:
     "border border-outline-variant bg-surface-container-high text-on-surface hover:bg-surface-container-highest",
   darkTonal:

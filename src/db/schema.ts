@@ -543,7 +543,8 @@ export type NewSeriesToGenre = typeof seriesToGenres.$inferInsert;
 export type SmartCollection = typeof smartCollections.$inferSelect;
 export type NewSmartCollection = typeof smartCollections.$inferInsert;
 export type SmartCollectionFilter = typeof smartCollectionFilters.$inferSelect;
-export type NewSmartCollectionFilter = typeof smartCollectionFilters.$inferInsert;
+export type NewSmartCollectionFilter =
+  typeof smartCollectionFilters.$inferInsert;
 export type SmartCollectionSort = typeof smartCollectionSorts.$inferSelect;
 export type NewSmartCollectionSort = typeof smartCollectionSorts.$inferInsert;
 export type UserPreferencesRow = typeof userPreferences.$inferSelect;

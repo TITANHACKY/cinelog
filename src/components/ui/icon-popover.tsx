@@ -43,7 +43,9 @@ export function IconPopover<T>({
   showMenuLabels,
   className,
 }: IconPopoverProps<T>) {
-  const { isOpen, containerRef, toggle, close } = usePopover(disabled || loading);
+  const { isOpen, containerRef, toggle, close } = usePopover(
+    disabled || loading,
+  );
   const current = options.find((option) => option.value === value);
   const CurrentIcon = current?.icon ?? triggerIcon ?? options[0]?.icon;
   const hasMenuLabels = showMenuLabels ?? expanded;
@@ -128,4 +130,3 @@ export function IconPopover<T>({
     </div>
   );
 }
-

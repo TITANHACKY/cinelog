@@ -111,11 +111,16 @@ function collectChangedFields<T extends object>(
   current: T,
   next: T,
   keys: Array<keyof T>,
-  compare: Partial<Record<keyof T, (left: unknown, right: unknown) => boolean>> = {},
+  compare: Partial<
+    Record<keyof T, (left: unknown, right: unknown) => boolean>
+  > = {},
 ) {
   const changed: Partial<T> = {};
-  const fieldDiffs: Array<{ field: string; oldValue: unknown; newValue: unknown }> =
-    [];
+  const fieldDiffs: Array<{
+    field: string;
+    oldValue: unknown;
+    newValue: unknown;
+  }> = [];
 
   for (const key of keys) {
     const left = current[key];
@@ -451,7 +456,8 @@ export function diffCatalogSeries(input: {
     });
   }
 
-  const existingSeasons = input.snapshot.seasonsBySeriesId.get(input.show.id) ?? [];
+  const existingSeasons =
+    input.snapshot.seasonsBySeriesId.get(input.show.id) ?? [];
   const existingByNumber = new Map(
     existingSeasons.map((season) => [season.seasonNumber, season]),
   );
@@ -527,7 +533,9 @@ export function diffCatalogSeries(input: {
   }
 }
 
-export function userSeriesReopenDiffRows(plans: UserSeriesReopenPlan[]): DiffRow[] {
+export function userSeriesReopenDiffRows(
+  plans: UserSeriesReopenPlan[],
+): DiffRow[] {
   return plans.map((plan) => ({
     entity: "user_series",
     dbId: String(plan.userSeriesId),
@@ -549,4 +557,10 @@ export const DIFF_CSV_HEADERS = [
   "action",
 ];
 
-export const ERROR_CSV_HEADERS = ["entity", "db_id", "tmdb_id", "code", "message"];
+export const ERROR_CSV_HEADERS = [
+  "entity",
+  "db_id",
+  "tmdb_id",
+  "code",
+  "message",
+];

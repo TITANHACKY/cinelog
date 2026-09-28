@@ -12,9 +12,7 @@ function eraWindow(eras: string[]): {
   gteYear: number | null;
   lteYear: number | null;
 } {
-  const buckets = ERA_BUCKETS.filter((bucket) =>
-    eras.includes(bucket.value),
-  );
+  const buckets = ERA_BUCKETS.filter((bucket) => eras.includes(bucket.value));
   if (buckets.length === 0) return { gteYear: null, lteYear: null };
 
   let gteYear: number | null = Infinity;
@@ -43,7 +41,10 @@ const TOTAL_LIMIT = 24;
 // We bound the fan-out to the top few picks to keep the request count small.
 const SUGGESTION_LANGUAGE_LIMIT = 3;
 
-function toCandidate(result: TmdbDiscoverResult, mediaType: 0 | 1): TitleCandidate {
+function toCandidate(
+  result: TmdbDiscoverResult,
+  mediaType: 0 | 1,
+): TitleCandidate {
   return {
     tmdbId: result.id,
     mediaType,
@@ -59,7 +60,10 @@ function toCandidate(result: TmdbDiscoverResult, mediaType: 0 | 1): TitleCandida
 // represented and the first list leads each round.
 function interleave<T>(lists: T[][]): T[] {
   const merged: T[] = [];
-  const max = lists.reduce((longest, list) => Math.max(longest, list.length), 0);
+  const max = lists.reduce(
+    (longest, list) => Math.max(longest, list.length),
+    0,
+  );
   for (let i = 0; i < max; i++) {
     for (const list of lists) {
       if (list[i]) merged.push(list[i]);

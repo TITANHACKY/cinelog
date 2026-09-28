@@ -103,11 +103,13 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     query.groupBy !== undefined &&
     Boolean(manualData?.groups?.length);
   const tabMovieCount =
-    validSelectedCollectionId !== null && presetData?.collection?.mediaType === 0
+    validSelectedCollectionId !== null &&
+    presetData?.collection?.mediaType === 0
       ? presetData.movieCount
       : (active?.movieCount ?? 0);
   const tabSeriesCount =
-    validSelectedCollectionId !== null && presetData?.collection?.mediaType === 1
+    validSelectedCollectionId !== null &&
+    presetData?.collection?.mediaType === 1
       ? presetData.seriesCount
       : (active?.seriesCount ?? 0);
 
@@ -144,14 +146,17 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
             title="Collection unavailable"
             titleClassName="text-status-error"
           />
-        ) : manual.isError && !manualData && validSelectedCollectionId === null ? (
+        ) : manual.isError &&
+          !manualData &&
+          validSelectedCollectionId === null ? (
           <EmptyState
             description={LIBRARY_ERROR_DESCRIPTION}
             icon={<AlertCircle className="h-6 w-6 text-status-error" />}
             title={LIBRARY_ERROR_TITLE}
             titleClassName="text-status-error"
           />
-        ) : isLoading ? null : validSelectedCollectionId && presetData?.collection ? (
+        ) : isLoading ? null : validSelectedCollectionId &&
+          presetData?.collection ? (
           presetData.groupBy !== null && presetData.groups?.length ? (
             presetData.groups.map((group) => {
               const page = presetData.groupPages[group.key];
@@ -231,10 +236,16 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
           >
             {isMovies
               ? manualData.items.map((movie) => (
-                  <MovieCard key={movie.tmdb_id} movie={movie as LibraryMovie} />
+                  <MovieCard
+                    key={movie.tmdb_id}
+                    movie={movie as LibraryMovie}
+                  />
                 ))
               : manualData.items.map((show) => (
-                  <SeriesCard key={show.tmdb_id} series={show as LibrarySeries} />
+                  <SeriesCard
+                    key={show.tmdb_id}
+                    series={show as LibrarySeries}
+                  />
                 ))}
           </LibrarySection>
         )}

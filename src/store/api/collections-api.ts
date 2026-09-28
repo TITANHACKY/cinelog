@@ -19,7 +19,10 @@ const collectionTags = ["Collections", ...libraryTagIds] as const;
 
 export const collectionsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getCollections: build.query<{ collections: SmartCollectionWithFilters[] }, void>({
+    getCollections: build.query<
+      { collections: SmartCollectionWithFilters[] },
+      void
+    >({
       query: () => ({ url: "/api/collections" }),
       providesTags: ["Collections"],
     }),
@@ -41,12 +44,22 @@ export const collectionsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [...collectionTags],
     }),
-    deleteCollection: build.mutation<{ collections: SmartCollectionWithFilters[] }, number>({
+    deleteCollection: build.mutation<
+      { collections: SmartCollectionWithFilters[] },
+      number
+    >({
       query: (id) => ({ url: `/api/collections/${id}`, method: "DELETE" }),
       invalidatesTags: [...collectionTags],
     }),
-    reorderCollections: build.mutation<{ success?: boolean }, { orderedIds: number[] }>({
-      query: (body) => ({ url: "/api/collections/reorder", method: "PATCH", body }),
+    reorderCollections: build.mutation<
+      { success?: boolean },
+      { orderedIds: number[] }
+    >({
+      query: (body) => ({
+        url: "/api/collections/reorder",
+        method: "PATCH",
+        body,
+      }),
       invalidatesTags: ["Collections", "Dashboard"],
     }),
   }),

@@ -63,7 +63,9 @@ export function SignupForm() {
     return (
       <div className="flex w-full flex-col items-center justify-center py-12 gap-3">
         <Loader2 className="size-6 animate-spin text-brand-primary" />
-        <p className="text-xs sm:text-sm text-secondary">Redirecting to dashboard...</p>
+        <p className="text-xs sm:text-sm text-secondary">
+          Redirecting to dashboard...
+        </p>
       </div>
     );
   }
@@ -81,7 +83,10 @@ export function SignupForm() {
 
       {error ? <AlertBanner message={error} variant="error" /> : null}
 
-      <form className="flex flex-col gap-2.5 sm:gap-4" onSubmit={handleSubmit(onSubmit)}>
+      <form
+        className="flex flex-col gap-2.5 sm:gap-4"
+        onSubmit={handleSubmit(onSubmit)}
+      >
         <FormField
           error={<ErrorList error={errors.username} />}
           id="username"
@@ -125,7 +130,9 @@ export function SignupForm() {
           label={
             <div className="flex items-center justify-between w-full">
               <span>Display Name</span>
-              <span className="text-[10px] sm:text-xs font-normal text-outline-muted">Optional</span>
+              <span className="text-[10px] sm:text-xs font-normal text-outline-muted">
+                Optional
+              </span>
             </div>
           }
         >

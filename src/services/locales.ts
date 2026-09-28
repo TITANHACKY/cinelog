@@ -1,8 +1,5 @@
 import { unstable_cache } from "next/cache";
-import {
-  listAllCountries,
-  listAllLanguages,
-} from "@/repositories/locales";
+import { listAllCountries, listAllLanguages } from "@/repositories/locales";
 
 const LOCALES_REVALIDATE_SECONDS = 86_400;
 

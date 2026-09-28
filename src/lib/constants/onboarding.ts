@@ -9,7 +9,12 @@ export const MEDIA_LEAN_OPTIONS = [
 
 // value is stable (stored); gteYear/lteYear are for the future discover engine.
 export const ERA_BUCKETS = [
-  { value: "pre-1980", label: "Classic (pre-1980)", gteYear: null, lteYear: 1979 },
+  {
+    value: "pre-1980",
+    label: "Classic (pre-1980)",
+    gteYear: null,
+    lteYear: 1979,
+  },
   { value: "1980s", label: "1980s", gteYear: 1980, lteYear: 1989 },
   { value: "1990s", label: "1990s", gteYear: 1990, lteYear: 1999 },
   { value: "2000s", label: "2000s", gteYear: 2000, lteYear: 2009 },

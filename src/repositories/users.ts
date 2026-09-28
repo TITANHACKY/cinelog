@@ -57,9 +57,7 @@ export async function findUserAndNameConflicts(
   const usernameOwner = username
     ? (results[index++] as User | undefined)
     : undefined;
-  const emailOwner = email
-    ? (results[index++] as User | undefined)
-    : undefined;
+  const emailOwner = email ? (results[index++] as User | undefined) : undefined;
 
   return {
     user: results[0] as User | undefined,

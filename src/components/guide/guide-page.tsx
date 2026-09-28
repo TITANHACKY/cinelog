@@ -17,7 +17,8 @@ export function GuidePage() {
               CineLog Feature Guide
             </h1>
             <p className="mt-1 font-public-sans text-xs text-secondary sm:text-sm">
-              Explore features, section walkthroughs, and screenshot previews to get the most out of CineLog.
+              Explore features, section walkthroughs, and screenshot previews to
+              get the most out of CineLog.
             </p>
           </div>
         </header>

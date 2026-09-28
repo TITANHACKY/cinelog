@@ -20,7 +20,8 @@ export function collectionToLibraryQuery(
     type: mediaType,
     offset: options?.offset ?? 0,
     limit: options?.limit ?? 15,
-    sort_field: (sort?.field as LibraryQueryInput["sort_field"]) ?? "created_at",
+    sort_field:
+      (sort?.field as LibraryQueryInput["sort_field"]) ?? "created_at",
     sort_direction: (sort?.direction as 0 | 1) ?? 1,
   };
 
@@ -30,13 +31,11 @@ export function collectionToLibraryQuery(
   }
 
   if (collection.filters.length > 0) {
-    query.filters = collection.filters.map(
-      (filter): LibraryFilterClause => ({
-        field: filter.field as LibraryFilterClause["field"],
-        operator: filter.operator as LibraryFilterClause["operator"],
-        value: filter.value,
-      }),
-    );
+    query.filters = collection.filters.map((filter): LibraryFilterClause => ({
+      field: filter.field as LibraryFilterClause["field"],
+      operator: filter.operator as LibraryFilterClause["operator"],
+      value: filter.value,
+    }));
   }
 
   if (collection.groupBy !== null && collection.groupBy !== undefined) {

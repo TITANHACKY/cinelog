@@ -25,7 +25,12 @@ export function useLibraryItemMutation(
   }
 
   function requestRemove(payload?: { title?: string }) {
-    void submitLibraryMutation(dispatch, { mediaType, tmdbId, remove: true, ...payload });
+    void submitLibraryMutation(dispatch, {
+      mediaType,
+      tmdbId,
+      remove: true,
+      ...payload,
+    });
   }
 
   return {

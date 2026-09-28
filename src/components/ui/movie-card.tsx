@@ -21,8 +21,13 @@ export function MovieCard({
   movie: LibraryMovie;
   actionsPosition?: "inline" | "below";
 }) {
-  const { isPending, isStatusPending, isRemovePending, requestMutation, requestRemove } =
-    useLibraryItemMutation("movie", movie.tmdb_id);
+  const {
+    isPending,
+    isStatusPending,
+    isRemovePending,
+    requestMutation,
+    requestRemove,
+  } = useLibraryItemMutation("movie", movie.tmdb_id);
   const canUpdateWatchActivity = canUpdateMovieWatchActivity(movie.status);
   const watchStatus = movie.watch_status ?? 0;
   const isWatchable = isMovieWatchable(movie.status, movie.release_date);
@@ -58,10 +63,14 @@ export function MovieCard({
       {watchStatus === 0 && !isWatchable ? (
         <Tooltip
           align="end"
-          className={resolvedActionsPosition === "below" ? "flex-1 min-w-0" : undefined}
+          className={
+            resolvedActionsPosition === "below" ? "flex-1 min-w-0" : undefined
+          }
           content={NON_RELEASED_MEDIA_TOOLTIP}
           contentClassName="whitespace-nowrap"
-          triggerClassName={resolvedActionsPosition === "below" ? "w-full" : undefined}
+          triggerClassName={
+            resolvedActionsPosition === "below" ? "w-full" : undefined
+          }
         >
           {statusToggle}
         </Tooltip>

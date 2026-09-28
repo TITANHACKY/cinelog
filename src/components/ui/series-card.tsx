@@ -58,7 +58,9 @@ export function SeriesCard({
           (season) => season.season_number === nextEpisode.seasonNumber,
         )
       : null) ??
-    [...countableSeasons].reverse().find((season) => season.episodes_watched > 0) ??
+    [...countableSeasons]
+      .reverse()
+      .find((season) => season.episodes_watched > 0) ??
     countableSeasons[countableSeasons.length - 1];
 
   const currentSeasonEpisodesWatched = currentSeason

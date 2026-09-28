@@ -17,19 +17,11 @@ import {
 import type { MoviePayload, TmdbSeries } from "@/lib/types";
 
 export async function findCatalogMovieByTmdbId(tmdbId: number) {
-  return getDb()
-    .select()
-    .from(movies)
-    .where(eq(movies.tmdbId, tmdbId))
-    .get();
+  return getDb().select().from(movies).where(eq(movies.tmdbId, tmdbId)).get();
 }
 
 export async function findCatalogSeriesByTmdbId(tmdbId: number) {
-  return getDb()
-    .select()
-    .from(series)
-    .where(eq(series.tmdbId, tmdbId))
-    .get();
+  return getDb().select().from(series).where(eq(series.tmdbId, tmdbId)).get();
 }
 
 export async function upsertCatalogMovie(tmdbId: number, body: MoviePayload) {
@@ -107,17 +99,20 @@ export async function linkMovieGenres(
   }
 
   const db = getDb();
-  await db.insert(moviesToGenres).select(
-    db
-      .select({
-        id: sql<number | null>`null`.as("id"),
-        movieId: sql<number>`${catalogMovieId}`.as("movieId"),
-        genreId: genres.id,
-        createdAt: sql`(unixepoch())`.as("createdAt"),
-      })
-      .from(genres)
-      .where(inArray(genres.tmdbId, genreTmdbIds)),
-  ).onConflictDoNothing();
+  await db
+    .insert(moviesToGenres)
+    .select(
+      db
+        .select({
+          id: sql<number | null>`null`.as("id"),
+          movieId: sql<number>`${catalogMovieId}`.as("movieId"),
+          genreId: genres.id,
+          createdAt: sql`(unixepoch())`.as("createdAt"),
+        })
+        .from(genres)
+        .where(inArray(genres.tmdbId, genreTmdbIds)),
+    )
+    .onConflictDoNothing();
 }
 
 export async function linkSeriesGenres(
@@ -129,17 +124,20 @@ export async function linkSeriesGenres(
   }
 
   const db = getDb();
-  await db.insert(seriesToGenres).select(
-    db
-      .select({
-        id: sql<number | null>`null`.as("id"),
-        seriesId: sql<number>`${catalogSeriesId}`.as("seriesId"),
-        genreId: genres.id,
-        createdAt: sql`(unixepoch())`.as("createdAt"),
-      })
-      .from(genres)
-      .where(inArray(genres.tmdbId, genreTmdbIds)),
-  ).onConflictDoNothing();
+  await db
+    .insert(seriesToGenres)
+    .select(
+      db
+        .select({
+          id: sql<number | null>`null`.as("id"),
+          seriesId: sql<number>`${catalogSeriesId}`.as("seriesId"),
+          genreId: genres.id,
+          createdAt: sql`(unixepoch())`.as("createdAt"),
+        })
+        .from(genres)
+        .where(inArray(genres.tmdbId, genreTmdbIds)),
+    )
+    .onConflictDoNothing();
 }
 
 export async function upsertCatalogMovieWithGenres(
@@ -163,8 +161,7 @@ export async function upsertCatalogSeriesWithGenresAndSeasons(
 ) {
   const catalogSeries = await findCatalogSeriesByTmdbId(tmdbId);
   const isNew = !catalogSeries;
-  const show =
-    catalogSeries ?? (await upsertCatalogSeries(tmdbId, body));
+  const show = catalogSeries ?? (await upsertCatalogSeries(tmdbId, body));
 
   const queries: SqliteBatchQuery[] = [];
 

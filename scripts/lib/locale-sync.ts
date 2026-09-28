@@ -108,7 +108,15 @@ export function diffCatalogLocales(input: {
 
     if (current === undefined) {
       mutations.inserts.push(row);
-      pushLocaleDiff(diffs, input.entity, "", row.code, "", row.englishName, "insert");
+      pushLocaleDiff(
+        diffs,
+        input.entity,
+        "",
+        row.code,
+        "",
+        row.englishName,
+        "insert",
+      );
       continue;
     }
 

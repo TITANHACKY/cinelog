@@ -6,7 +6,10 @@ import {
 import { readJsonBody } from "@/lib/http/request";
 import { ok, toErrorResponse } from "@/lib/http/response";
 import { preferencesSchema } from "@/lib/validations/onboarding";
-import { getUserPreferences, saveUserPreferences } from "@/services/preferences";
+import {
+  getUserPreferences,
+  saveUserPreferences,
+} from "@/services/preferences";
 
 export const dynamic = "force-dynamic";
 

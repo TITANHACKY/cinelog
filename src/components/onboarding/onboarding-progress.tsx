@@ -21,7 +21,9 @@ export function OnboardingProgress({
           <span
             key={index}
             className={`h-1.5 flex-1 rounded-full transition-colors ${
-              index <= current ? "bg-brand-primary" : "bg-surface-container-high"
+              index <= current
+                ? "bg-brand-primary"
+                : "bg-surface-container-high"
             }`}
           />
         ))}

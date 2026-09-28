@@ -3,9 +3,7 @@ import { WATCH_STATUS } from "@/lib/constants";
 import type { ContentMediaType } from "@/store/api/content-types";
 
 export type ImpressionPromptReason =
-  | "movie-completed"
-  | "series-completed"
-  | "season-completed";
+  "movie-completed" | "series-completed" | "season-completed";
 
 export type ImpressionPromptSource = "library" | "details";
 
@@ -141,7 +139,13 @@ const impressionPromptSlice = createSlice({
       state,
       action: PayloadAction<{ mediaType: ContentMediaType; tmdbId: number }>,
     ) => {
-      if (!sameTitle(state.target, action.payload.mediaType, action.payload.tmdbId)) {
+      if (
+        !sameTitle(
+          state.target,
+          action.payload.mediaType,
+          action.payload.tmdbId,
+        )
+      ) {
         return;
       }
 
@@ -158,7 +162,13 @@ const impressionPromptSlice = createSlice({
         error: string;
       }>,
     ) => {
-      if (!sameTitle(state.target, action.payload.mediaType, action.payload.tmdbId)) {
+      if (
+        !sameTitle(
+          state.target,
+          action.payload.mediaType,
+          action.payload.tmdbId,
+        )
+      ) {
         return;
       }
 

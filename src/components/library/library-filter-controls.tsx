@@ -8,10 +8,7 @@ import { SearchField } from "@/components/ui/search-field";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useLibraryBrowse } from "@/hooks/library/use-library-browse";
-import {
-  LIBRARY_COLLECTION_ACTIVE_HINT,
-  MEDIA_TYPES,
-} from "@/lib/constants";
+import { LIBRARY_COLLECTION_ACTIVE_HINT, MEDIA_TYPES } from "@/lib/constants";
 import type { LibraryMediaType, SmartCollectionWithFilters } from "@/lib/types";
 
 export type { LibraryMediaType };

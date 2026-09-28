@@ -46,7 +46,9 @@ export function normalizeMovieStatus(
 export function normalizeSeriesStatus(
   input: string | null | undefined,
 ): SeriesStatusValue | null {
-  return (matchStatus(SERIES_STATUS, input)?.value as SeriesStatusValue) ?? null;
+  return (
+    (matchStatus(SERIES_STATUS, input)?.value as SeriesStatusValue) ?? null
+  );
 }
 
 export function toMovieStatusDisplay(
@@ -86,7 +88,6 @@ export function isMovieWatchable(
   releaseDate?: string | null,
 ): boolean {
   return (
-    canUpdateMovieWatchActivity(status) &&
-    hasAiredOnOrBeforeToday(releaseDate)
+    canUpdateMovieWatchActivity(status) && hasAiredOnOrBeforeToday(releaseDate)
   );
 }

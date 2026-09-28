@@ -34,8 +34,7 @@ export const moviePatchSchema = z
       .optional(),
   })
   .refine(
-    (data) =>
-      data.watch_status !== undefined || data.impression !== undefined,
+    (data) => data.watch_status !== undefined || data.impression !== undefined,
     { message: "No valid fields to update" },
   );
 
@@ -124,14 +123,14 @@ export const libraryQuerySchema = z
       emptyToUndefined,
       z.string().trim().min(1).max(100).optional(),
     ),
-    filter_field: z.preprocess(emptyToUndefined, z.enum(filterFields).optional()),
-    filter_operator: z.preprocess(
-      (value) => {
-        const next = emptyToUndefined(value);
-        return next === undefined ? undefined : Number(next);
-      },
-      z.number().int().min(0).max(4).optional(),
+    filter_field: z.preprocess(
+      emptyToUndefined,
+      z.enum(filterFields).optional(),
     ),
+    filter_operator: z.preprocess((value) => {
+      const next = emptyToUndefined(value);
+      return next === undefined ? undefined : Number(next);
+    }, z.number().int().min(0).max(4).optional()),
     filter_value: z.preprocess(
       emptyToUndefined,
       z.string().trim().min(1).max(1000).optional(),
@@ -151,7 +150,10 @@ export const libraryQuerySchema = z
       },
       z.union([z.literal(0), z.literal(1), z.literal(2)]).optional(),
     ),
-    group_key: z.preprocess(emptyToUndefined, z.string().min(1).max(64).optional()),
+    group_key: z.preprocess(
+      emptyToUndefined,
+      z.string().min(1).max(64).optional(),
+    ),
   })
   .superRefine((data, context) => {
     const hasFilterPart =

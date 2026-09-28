@@ -142,9 +142,7 @@ export async function findContinueWatchingTitles(
   }
 
   const followUpResults =
-    followUpQueries.length > 0
-      ? await db.batch(asBatch(followUpQueries))
-      : [];
+    followUpQueries.length > 0 ? await db.batch(asBatch(followUpQueries)) : [];
 
   let queryIndex = 0;
   const movieGenreMap = new Map<number, string[]>();

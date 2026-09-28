@@ -26,7 +26,10 @@ export async function saveUserPreferences(
 
   const alreadyCompleted = user.onboardingCompletedAt != null;
   if (!alreadyCompleted) {
-    await markOnboardingCompleted(userId, String(Math.floor(Date.now() / 1000)));
+    await markOnboardingCompleted(
+      userId,
+      String(Math.floor(Date.now() / 1000)),
+    );
   }
 
   return { tokenReissueNeeded: !alreadyCompleted };

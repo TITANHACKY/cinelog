@@ -29,16 +29,16 @@ import type {
   LibraryMediaType,
   LibraryOperator,
 } from "@/lib/types";
-import { toMovieStatusDisplay, toSeriesStatusDisplay } from "@/lib/media/status";
+import {
+  toMovieStatusDisplay,
+  toSeriesStatusDisplay,
+} from "@/lib/media/status";
 import { Trash2 } from "lucide-react";
 
 type FilterClauseRowProps = {
   clause: CollectionFilterItem;
   mediaType: LibraryMediaType;
-  onUpdate: (
-    field: keyof CollectionFilterItem,
-    value: string | number,
-  ) => void;
+  onUpdate: (field: keyof CollectionFilterItem, value: string | number) => void;
   onRemove?: () => void;
 };
 
@@ -156,7 +156,9 @@ export function FilterClauseRow({
         aria-label="Filter operator"
         heading="Is"
         menuMinWidth={160}
-        onChange={(value) => onUpdate("operator", Number(value) as LibraryOperator)}
+        onChange={(value) =>
+          onUpdate("operator", Number(value) as LibraryOperator)
+        }
         options={operatorOptions.map((operator) => ({
           value: String(operator.value),
           label: operator.label,

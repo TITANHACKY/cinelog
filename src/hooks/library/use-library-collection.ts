@@ -22,12 +22,23 @@ export function useLibraryCollection(
   const data = collectionId ? result.currentData : undefined;
 
   const loadMore = useCallback(async () => {
-    if (!collectionId || loadingMore || !data || data.groupBy !== null || !data.hasMore) {
+    if (
+      !collectionId ||
+      loadingMore ||
+      !data ||
+      data.groupBy !== null ||
+      !data.hasMore
+    ) {
       return;
     }
     setLoadingMore(true);
     try {
-      await loadMoreCollection(dispatch, collectionId, search, data.items.length);
+      await loadMoreCollection(
+        dispatch,
+        collectionId,
+        search,
+        data.items.length,
+      );
     } finally {
       setLoadingMore(false);
     }
@@ -56,7 +67,9 @@ export function useLibraryCollection(
   return {
     data,
     isLoading: collectionId !== null && result.isLoading,
-    error: result.isError ? apiErrorMessage(result.error, "Failed to load collection") : null,
+    error: result.isError
+      ? apiErrorMessage(result.error, "Failed to load collection")
+      : null,
     loadingMore,
     loadMore,
     loadMoreGroup,

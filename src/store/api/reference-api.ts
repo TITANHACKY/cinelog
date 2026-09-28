@@ -15,7 +15,8 @@ export const referenceApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getGenres: build.query<GenreOption[], void>({
       query: () => ({ url: "/api/genres" }),
-      transformResponse: (response: { genres?: GenreOption[] }) => response.genres ?? [],
+      transformResponse: (response: { genres?: GenreOption[] }) =>
+        response.genres ?? [],
       providesTags: ["Genres"],
       keepUnusedDataFor: 3600,
     }),

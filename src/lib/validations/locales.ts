@@ -6,16 +6,15 @@ export async function isValidLanguageCode(code: string) {
   return languages.some((language) => language.iso_639_1 === code);
 }
 
-export async function assertLocaleFilterValue(
-  field?: string,
-  value?: string,
-) {
+export async function assertLocaleFilterValue(field?: string, value?: string) {
   if (field !== "original_language" && field !== "origin_country") {
     return;
   }
 
   const message =
-    field === "original_language" ? "Invalid language" : "Invalid origin country";
+    field === "original_language"
+      ? "Invalid language"
+      : "Invalid origin country";
 
   if (!value?.trim()) {
     throw new AppError(message, 400);

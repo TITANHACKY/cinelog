@@ -66,14 +66,14 @@ export function GlobalImpressionPrompt() {
           <DialogTitle className="pr-2 text-base leading-snug">
             {heading}
           </DialogTitle>
-          <DialogDescription>
-            What&apos;s your opinion?
-          </DialogDescription>
+          <DialogDescription>What&apos;s your opinion?</DialogDescription>
         </DialogHeader>
         <div className="flex min-w-0 flex-row gap-2">
           {Object.values(IMPRESSION).map((impression) => {
             const config =
-              IMPRESSION_CONFIG[impression.value as keyof typeof IMPRESSION_CONFIG];
+              IMPRESSION_CONFIG[
+                impression.value as keyof typeof IMPRESSION_CONFIG
+              ];
 
             return (
               <ReactionButton

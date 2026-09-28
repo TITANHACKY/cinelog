@@ -1,0 +1,14 @@
+.next
+out
+build
+node_modules
+.yarn
+coverage
+temp
+tmp
+data
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+yarn.lock
+drizzle/meta

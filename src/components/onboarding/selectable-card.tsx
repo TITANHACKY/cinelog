@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 
 const cardVariants = {
   selected: "border-status-success bg-status-success/15",
-  unselected: "border-outline-variant bg-surface-container hover:border-outline-alt",
+  unselected:
+    "border-outline-variant bg-surface-container hover:border-outline-alt",
 };
 
 export function SelectableCard({

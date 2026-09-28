@@ -2,8 +2,7 @@ name: Catalog Sync
 
 on:
   schedule:
-    # Daily at 06:00 UTC. GitHub may start the job several minutes later.
-    - cron: "0 6 * * *"
+    - cron: "30 19 * * *"
   workflow_dispatch:
     inputs:
       mode:

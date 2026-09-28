@@ -14,12 +14,18 @@ import { useOnboardingWizard } from "@/hooks/onboarding/use-onboarding-wizard";
 
 const STEP_TITLES = [
   { title: "What do you watch?", subtitle: "Tell us what you reach for most." },
-  { title: "Pick your Genres", subtitle: "We use these to tailor CineLog to you." },
+  {
+    title: "Pick your Genres",
+    subtitle: "We use these to tailor CineLog to you.",
+  },
   {
     title: "Preferred Languages",
     subtitle: "Pick at least one — helps us surface the right titles.",
   },
-  { title: "Era & Rating", subtitle: "Optional — set the vibe and a quality floor." },
+  {
+    title: "Era & Rating",
+    subtitle: "Optional — set the vibe and a quality floor.",
+  },
   {
     title: "Add titles you love",
     subtitle: `Add your favourite titles to your watchlist`,
@@ -29,7 +35,6 @@ const STEP_TITLES = [
 export function OnboardingWizard() {
   const w = useOnboardingWizard();
   const meta = STEP_TITLES[w.stepIndex];
-
 
   // Wait for the saved draft to be restored before rendering a step, so we
   // never flash step 1 while resuming a later step on reload.
@@ -49,7 +54,9 @@ export function OnboardingWizard() {
         <h1 className="font-heading text-2xl font-bold tracking-tight text-on-surface">
           {meta.title}
         </h1>
-        <p className="font-public-sans text-sm text-secondary">{meta.subtitle}</p>
+        <p className="font-public-sans text-sm text-secondary">
+          {meta.subtitle}
+        </p>
         {w.isLastStep ? (
           <p className="font-public-sans text-xs text-outline-muted">
             {w.helperText}
@@ -111,7 +118,6 @@ export function OnboardingWizard() {
           Back
         </Button>
         <div className="flex items-center gap-2">
-
           {w.isLastStep ? (
             <div className="flex items-center gap-3">
               <Button
@@ -126,10 +132,7 @@ export function OnboardingWizard() {
               </Button>
             </div>
           ) : (
-            <Button
-              onClick={w.next}
-              disabled={!w.canProceed || w.isSubmitting}
-            >
+            <Button onClick={w.next} disabled={!w.canProceed || w.isSubmitting}>
               Next
             </Button>
           )}

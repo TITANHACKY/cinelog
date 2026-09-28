@@ -57,11 +57,17 @@ export function useContentMutation({
         requireWatchActivity?: boolean;
       },
     ) => {
-      const requireWatchlist = options?.requireWatchlist ?? mutation !== "add-watchlist";
+      const requireWatchlist =
+        options?.requireWatchlist ?? mutation !== "add-watchlist";
       const requireWatchActivity =
         options?.requireWatchActivity ?? mutation !== "add-watchlist";
 
-      if (id === undefined || !mediaType || isMutating || isPendingRef.current) {
+      if (
+        id === undefined ||
+        !mediaType ||
+        isMutating ||
+        isPendingRef.current
+      ) {
         return;
       }
       if (requireWatchlist && !isPresentInWatchlist) return;

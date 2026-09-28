@@ -23,10 +23,7 @@ const initialState: AuthState = {
   status: "idle",
 };
 
-function setSession(
-  state: AuthState,
-  user: User,
-) {
+function setSession(state: AuthState, user: User) {
   state.status = "succeeded";
   state.user = user;
   state.isAuthenticated = true;
@@ -65,9 +62,12 @@ export const authSlice = createSlice({
       .addMatcher(authApi.endpoints.logout.matchRejected, (state) => {
         clearSession(state);
       })
-      .addMatcher(userApi.endpoints.updateProfile.matchFulfilled, (state, action) => {
-        state.user = action.payload.user;
-      });
+      .addMatcher(
+        userApi.endpoints.updateProfile.matchFulfilled,
+        (state, action) => {
+          state.user = action.payload.user;
+        },
+      );
   },
 });
 

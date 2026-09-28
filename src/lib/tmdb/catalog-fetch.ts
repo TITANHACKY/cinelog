@@ -19,7 +19,10 @@ async function fetchTmdbGenreList(path: string, failedMessage: string) {
 }
 
 export async function fetchTmdbMovieGenres() {
-  return fetchTmdbGenreList("/genre/movie/list", "TMDB movie genre list failed");
+  return fetchTmdbGenreList(
+    "/genre/movie/list",
+    "TMDB movie genre list failed",
+  );
 }
 
 export async function fetchTmdbSeriesGenres() {

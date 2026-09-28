@@ -32,6 +32,24 @@ yarn run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+### Drizzle Studio
+
+Browse and edit database rows in a local GUI while developing. In a second terminal, run:
+
+```bash
+yarn db:studio
+```
+
+Drizzle Studio opens at [https://local.drizzle.studio](https://local.drizzle.studio) (default port `4983`). It uses the same `TURSO_CONNECTION_URL` and `TURSO_AUTH_TOKEN` from your environment as the app and migration commands.
+
+For a fully offline local database, point `TURSO_CONNECTION_URL` at a SQLite file (no auth token required):
+
+```env
+TURSO_CONNECTION_URL=file:./data/local.db
+```
+
+Then run `yarn db:migrate` once to create the schema before starting the app or Studio.
+
 ## Production
 
 Create an optimized production build:
@@ -97,15 +115,24 @@ The migration command uses `TURSO_CONNECTION_URL` and `TURSO_AUTH_TOKEN` from yo
 ```bash
 yarn lint
 yarn lint:fix
+yarn format
+yarn format:check
 yarn typecheck
+yarn audit
 yarn build
 yarn start
 ```
 
 `yarn lint` checks all project files and prints lint errors in the CLI. It exits
 silently when there are no ESLint errors or warnings. Use `yarn lint:fix` to
-apply safe automatic fixes. `yarn typecheck` reports TypeScript errors; those
-errors do not have a reliable automatic fixer and must be corrected in source.
+apply safe automatic fixes. `yarn format` applies Prettier across the repo; use
+`yarn format:check` in CI or before committing to verify formatting without
+writing files. `yarn typecheck` reports TypeScript errors; those errors do not
+have a reliable automatic fixer and must be corrected in source.
+
+`yarn audit` scans the full dependency tree for known vulnerabilities at **high**
+severity or above. Pull requests run the same check in CI (see
+[`.github/workflows/pr-checks.yml`](.github/workflows/pr-checks.yml)).
 
 ## Catalog sync
 

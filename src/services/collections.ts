@@ -34,11 +34,16 @@ export async function createUserCollection(
 ) {
   const enabled = await getSmartCollectionsEnabled(userId);
   if (!enabled) {
-    throw new AppError("Smart collections feature is disabled for your account", 400);
+    throw new AppError(
+      "Smart collections feature is disabled for your account",
+      400,
+    );
   }
 
   const displayOrder =
-    input.displayOrder > 0 ? input.displayOrder : await nextDisplayOrder(userId);
+    input.displayOrder > 0
+      ? input.displayOrder
+      : await nextDisplayOrder(userId);
   return insertUserCollection(userId, { ...input, displayOrder });
 }
 

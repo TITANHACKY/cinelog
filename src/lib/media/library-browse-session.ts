@@ -97,11 +97,7 @@ function parseCollectionId(value: unknown): number | null {
     return null;
   }
 
-  if (
-    typeof value === "number" &&
-    Number.isInteger(value) &&
-    value > 0
-  ) {
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) {
     return value;
   }
 
@@ -138,7 +134,9 @@ function parseMediaSession(value: unknown): LibraryBrowseMediaSession | null {
   };
 }
 
-function parseLegacySession(value: Record<string, unknown>): LibraryBrowseSession {
+function parseLegacySession(
+  value: Record<string, unknown>,
+): LibraryBrowseSession {
   const query = parseQuery(value.query) ?? DEFAULT_LIBRARY_BROWSE_QUERY;
   const selectedCollectionId = parseCollectionId(value.selectedCollectionId);
 
@@ -231,8 +229,5 @@ export function writeLibraryBrowseSession(session: LibraryBrowseSession) {
     return;
   }
 
-  writeSessionStorage(
-    LIBRARY_BROWSE_SESSION_KEY,
-    JSON.stringify(session),
-  );
+  writeSessionStorage(LIBRARY_BROWSE_SESSION_KEY, JSON.stringify(session));
 }

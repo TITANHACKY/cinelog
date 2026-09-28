@@ -103,8 +103,7 @@ export class TmdbRequestLimiter {
 
           this.stats.retries += 1;
           const details = error.details as
-            | { retryAfterSeconds?: number }
-            | undefined;
+            { retryAfterSeconds?: number } | undefined;
           const retryAfterMs =
             typeof details?.retryAfterSeconds === "number"
               ? details.retryAfterSeconds * 1000

@@ -113,7 +113,9 @@ export async function replaceUserPreferences(
           updatedAt: now,
         },
       }),
-    db.delete(userPreferredGenres).where(eq(userPreferredGenres.userId, userId)),
+    db
+      .delete(userPreferredGenres)
+      .where(eq(userPreferredGenres.userId, userId)),
     db
       .delete(userPreferredLanguages)
       .where(eq(userPreferredLanguages.userId, userId)),
@@ -130,7 +132,9 @@ export async function replaceUserPreferences(
     statements.push(
       db
         .insert(userPreferredLanguages)
-        .values(input.languages.map((languageCode) => ({ userId, languageCode }))),
+        .values(
+          input.languages.map((languageCode) => ({ userId, languageCode })),
+        ),
     );
   }
 
@@ -147,9 +151,13 @@ export async function markOnboardingCompleted(
     .where(eq(users.id, userId));
 }
 
-export async function getSmartCollectionsEnabled(userId: number): Promise<boolean> {
+export async function getSmartCollectionsEnabled(
+  userId: number,
+): Promise<boolean> {
   const row = await getDb()
-    .select({ smartCollectionsEnabled: userPreferences.smartCollectionsEnabled })
+    .select({
+      smartCollectionsEnabled: userPreferences.smartCollectionsEnabled,
+    })
     .from(userPreferences)
     .where(eq(userPreferences.userId, userId))
     .get();
@@ -176,4 +184,3 @@ export async function setSmartCollectionsEnabled(
       },
     });
 }
-

@@ -60,13 +60,16 @@ export function SmartCollectionsSection() {
               Enable Smart Collections
             </span>
             <p className="font-public-sans text-xs text-secondary">
-              Create custom rule-based collections to organize your library and showcase custom carousels on your dashboard.
+              Create custom rule-based collections to organize your library and
+              showcase custom carousels on your dashboard.
             </p>
           </div>
           <ToggleSwitch
             checked={smartCollectionsEnabled}
             disabled={isToggling}
-            onChange={() => void toggleSmartCollections(!smartCollectionsEnabled)}
+            onChange={() =>
+              void toggleSmartCollections(!smartCollectionsEnabled)
+            }
             title={
               smartCollectionsEnabled
                 ? "Disable Smart Collections"
@@ -81,7 +84,8 @@ export function SmartCollectionsSection() {
               Smart Collections are turned off
             </p>
             <p className="mt-1 max-w-md font-public-sans text-xs text-secondary sm:text-sm">
-              Enable the toggle above to start creating and managing dynamic collections for your dashboard and library.
+              Enable the toggle above to start creating and managing dynamic
+              collections for your dashboard and library.
             </p>
           </div>
         ) : (
@@ -104,8 +108,8 @@ export function SmartCollectionsSection() {
                     </span>
                   </div>
                   <p className="font-public-sans text-xs text-secondary">
-                    Drag to reorder. Up to 3 filters (AND), one sort, and optional
-                    group.
+                    Drag to reorder. Up to 3 filters (AND), one sort, and
+                    optional group.
                   </p>
                 </div>
               </div>

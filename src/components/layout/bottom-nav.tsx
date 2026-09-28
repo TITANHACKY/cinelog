@@ -66,9 +66,7 @@ export function BottomNav() {
               <div
                 className={cn(
                   "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
-                  active
-                    ? "bg-brand-primary-container/20"
-                    : "bg-transparent",
+                  active ? "bg-brand-primary-container/20" : "bg-transparent",
                 )}
               >
                 <Icon className="size-5" strokeWidth={active ? 2.2 : 1.8} />
@@ -230,7 +228,8 @@ export function BottomNav() {
                         Welcome to CineLog
                       </p>
                       <p className="text-xs text-secondary">
-                        Log in to sync your library and watchlist across devices.
+                        Log in to sync your library and watchlist across
+                        devices.
                       </p>
                     </div>
 

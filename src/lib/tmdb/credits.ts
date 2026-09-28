@@ -3,8 +3,7 @@ import type { TmdbCrewMember, TmdbMovie, TmdbSeries } from "@/lib/types";
 type TmdbCredits = TmdbMovie["credits"] | TmdbSeries["credits"];
 
 export function pickCastAndDirectors(credits: TmdbCredits) {
-  const creditsObj =
-    credits && !Array.isArray(credits) ? credits : undefined;
+  const creditsObj = credits && !Array.isArray(credits) ? credits : undefined;
   const cast = [...(creditsObj?.cast ?? [])]
     .sort(
       (first, second) => (first.order ?? Infinity) - (second.order ?? Infinity),

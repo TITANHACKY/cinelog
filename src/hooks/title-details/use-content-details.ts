@@ -20,7 +20,9 @@ export function useContentDetails<T>(
   return {
     data: (result.data as T | undefined) ?? null,
     error: result.isError
-      ? new Error(apiErrorMessage(result.error, "Content details request failed"))
+      ? new Error(
+          apiErrorMessage(result.error, "Content details request failed"),
+        )
       : null,
     isLoading: result.isLoading,
     retry: () => {

@@ -86,7 +86,8 @@ export function useProfileForm(user: User | null) {
         profileErrorMessage({
           error: apiError?.message,
           details: apiError?.details,
-        }) || apiErrorMessage(error, "A network error occurred. Please try again."),
+        }) ||
+          apiErrorMessage(error, "A network error occurred. Please try again."),
       );
     }
   }

@@ -38,7 +38,9 @@ export function LoginForm() {
     return (
       <div className="flex w-full flex-col items-center justify-center py-12 gap-3">
         <Loader2 className="size-6 animate-spin text-brand-primary" />
-        <p className="text-xs sm:text-sm text-secondary">Redirecting to dashboard...</p>
+        <p className="text-xs sm:text-sm text-secondary">
+          Redirecting to dashboard...
+        </p>
       </div>
     );
   }
@@ -56,7 +58,10 @@ export function LoginForm() {
 
       {error ? <AlertBanner message={error} variant="error" /> : null}
 
-      <form className="flex flex-col gap-2.5 sm:gap-4.5" onSubmit={handleSubmit(onSubmit)}>
+      <form
+        className="flex flex-col gap-2.5 sm:gap-4.5"
+        onSubmit={handleSubmit(onSubmit)}
+      >
         <FormField
           error={
             errors.username ? (

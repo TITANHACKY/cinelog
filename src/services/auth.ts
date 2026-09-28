@@ -169,5 +169,8 @@ export async function updateUserProfile(
   }
 
   const smartCollectionsEnabled = await getSmartCollectionsEnabled(userId);
-  return { token, publicUser: toPublicUser(updatedUser, smartCollectionsEnabled) };
+  return {
+    token,
+    publicUser: toPublicUser(updatedUser, smartCollectionsEnabled),
+  };
 }

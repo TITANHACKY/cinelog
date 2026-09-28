@@ -11,7 +11,9 @@ function getThemeSnapshot(): Theme {
   try {
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
     if (stored === "light" || stored === "dark") return stored;
-    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+    return document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light";
   } catch {
     return "dark";
   }
@@ -27,7 +29,11 @@ function subscribe(callback: () => void) {
 }
 
 export function useTheme() {
-  const theme = useSyncExternalStore(subscribe, getThemeSnapshot, getServerSnapshot);
+  const theme = useSyncExternalStore(
+    subscribe,
+    getThemeSnapshot,
+    getServerSnapshot,
+  );
 
   const applyTheme = useCallback((newTheme: Theme) => {
     try {

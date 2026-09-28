@@ -99,7 +99,9 @@ export function StepTitles({
             title={candidate.title}
             posterPath={candidate.posterPath}
             year={candidate.year ?? ""}
-            rating={candidate.rating != null ? candidate.rating.toFixed(1) : "–"}
+            rating={
+              candidate.rating != null ? candidate.rating.toFixed(1) : "–"
+            }
             meta={MEDIA_LABEL[candidate.mediaType]}
             actions={renderCardAction(candidate)}
           />
