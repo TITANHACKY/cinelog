@@ -60,6 +60,9 @@ export const WATCHABLE_SERIES_STATUSES: ReadonlySet<SeriesStatusValue> =
     SERIES_STATUS.pilot.value,
   ]);
 
+export const NON_RELEASED_MEDIA_TOOLTIP = "Not yet released";
+export const NON_RELEASED_SERIES_TOOLTIP = NON_RELEASED_MEDIA_TOOLTIP;
+
 export const WATCH_STATUS_INDICATOR: Record<number, BadgeIndicator> = {
   0: "accentAlt",
   1: "info",

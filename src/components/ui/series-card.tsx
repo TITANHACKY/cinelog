@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useLibraryItemMutation } from "@/hooks/library/use-library-item-mutation";
 import { useLocales } from "@/hooks/locales/use-locales";
+import { NON_RELEASED_SERIES_TOOLTIP } from "@/lib/constants";
 import { formatMediaMeta, getYearString } from "@/lib/media/display";
 import {
   calculateSeriesProgress,
@@ -16,8 +17,6 @@ import {
 } from "@/lib/media/series-progress";
 import { canUpdateSeriesWatchActivity } from "@/lib/media/status";
 import type { LibrarySeries } from "@/lib/types";
-
-const NON_RELEASED_SERIES_TOOLTIP = "Not yet released";
 
 export function SeriesCard({ series }: { series: LibrarySeries }) {
   const {
@@ -124,7 +123,13 @@ export function SeriesCard({ series }: { series: LibrarySeries }) {
     <>
       {removeButton}
       {watchStatus === 0 && !isWatchable ? (
-        <Tooltip content={NON_RELEASED_SERIES_TOOLTIP}>{statusToggle}</Tooltip>
+        <Tooltip
+          align="end"
+          content={NON_RELEASED_SERIES_TOOLTIP}
+          contentClassName="whitespace-nowrap"
+        >
+          {statusToggle}
+        </Tooltip>
       ) : (
         statusToggle
       )}
@@ -135,22 +140,24 @@ export function SeriesCard({ series }: { series: LibrarySeries }) {
     <MediaCard
       actions={actions}
       actionsPosition={isWatching ? "below" : "inline"}
-      footerTop={
+      overlay={
         isWatching ? (
-          <div className="flex w-full flex-col gap-1.5 pb-0.5">
-            <div className="flex items-center justify-between font-public-sans text-[10px] font-semibold tracking-[0.35px] text-secondary uppercase">
-              <span>
-                {completedSeasons}/{totalSeasons} seasons
-              </span>
-              <span>
-                {currentSeasonEpisodesWatched}/{currentSeasonTotalEpisodes}{" "}
-                episodes
-              </span>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/55 to-transparent px-3 pt-8 pb-2 sm:px-3.5 sm:pb-2.5">
+            <div className="flex w-full flex-col gap-1.5">
+              <div className="flex items-center justify-between font-public-sans text-[10px] font-semibold tracking-[0.35px] text-white/90 uppercase drop-shadow-xs">
+                <span>
+                  {completedSeasons}/{totalSeasons} seasons
+                </span>
+                <span>
+                  {currentSeasonEpisodesWatched}/{currentSeasonTotalEpisodes}{" "}
+                  episodes
+                </span>
+              </div>
+              <Progress
+                className="h-1.5 rounded-[12px] bg-white/25"
+                value={percentage}
+              />
             </div>
-            <Progress
-              className="h-1.5 rounded-[12px] bg-surface-container-high"
-              value={percentage}
-            />
           </div>
         ) : undefined
       }

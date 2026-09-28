@@ -24,7 +24,7 @@ export const userApi = baseApi.injectEndpoints({
     }),
     updateProfile: build.mutation<{ user: User }, Record<string, unknown>>({
       query: (body) => ({ url: "/api/user/profile", method: "PATCH", body }),
-      invalidatesTags: ["Me"],
+      invalidatesTags: ["Me", "Dashboard", "Collections", "CollectionCarousel"],
     }),
     getTitleSuggestions: build.query<{ titles: TitleCandidate[] }, TitleSuggestionArgs>({
       query: ({ mediaLean, genreIds, languages, eras, minRating }) => {

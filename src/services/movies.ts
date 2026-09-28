@@ -131,8 +131,13 @@ export async function updateMovieInLibrary(
     updateData.watchStatus = body.watch_status;
     if (body.watch_status === WATCH_STATUS[2].value) {
       updateData.completedAt = now;
+      updateData.lastWatchedAt = now;
+    } else if (body.watch_status === WATCH_STATUS[1].value) {
+      updateData.lastWatchedAt = now;
+      updateData.completedAt = null;
     } else {
       updateData.completedAt = null;
+      updateData.lastWatchedAt = null;
     }
   }
 

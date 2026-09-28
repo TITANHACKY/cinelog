@@ -8,6 +8,7 @@ export type User = {
   email?: string;
   displayName?: string | null;
   hasCompletedOnboarding?: boolean;
+  smartCollectionsEnabled?: boolean;
 };
 
 export type AuthState = {

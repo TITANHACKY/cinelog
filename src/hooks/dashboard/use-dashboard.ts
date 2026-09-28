@@ -15,6 +15,7 @@ export function useDashboard() {
       : null,
     movieCount: result.data?.counts.movies ?? 0,
     seriesCount: result.data?.counts.series ?? 0,
+    continueWatching: result.data?.continueWatching ?? [],
     collections: result.data?.collections ?? [],
   };
 }

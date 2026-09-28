@@ -15,16 +15,21 @@ import {
   useReorderCollectionsMutation,
   useUpdateCollectionMutation,
 } from "@/store/api/collections-api";
-import { useAppDispatch } from "@/store";
+import { useUpdateProfileMutation } from "@/store/api/user-api";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { showToast } from "@/store/slices/toastSlice";
 
 export function useSmartCollections() {
   const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const smartCollectionsEnabled = Boolean(user?.smartCollectionsEnabled);
+
   const result = useGetCollectionsQuery();
   const [createCollection] = useCreateCollectionMutation();
   const [updateCollection] = useUpdateCollectionMutation();
   const [removeCollection] = useDeleteCollectionMutation();
   const [reorder] = useReorderCollectionsMutation();
+  const [updateProfile, { isLoading: isToggling }] = useUpdateProfileMutation();
   const collections = result.data?.collections ?? [];
 
   const notify = useCallback(
@@ -134,9 +139,32 @@ export function useSmartCollections() {
     }
   }
 
+  const toggleSmartCollections = useCallback(
+    async (enabled: boolean) => {
+      try {
+        await updateProfile({ smartCollectionsEnabled: enabled }).unwrap();
+        notify(
+          enabled
+            ? "Smart collections enabled."
+            : "Smart collections disabled.",
+          "success",
+        );
+      } catch (error) {
+        notify(
+          apiErrorMessage(error, "Failed to update smart collections setting."),
+          "error",
+        );
+      }
+    },
+    [notify, updateProfile],
+  );
+
   return {
     collections,
     isLoading: result.isLoading,
+    isToggling,
+    smartCollectionsEnabled,
+    toggleSmartCollections,
     loadCollections,
     saveCollection,
     deleteCollection,

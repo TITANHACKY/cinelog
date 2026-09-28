@@ -467,9 +467,67 @@ export function patchDashboard(data: DashboardData, change: LibraryChange): Dash
     };
   });
 
+  let continueWatching = data.continueWatching ?? [];
+  if (change.remove) {
+    continueWatching = continueWatching.filter((item) => {
+      const isMovie = "title" in item;
+      const mediaMatch = change.mediaType === (isMovie ? "movie" : "series");
+      return !(mediaMatch && item.tmdb_id === change.tmdbId);
+    });
+  } else if (change.watch_status !== undefined && change.watch_status !== 1) {
+    continueWatching = continueWatching.filter((item) => {
+      const isMovie = "title" in item;
+      const mediaMatch = change.mediaType === (isMovie ? "movie" : "series");
+      return !(mediaMatch && item.tmdb_id === change.tmdbId);
+    });
+  } else if (
+    change.seriesUpdate?.watch_status !== undefined &&
+    change.seriesUpdate.watch_status !== 1
+  ) {
+    continueWatching = continueWatching.filter((item) => {
+      const isMovie = "title" in item;
+      return !(change.mediaType === "series" && !isMovie && item.tmdb_id === change.tmdbId);
+    });
+  } else {
+    continueWatching = continueWatching.map((item) => {
+      const isMovie = "title" in item;
+      if (change.mediaType === (isMovie ? "movie" : "series") && item.tmdb_id === change.tmdbId) {
+        if (!isMovie && change.seriesUpdate) {
+          const seriesItem = item as LibrarySeries;
+          const updatedSeasons = (seriesItem.seasons_info ?? []).map((s) => {
+            const match = change.seriesUpdate?.seasons.find(
+              (u) => u.season_number === s.season_number,
+            );
+            return match ? { ...s, episodes_watched: match.episodes_watched } : s;
+          });
+          return {
+            ...seriesItem,
+            watch_status: change.seriesUpdate.watch_status ?? seriesItem.watch_status,
+            impression: change.seriesUpdate.impression ?? seriesItem.impression,
+            total_number_of_episodes_watched:
+              change.seriesUpdate.total_number_of_episodes_watched,
+            total_number_of_seasons_watched:
+              change.seriesUpdate.total_number_of_seasons_watched,
+            seasons_info: updatedSeasons,
+            last_watched_at: String(Math.floor(Date.now() / 1000)),
+          };
+        }
+        if (change.watch_status !== undefined) {
+          return {
+            ...item,
+            watch_status: change.watch_status,
+            last_watched_at: String(Math.floor(Date.now() / 1000)),
+          };
+        }
+      }
+      return item;
+    });
+  }
+
   return {
     ...data,
     collections,
+    continueWatching,
     counts: change.remove
       ? {
           movies:

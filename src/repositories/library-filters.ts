@@ -305,7 +305,7 @@ function sortExpression(mediaType: "movie" | "series", query: LibraryQueryInput)
     case "last_watched_at":
       return mediaType === "series"
         ? direction(userSeries.lastWatchedAt)
-        : sql`null`;
+        : direction(userMovies.lastWatchedAt);
     case "created_at":
     default:
       return direction(user.createdAt);

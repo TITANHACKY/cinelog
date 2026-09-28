@@ -78,6 +78,7 @@ export async function loadUserPreferences(
     eras: prefs.eras ? (JSON.parse(prefs.eras) as string[]) : [],
     genreIds: genreRows.map((row) => row.genreTmdbId),
     languages: languageRows.map((row) => row.languageCode),
+    smartCollectionsEnabled: Boolean(prefs.smartCollectionsEnabled),
   };
 }
 
@@ -96,6 +97,9 @@ export async function replaceUserPreferences(
         mediaLean: input.mediaLean,
         minRating: input.minRating,
         eras: JSON.stringify(input.eras),
+        ...(input.smartCollectionsEnabled !== undefined
+          ? { smartCollectionsEnabled: input.smartCollectionsEnabled }
+          : {}),
       })
       .onConflictDoUpdate({
         target: userPreferences.userId,
@@ -103,6 +107,9 @@ export async function replaceUserPreferences(
           mediaLean: input.mediaLean,
           minRating: input.minRating,
           eras: JSON.stringify(input.eras),
+          ...(input.smartCollectionsEnabled !== undefined
+            ? { smartCollectionsEnabled: input.smartCollectionsEnabled }
+            : {}),
           updatedAt: now,
         },
       }),
@@ -139,3 +146,34 @@ export async function markOnboardingCompleted(
     .set({ onboardingCompletedAt: at })
     .where(eq(users.id, userId));
 }
+
+export async function getSmartCollectionsEnabled(userId: number): Promise<boolean> {
+  const row = await getDb()
+    .select({ smartCollectionsEnabled: userPreferences.smartCollectionsEnabled })
+    .from(userPreferences)
+    .where(eq(userPreferences.userId, userId))
+    .get();
+  return Boolean(row?.smartCollectionsEnabled);
+}
+
+export async function setSmartCollectionsEnabled(
+  userId: number,
+  enabled: boolean,
+): Promise<void> {
+  const db = getDb();
+  const now = String(Math.floor(Date.now() / 1000));
+  await db
+    .insert(userPreferences)
+    .values({
+      userId,
+      smartCollectionsEnabled: enabled,
+    })
+    .onConflictDoUpdate({
+      target: userPreferences.userId,
+      set: {
+        smartCollectionsEnabled: enabled,
+        updatedAt: now,
+      },
+    });
+}
+

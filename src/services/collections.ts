@@ -15,6 +15,7 @@ import {
   reorderUserCollections as repoReorderCollections,
   updateUserCollection as repoUpdateCollection,
 } from "@/repositories/collections";
+import { getSmartCollectionsEnabled } from "@/repositories/preferences";
 export async function getUserCollections(userId: number) {
   return listUserCollections(userId);
 }
@@ -31,6 +32,11 @@ export async function createUserCollection(
   userId: number,
   input: CreateCollectionInput,
 ) {
+  const enabled = await getSmartCollectionsEnabled(userId);
+  if (!enabled) {
+    throw new AppError("Smart collections feature is disabled for your account", 400);
+  }
+
   const displayOrder =
     input.displayOrder > 0 ? input.displayOrder : await nextDisplayOrder(userId);
   return insertUserCollection(userId, { ...input, displayOrder });
