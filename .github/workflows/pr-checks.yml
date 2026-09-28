@@ -27,6 +27,28 @@ jobs:
       - name: Run ESLint
         run: yarn lint
 
+  prettier:
+    name: Prettier Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+
+      - name: Install Dependencies
+        run: yarn install --immutable
+
+      - name: Check Prettier Formatting
+        run: yarn format:check
+
   typecheck:
     name: TypeScript Typecheck
     runs-on: ubuntu-latest

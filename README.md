@@ -125,9 +125,9 @@ yarn start
 
 `yarn lint` checks all project files and prints lint errors in the CLI. It exits
 silently when there are no ESLint errors or warnings. Use `yarn lint:fix` to
-apply safe automatic fixes. `yarn format` applies Prettier across the repo; use
-`yarn format:check` in CI or before committing to verify formatting without
-writing files. `yarn typecheck` reports TypeScript errors; those errors do not
+apply safe automatic fixes. `yarn format` applies Prettier across the repo; use `yarn format:check` before
+committing to verify formatting without writing files. Pull requests run the
+same check in CI. `yarn typecheck` reports TypeScript errors; those errors do not
 have a reliable automatic fixer and must be corrected in source.
 
 `yarn audit` scans the full dependency tree for known vulnerabilities at **high**
