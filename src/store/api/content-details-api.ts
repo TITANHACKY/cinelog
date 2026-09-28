@@ -18,11 +18,14 @@ import {
 } from "@/store/slices/impressionPromptSlice";
 import { showToast } from "@/store/slices/toastSlice";
 
-type MutationResponse = ContentLibraryFields & ContentDetailsData & { error?: string };
+type MutationResponse = ContentLibraryFields &
+  ContentDetailsData & { error?: string };
 // See library-api.ts. The thunk state cannot be named from this module.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AppDispatch = (action: any) => any;
-type RootState = Parameters<typeof contentDetailsApi.util.selectCachedArgsForQuery>[0];
+type RootState = Parameters<
+  typeof contentDetailsApi.util.selectCachedArgsForQuery
+>[0];
 
 const inflightMutations = new Map<string, Promise<void>>();
 
@@ -39,7 +42,10 @@ export type DetailsCachePatch = {
   fields?: ContentLibraryFields;
 };
 
-function applyDetailsPatch(current: ContentDetailsData, change: DetailsCachePatch) {
+function applyDetailsPatch(
+  current: ContentDetailsData,
+  change: DetailsCachePatch,
+) {
   if (change.replace) return change.replace;
   const next = { ...current };
 
@@ -65,20 +71,25 @@ function applyDetailsPatch(current: ContentDetailsData, change: DetailsCachePatc
     Object.assign(next, libraryFields);
     if (seasons && "seasons" in next && Array.isArray(next.seasons)) {
       const progressByNumber = new Map(
-        seasons.map((season) => [season.season_number, season.episodes_watched]),
+        seasons.map((season) => [
+          season.season_number,
+          season.episodes_watched,
+        ]),
       );
       next.seasons = next.seasons.map((season) => ({
         ...season,
         episodes_watched:
           season.season_number === undefined
             ? season.episodes_watched
-            : (progressByNumber.get(season.season_number) ?? season.episodes_watched),
+            : (progressByNumber.get(season.season_number) ??
+              season.episodes_watched),
       }));
     }
     return next;
   }
 
-  if (change.watch_status !== undefined) next.watch_status = change.watch_status;
+  if (change.watch_status !== undefined)
+    next.watch_status = change.watch_status;
   if (change.impression !== undefined) next.impression = change.impression;
   if (
     change.episodesWatched !== undefined &&
@@ -94,14 +105,18 @@ function applyDetailsPatch(current: ContentDetailsData, change: DetailsCachePatc
   }
   if (change.seasons && "seasons" in next && Array.isArray(next.seasons)) {
     const progressByNumber = new Map(
-      change.seasons.map((season) => [season.season_number, season.episodes_watched]),
+      change.seasons.map((season) => [
+        season.season_number,
+        season.episodes_watched,
+      ]),
     );
     next.seasons = next.seasons.map((season) => ({
       ...season,
       episodes_watched:
         season.season_number === undefined
           ? season.episodes_watched
-          : (progressByNumber.get(season.season_number) ?? season.episodes_watched),
+          : (progressByNumber.get(season.season_number) ??
+            season.episodes_watched),
     }));
   }
   return next;
@@ -115,7 +130,9 @@ export function patchCachedContentDetails(
   const state = getState() as RootState;
   const arg = contentDetailsApi.util
     .selectCachedArgsForQuery(state, "getContentDetails")
-    .find((item) => item.mediaType === change.mediaType && item.id === change.id);
+    .find(
+      (item) => item.mediaType === change.mediaType && item.id === change.id,
+    );
   if (!arg) return undefined;
   const patch = dispatch(
     contentDetailsApi.util.updateQueryData("getContentDetails", arg, (draft) =>
@@ -131,8 +148,10 @@ function readCachedDetails(
   id: string,
 ) {
   const state = getState() as RootState;
-  return contentDetailsApi.endpoints.getContentDetails.select({ mediaType, id })(state)
-    .data;
+  return contentDetailsApi.endpoints.getContentDetails.select({
+    mediaType,
+    id,
+  })(state).data;
 }
 
 export const contentDetailsApi = baseApi.injectEndpoints({
@@ -174,7 +193,10 @@ export const contentDetailsApi = baseApi.injectEndpoints({
           (!progress || mediaType !== "series")
         ) {
           return {
-            error: { status: 400, message: "Series progress details are unavailable" },
+            error: {
+              status: 400,
+              message: "Series progress details are unavailable",
+            },
           };
         }
 
@@ -198,7 +220,10 @@ export const contentDetailsApi = baseApi.injectEndpoints({
           return {
             error: {
               status: 0,
-              message: error instanceof Error ? error.message : "Content update failed",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Content update failed",
             },
           };
         }
@@ -217,7 +242,10 @@ export const contentDetailsApi = baseApi.injectEndpoints({
             });
             dispatch(libraryApi.util.invalidateTags([...libraryTagIds]));
             dispatch(
-              showToast({ message: "Added to your watchlist", variant: "success" }),
+              showToast({
+                message: "Added to your watchlist",
+                variant: "success",
+              }),
             );
             return;
           }
@@ -276,7 +304,9 @@ export const contentDetailsApi = baseApi.injectEndpoints({
             mediaType,
             tmdbId,
             watch_status:
-              typeof data.watch_status === "number" ? data.watch_status : undefined,
+              typeof data.watch_status === "number"
+                ? data.watch_status
+                : undefined,
             impression: data.impression,
             seriesUpdate,
           });
@@ -290,7 +320,10 @@ export const contentDetailsApi = baseApi.injectEndpoints({
                 ? current.name
                 : "this title";
 
-          if (mutation === "update-watch-status" || mutation === "update-progress") {
+          if (
+            mutation === "update-watch-status" ||
+            mutation === "update-progress"
+          ) {
             const prompt = completionImpressionPrompt({
               mediaType,
               tmdbId,
@@ -337,7 +370,9 @@ export const contentDetailsApi = baseApi.injectEndpoints({
             );
           } else if (mutation === "update-impression") {
             if (value === null || value === undefined) {
-              dispatch(showToast({ message: "Impression removed", variant: "info" }));
+              dispatch(
+                showToast({ message: "Impression removed", variant: "info" }),
+              );
             } else {
               const impressionName =
                 Object.values(IMPRESSION).find((item) => item.value === value)
@@ -368,7 +403,10 @@ export const contentDetailsApi = baseApi.injectEndpoints({
   }),
 });
 
-export function submitContentMutation(dispatch: AppDispatch, input: ContentMutationArg) {
+export function submitContentMutation(
+  dispatch: AppDispatch,
+  input: ContentMutationArg,
+) {
   const key = `${input.mediaType}:${input.id}`;
   const existing = inflightMutations.get(key);
   if (existing) return existing;
@@ -378,9 +416,11 @@ export function submitContentMutation(dispatch: AppDispatch, input: ContentMutat
       fixedCacheKey: `content-${input.mediaType}-${input.id}`,
     }),
   );
-  const promise = request.then(() => undefined).finally(() => {
-    inflightMutations.delete(key);
-  });
+  const promise = request
+    .then(() => undefined)
+    .finally(() => {
+      inflightMutations.delete(key);
+    });
   inflightMutations.set(key, promise);
   return promise;
 }

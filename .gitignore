@@ -21,6 +21,13 @@
 # production
 /build
 
+# local sqlite databases
+/data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
 # misc
 .DS_Store
 *.pem

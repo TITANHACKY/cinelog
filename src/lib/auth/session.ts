@@ -14,7 +14,11 @@ function cookieOptions(maxAge: number) {
 }
 
 export async function setAuthCookie(token: string) {
-  (await cookies()).set(AUTH_COOKIE, token, cookieOptions(AUTH_TOKEN_TTL_SECONDS));
+  (await cookies()).set(
+    AUTH_COOKIE,
+    token,
+    cookieOptions(AUTH_TOKEN_TTL_SECONDS),
+  );
 }
 
 export async function clearAuthCookie() {

@@ -33,7 +33,7 @@ export const SMART_COLLECTIONS = {
     1: { value: "neq", display_value: "Not Equals" },
     2: { value: "gt", display_value: "Greater Than" },
     3: { value: "lt", display_value: "Less Than" },
-    4: { value: "in", display_value: "In" }
+    4: { value: "in", display_value: "In" },
   },
   direction: {
     0: { value: "asc", display_value: "Ascending" },

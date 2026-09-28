@@ -328,8 +328,10 @@ export async function listLibraryRows(
             lastAirDate: rankedSeries.lastAirDate,
             totalNumberOfEpisodes: rankedSeries.totalNumberOfEpisodes,
             totalNumberOfSeasons: rankedSeries.totalNumberOfSeasons,
-            totalNumberOfSeasonsWatched: rankedSeries.totalNumberOfSeasonsWatched,
-            totalNumberOfEpisodesWatched: rankedSeries.totalNumberOfEpisodesWatched,
+            totalNumberOfSeasonsWatched:
+              rankedSeries.totalNumberOfSeasonsWatched,
+            totalNumberOfEpisodesWatched:
+              rankedSeries.totalNumberOfEpisodesWatched,
             posterPath: rankedSeries.posterPath,
             voteAverage: rankedSeries.voteAverage,
             status: rankedSeries.status,

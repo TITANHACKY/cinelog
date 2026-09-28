@@ -1,7 +1,4 @@
-import {
-  createApi,
-  type BaseQueryFn,
-} from "@reduxjs/toolkit/query/react";
+import { createApi, type BaseQueryFn } from "@reduxjs/toolkit/query/react";
 import { apiFetch } from "@/lib/http/client";
 
 export type ApiError = {
@@ -29,17 +26,17 @@ function unwrapPayload(json: unknown) {
   return json;
 }
 
-export const apiBaseQuery: BaseQueryFn<RequestArgs, unknown, ApiError> = async ({
-  url,
-  method = "GET",
-  body,
-  cache,
-}) => {
+export const apiBaseQuery: BaseQueryFn<
+  RequestArgs,
+  unknown,
+  ApiError
+> = async ({ url, method = "GET", body, cache }) => {
   try {
     const response = await apiFetch(url, {
       method,
       cache,
-      headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
+      headers:
+        body !== undefined ? { "Content-Type": "application/json" } : undefined,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     const json = await response.json().catch(() => null);

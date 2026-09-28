@@ -14,7 +14,11 @@ import {
   type LibraryViewData,
   type SeriesProgressFields,
 } from "@/lib/media/library-patch";
-import type { LibraryBrowseQuery, LibraryGroupBy, LibraryMediaType } from "@/lib/types";
+import type {
+  LibraryBrowseQuery,
+  LibraryGroupBy,
+  LibraryMediaType,
+} from "@/lib/types";
 import type { DashboardData } from "@/services/dashboard";
 import {
   completionImpressionPrompt,
@@ -23,7 +27,11 @@ import {
   impressionPromptResolved,
 } from "@/store/slices/impressionPromptSlice";
 import { showToast } from "@/store/slices/toastSlice";
-import { baseApi, libraryTagIds, settledErrorMessage } from "@/store/api/base-api";
+import {
+  baseApi,
+  libraryTagIds,
+  settledErrorMessage,
+} from "@/store/api/base-api";
 
 export type LibraryMutationInput = {
   mediaType: LibraryMediaType;
@@ -58,13 +66,21 @@ export const libraryApi = baseApi.injectEndpoints({
         try {
           const payload = await fetchLibraryPayload(mediaType, query, 0);
           return {
-            data: libraryViewFromPayload(mediaType, query.groupBy, payload, null),
+            data: libraryViewFromPayload(
+              mediaType,
+              query.groupBy,
+              payload,
+              null,
+            ),
           };
         } catch (error) {
           return {
             error: {
               status: 500,
-              message: error instanceof Error ? error.message : "Failed to load library",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Failed to load library",
             },
           };
         }
@@ -91,7 +107,9 @@ export const libraryApi = baseApi.injectEndpoints({
             error: {
               status: 500,
               message:
-                error instanceof Error ? error.message : "Failed to load collection items",
+                error instanceof Error
+                  ? error.message
+                  : "Failed to load collection items",
             },
           };
         }
@@ -117,7 +135,11 @@ export const libraryApi = baseApi.injectEndpoints({
       },
       queryFn: async ({ queryArg: collectionId, pageParam }) => {
         try {
-          const payload = await fetchCollectionPayload(collectionId, "", pageParam);
+          const payload = await fetchCollectionPayload(
+            collectionId,
+            "",
+            pageParam,
+          );
           return {
             data: {
               movies: payload.movies,
@@ -130,7 +152,9 @@ export const libraryApi = baseApi.injectEndpoints({
             error: {
               status: 500,
               message:
-                error instanceof Error ? error.message : "Failed to load collection items",
+                error instanceof Error
+                  ? error.message
+                  : "Failed to load collection items",
             },
           };
         }
@@ -192,14 +216,18 @@ export const libraryApi = baseApi.injectEndpoints({
           return {
             error: {
               status: 0,
-              message: error instanceof Error ? error.message : "Library update failed",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Library update failed",
             },
           };
         }
       },
       async onQueryStarted(input, { dispatch, getState, queryFulfilled }) {
         const undos = patchLibraryCaches(dispatch, getState, input);
-        const { patchCachedContentDetails } = await import("./content-details-api");
+        const { patchCachedContentDetails } =
+          await import("./content-details-api");
         const detailsUndo = patchCachedContentDetails(dispatch, getState, {
           mediaType: input.mediaType,
           id: String(input.tmdbId),
@@ -302,7 +330,10 @@ export function patchLibraryCaches(
   const state = getState() as RootState;
   const undos: Array<() => void> = [];
 
-  for (const arg of libraryApi.util.selectCachedArgsForQuery(state, "getLibraryView")) {
+  for (const arg of libraryApi.util.selectCachedArgsForQuery(
+    state,
+    "getLibraryView",
+  )) {
     const patch = dispatch(
       libraryApi.util.updateQueryData("getLibraryView", arg, (draft) =>
         patchLibraryView(draft, change),
@@ -311,7 +342,10 @@ export function patchLibraryCaches(
     undos.push(() => patch.undo());
   }
 
-  for (const arg of libraryApi.util.selectCachedArgsForQuery(state, "getCollectionView")) {
+  for (const arg of libraryApi.util.selectCachedArgsForQuery(
+    state,
+    "getCollectionView",
+  )) {
     const patch = dispatch(
       libraryApi.util.updateQueryData("getCollectionView", arg, (draft) =>
         patchLibraryView(draft, change),
@@ -325,17 +359,24 @@ export function patchLibraryCaches(
     "getCollectionCarouselPages",
   )) {
     const patch = dispatch(
-      libraryApi.util.updateQueryData("getCollectionCarouselPages", arg, (draft) => {
-        for (let index = 0; index < draft.pages.length; index += 1) {
-          const patched = patchCarouselPage(draft.pages[index], change);
-          if (patched.found) draft.pages[index] = patched.page;
-        }
-      }),
+      libraryApi.util.updateQueryData(
+        "getCollectionCarouselPages",
+        arg,
+        (draft) => {
+          for (let index = 0; index < draft.pages.length; index += 1) {
+            const patched = patchCarouselPage(draft.pages[index], change);
+            if (patched.found) draft.pages[index] = patched.page;
+          }
+        },
+      ),
     ) as { undo: () => void };
     undos.push(() => patch.undo());
   }
 
-  for (const arg of libraryApi.util.selectCachedArgsForQuery(state, "getDashboard")) {
+  for (const arg of libraryApi.util.selectCachedArgsForQuery(
+    state,
+    "getDashboard",
+  )) {
     const patch = dispatch(
       libraryApi.util.updateQueryData("getDashboard", arg, (draft) =>
         patchDashboard(draft, change),
@@ -347,7 +388,10 @@ export function patchLibraryCaches(
   return undos;
 }
 
-export function submitLibraryMutation(dispatch: AppDispatch, input: LibraryMutationInput) {
+export function submitLibraryMutation(
+  dispatch: AppDispatch,
+  input: LibraryMutationInput,
+) {
   const key = `${input.mediaType}:${input.tmdbId}`;
   const existing = inflightMutations.get(key);
   if (existing) return existing;
@@ -357,9 +401,11 @@ export function submitLibraryMutation(dispatch: AppDispatch, input: LibraryMutat
       fixedCacheKey: `library-item-${input.mediaType}-${input.tmdbId}`,
     }),
   );
-  const promise = request.then(() => undefined).finally(() => {
-    inflightMutations.delete(key);
-  });
+  const promise = request
+    .then(() => undefined)
+    .finally(() => {
+      inflightMutations.delete(key);
+    });
   inflightMutations.set(key, promise);
   return promise;
 }
@@ -372,8 +418,10 @@ export async function loadMoreLibrary(
 ) {
   const payload = await fetchLibraryPayload(mediaType, query, offset);
   dispatch(
-    libraryApi.util.updateQueryData("getLibraryView", { mediaType, query }, (draft) =>
-      appendLibraryPage(draft, payload),
+    libraryApi.util.updateQueryData(
+      "getLibraryView",
+      { mediaType, query },
+      (draft) => appendLibraryPage(draft, payload),
     ),
   );
 }
@@ -386,21 +434,32 @@ export async function loadMoreLibraryGroup(
   offset: number,
 ) {
   dispatch(
-    libraryApi.util.updateQueryData("getLibraryView", { mediaType, query }, (draft) =>
-      setGroupLoading(draft, groupKey, true),
+    libraryApi.util.updateQueryData(
+      "getLibraryView",
+      { mediaType, query },
+      (draft) => setGroupLoading(draft, groupKey, true),
     ),
   );
   try {
-    const payload = await fetchLibraryPayload(mediaType, query, offset, groupKey);
+    const payload = await fetchLibraryPayload(
+      mediaType,
+      query,
+      offset,
+      groupKey,
+    );
     dispatch(
-      libraryApi.util.updateQueryData("getLibraryView", { mediaType, query }, (draft) =>
-        appendLibraryGroupPage(draft, groupKey, payload),
+      libraryApi.util.updateQueryData(
+        "getLibraryView",
+        { mediaType, query },
+        (draft) => appendLibraryGroupPage(draft, groupKey, payload),
       ),
     );
   } catch (error) {
     dispatch(
-      libraryApi.util.updateQueryData("getLibraryView", { mediaType, query }, (draft) =>
-        setGroupLoading(draft, groupKey, false),
+      libraryApi.util.updateQueryData(
+        "getLibraryView",
+        { mediaType, query },
+        (draft) => setGroupLoading(draft, groupKey, false),
       ),
     );
     throw error;

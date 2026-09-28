@@ -88,7 +88,9 @@ export async function fetchLibraryPayload(
     groupKey,
   );
   const response = await apiFetch(`/api/library?${params.toString()}`);
-  const data = (await response.json()) as LibraryApiPayload & { error?: string };
+  const data = (await response.json()) as LibraryApiPayload & {
+    error?: string;
+  };
   if (!response.ok) {
     throw new Error(data.error || "Failed to load library");
   }
@@ -112,7 +114,9 @@ export async function fetchCollectionPayload(
   const response = await apiFetch(
     `/api/collections/${collectionId}/items?${params.toString()}`,
   );
-  const json = (await response.json()) as LibraryApiPayload & { error?: string };
+  const json = (await response.json()) as LibraryApiPayload & {
+    error?: string;
+  };
   if (!response.ok) {
     throw new Error(json.error || "Failed to load collection items");
   }
@@ -214,7 +218,8 @@ function buildGroupPages(
     const prev = previous?.[group.key];
     pages[group.key] = {
       items: groupItems,
-      hasMore: prev?.hasMore ?? group.hasMore ?? groupItems.length < group.count,
+      hasMore:
+        prev?.hasMore ?? group.hasMore ?? groupItems.length < group.count,
       loadingMore: false,
     };
   }
@@ -234,14 +239,12 @@ function applySeriesProgress(
     impression: update.impression,
     total_number_of_episodes_watched: update.total_number_of_episodes_watched,
     total_number_of_seasons_watched: update.total_number_of_seasons_watched,
-    seasons_info: update.seasons.map(
-      (season): LibrarySeriesSeason => ({
-        season_number: season.season_number,
-        episode_count: season.episode_count,
-        episodes_watched: season.episodes_watched,
-        air_date: airDateBySeason.get(season.season_number) ?? null,
-      }),
-    ),
+    seasons_info: update.seasons.map((season): LibrarySeriesSeason => ({
+      season_number: season.season_number,
+      episode_count: season.episode_count,
+      episodes_watched: season.episodes_watched,
+      air_date: airDateBySeason.get(season.season_number) ?? null,
+    })),
   };
 }
 
@@ -374,10 +377,7 @@ export function patchLibraryView(data: LibraryViewData, change: LibraryChange) {
 
   let groups = data.groups;
   const groupBy = data.groupBy ?? undefined;
-  if (
-    groupBy === 0 &&
-    previous.watch_status !== nextItem.watch_status
-  ) {
+  if (groupBy === 0 && previous.watch_status !== nextItem.watch_status) {
     groups = updateWatchStatusGroups(
       groups,
       String(previous.watch_status),
@@ -445,7 +445,10 @@ export function patchCarouselPage(page: CarouselPage, change: LibraryChange) {
   };
 }
 
-export function patchDashboard(data: DashboardData, change: LibraryChange): DashboardData {
+export function patchDashboard(
+  data: DashboardData,
+  change: LibraryChange,
+): DashboardData {
   const collections = data.collections.map((collection) => {
     const movies = patchItemList(collection.preview.movies, change);
     const series = patchItemList(collection.preview.series, change);
@@ -486,23 +489,33 @@ export function patchDashboard(data: DashboardData, change: LibraryChange): Dash
   ) {
     continueWatching = continueWatching.filter((item) => {
       const isMovie = "title" in item;
-      return !(change.mediaType === "series" && !isMovie && item.tmdb_id === change.tmdbId);
+      return !(
+        change.mediaType === "series" &&
+        !isMovie &&
+        item.tmdb_id === change.tmdbId
+      );
     });
   } else {
     continueWatching = continueWatching.map((item) => {
       const isMovie = "title" in item;
-      if (change.mediaType === (isMovie ? "movie" : "series") && item.tmdb_id === change.tmdbId) {
+      if (
+        change.mediaType === (isMovie ? "movie" : "series") &&
+        item.tmdb_id === change.tmdbId
+      ) {
         if (!isMovie && change.seriesUpdate) {
           const seriesItem = item as LibrarySeries;
           const updatedSeasons = (seriesItem.seasons_info ?? []).map((s) => {
             const match = change.seriesUpdate?.seasons.find(
               (u) => u.season_number === s.season_number,
             );
-            return match ? { ...s, episodes_watched: match.episodes_watched } : s;
+            return match
+              ? { ...s, episodes_watched: match.episodes_watched }
+              : s;
           });
           return {
             ...seriesItem,
-            watch_status: change.seriesUpdate.watch_status ?? seriesItem.watch_status,
+            watch_status:
+              change.seriesUpdate.watch_status ?? seriesItem.watch_status,
             impression: change.seriesUpdate.impression ?? seriesItem.impression,
             total_number_of_episodes_watched:
               change.seriesUpdate.total_number_of_episodes_watched,
@@ -542,4 +555,3 @@ export function patchDashboard(data: DashboardData, change: LibraryChange): Dash
       : data.counts,
   };
 }
-

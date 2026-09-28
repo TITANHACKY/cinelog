@@ -82,8 +82,9 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
                 Every frame, every story, logged your way.
               </h1>
               <p className="hidden sm:block text-xs sm:text-sm text-zinc-200/90 leading-relaxed max-w-lg drop-shadow-sm">
-                Immerse yourself in films and television. Track everything you watch,
-                build aesthetic custom watchlists, and relive your cinema journey with ease.
+                Immerse yourself in films and television. Track everything you
+                watch, build aesthetic custom watchlists, and relive your cinema
+                journey with ease.
               </p>
             </div>
 

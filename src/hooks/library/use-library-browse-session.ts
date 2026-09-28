@@ -46,8 +46,7 @@ export function useLibraryBrowseSession() {
         }
 
         if (
-          selectedCollectionIds[mediaType] !==
-          storedMedia.selectedCollectionId
+          selectedCollectionIds[mediaType] !== storedMedia.selectedCollectionId
         ) {
           dispatch(
             libraryCollectionSelected({

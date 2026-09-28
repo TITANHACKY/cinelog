@@ -28,6 +28,10 @@ export async function GET(request: Request) {
     const library = await getLibrary(session.userId, query);
     return ok(library);
   } catch (error) {
-    return toErrorResponse(error, "Failed to load library", "Failed to load library");
+    return toErrorResponse(
+      error,
+      "Failed to load library",
+      "Failed to load library",
+    );
   }
 }

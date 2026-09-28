@@ -25,4 +25,3 @@ export type UserPreferencesInput = {
 export type UserPreferences = UserPreferencesInput & {
   smartCollectionsEnabled?: boolean;
 }; // GET returns same shape
-

@@ -22,12 +22,7 @@ export function StepMediaLean({
   const rowOnDesktop = layout === "rowOnDesktop";
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-3",
-        rowOnDesktop && "sm:flex-row",
-      )}
-    >
+    <div className={cn("flex flex-col gap-3", rowOnDesktop && "sm:flex-row")}>
       {MEDIA_LEAN_OPTIONS.map((option) => (
         <div
           className={cn(rowOnDesktop && "sm:min-w-0 sm:flex-1")}

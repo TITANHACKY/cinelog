@@ -182,27 +182,23 @@ export async function insertUserCollection(
 
   const results = await db.batch(asBatch(queries));
   let resultIndex = 0;
-  const createdCollections = results[resultIndex++] as (
-    typeof smartCollections.$inferSelect
-  )[];
+  const createdCollections = results[
+    resultIndex++
+  ] as (typeof smartCollections.$inferSelect)[];
   let createdFilters: (typeof smartCollectionFilters.$inferSelect)[] = [];
   if (data.filters.length > 0) {
-    createdFilters = results[resultIndex++] as (
-      typeof smartCollectionFilters.$inferSelect
-    )[];
+    createdFilters = results[
+      resultIndex++
+    ] as (typeof smartCollectionFilters.$inferSelect)[];
   }
   let createdSorts: (typeof smartCollectionSorts.$inferSelect)[] = [];
   if (data.sorts && data.sorts.length > 0) {
-    createdSorts = results[resultIndex++] as (
-      typeof smartCollectionSorts.$inferSelect
-    )[];
+    createdSorts = results[
+      resultIndex++
+    ] as (typeof smartCollectionSorts.$inferSelect)[];
   }
 
-  return mapCollection(
-    createdCollections[0],
-    createdFilters,
-    createdSorts,
-  );
+  return mapCollection(createdCollections[0], createdFilters, createdSorts);
 }
 
 export async function updateUserCollection(

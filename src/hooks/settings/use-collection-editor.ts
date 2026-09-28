@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  LIBRARY_SORT_OPTIONS,
-  MAX_COLLECTION_FILTERS,
-} from "@/lib/constants";
+import { LIBRARY_SORT_OPTIONS, MAX_COLLECTION_FILTERS } from "@/lib/constants";
 import { defaultFilterValue } from "@/lib/media/library-browse";
 import type {
   CollectionFilterItem,

@@ -2,9 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { movies, userMovies } from "@/db/schema";
 import type { MoviePayload } from "@/lib/types";
-import {
-  upsertCatalogMovieWithGenres,
-} from "@/repositories/catalog";
+import { upsertCatalogMovieWithGenres } from "@/repositories/catalog";
 
 export async function findUserMovieData(tmdbId: number, userId: number) {
   return getDb()

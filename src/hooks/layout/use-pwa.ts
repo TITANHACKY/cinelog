@@ -251,7 +251,8 @@ export function usePwa() {
   }, [waitingWorker]);
 
   return {
-    isInstallable: Boolean(deferredPrompt) && !hasDismissedPrompt && !isInstalled,
+    isInstallable:
+      Boolean(deferredPrompt) && !hasDismissedPrompt && !isInstalled,
     isInstalled,
     isIOS: isIosDevice && !isInstalled && !hasDismissedPrompt,
     isOnline,

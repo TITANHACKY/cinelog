@@ -78,9 +78,7 @@ export function HomePage() {
           <div className="flex flex-col gap-8 sm:gap-10">
             {collections.map((col) => {
               const items =
-                col.mediaType === 0
-                  ? col.preview.movies
-                  : col.preview.series;
+                col.mediaType === 0 ? col.preview.movies : col.preview.series;
               const count =
                 col.mediaType === 0
                   ? col.preview.metadata.count.movies
@@ -99,7 +97,9 @@ export function HomePage() {
           </div>
         ) : null}
 
-        {!isLoading && continueWatching.length === 0 && collections.length === 0 ? (
+        {!isLoading &&
+        continueWatching.length === 0 &&
+        collections.length === 0 ? (
           <section className="flex flex-col items-center gap-3.5 rounded-2xl border border-dashed border-outline-variant bg-surface-container-low p-6 text-center sm:gap-4 sm:p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-primary-container/20 text-brand-primary sm:h-11 sm:w-11">
               <Search className="h-5 w-5" />
@@ -111,11 +111,7 @@ export function HomePage() {
               Click the search button in the bottom right corner to find movies
               and series and add them to your watchlist.
             </p>
-            <ButtonLink
-              className="text-xs"
-              href="/guide"
-              variant="darkTonal"
-            >
+            <ButtonLink className="text-xs" href="/guide" variant="darkTonal">
               <BookOpen className="mr-1.5 h-3.5 w-3.5" />
               New here? Read the guide
             </ButtonLink>

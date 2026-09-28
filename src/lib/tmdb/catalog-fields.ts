@@ -4,7 +4,12 @@ import {
   type MovieStatusValue,
   type SeriesStatusValue,
 } from "@/lib/media/status";
-import type { MoviePayload, TmdbMovie, TmdbReleaseDate, TmdbSeries } from "@/lib/types";
+import type {
+  MoviePayload,
+  TmdbMovie,
+  TmdbReleaseDate,
+  TmdbSeries,
+} from "@/lib/types";
 
 export type CatalogMovieFields = {
   title: string;
@@ -40,9 +45,7 @@ export type CatalogSeasonFields = {
   airDate: string | null;
 };
 
-export function firstOriginCountry(
-  countries?: string[] | null,
-): string | null {
+export function firstOriginCountry(countries?: string[] | null): string | null {
   return countries?.[0] || null;
 }
 
@@ -56,7 +59,9 @@ export function roundVoteAverage(
   return Math.round(value * 10) / 10;
 }
 
-export function pickMovieCertification(movie: TmdbMovie): TmdbReleaseDate | null {
+export function pickMovieCertification(
+  movie: TmdbMovie,
+): TmdbReleaseDate | null {
   const releaseResults = movie.release_dates?.results ?? [];
   const releaseCountry =
     releaseResults.find((release) => release.iso_3166_1 === "IN") ??
@@ -91,9 +96,7 @@ export function pickSeriesCertificate(body: TmdbSeries): string | null {
   return ratingCountry?.rating ?? null;
 }
 
-export function genreTmdbIds(
-  genres?: Array<{ id?: number }> | null,
-): number[] {
+export function genreTmdbIds(genres?: Array<{ id?: number }> | null): number[] {
   return (genres ?? [])
     .map((genre) => genre.id)
     .filter((id): id is number => typeof id === "number");

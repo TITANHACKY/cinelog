@@ -38,7 +38,8 @@ export function ContentPreferencesSection() {
             Content Preferences
           </h2>
           <p className="font-public-sans text-xs text-secondary">
-            Customize your media format lean, preferred genres, languages, and era ratings.
+            Customize your media format lean, preferred genres, languages, and
+            era ratings.
           </p>
         </div>
       </div>
@@ -67,7 +68,10 @@ export function ContentPreferencesSection() {
           <h2 className="font-public-sans text-sm font-semibold text-on-surface">
             Genres
           </h2>
-          <StepGenres selected={draft.genreIds} onToggle={actions.toggleGenre} />
+          <StepGenres
+            selected={draft.genreIds}
+            onToggle={actions.toggleGenre}
+          />
         </section>
 
         <section className="flex flex-col gap-3">
@@ -97,7 +101,9 @@ export function ContentPreferencesSection() {
             variant="primaryFilled"
             onClick={save}
             disabled={
-              isSaving || draft.genreIds.length < 1 || draft.languages.length < 1
+              isSaving ||
+              draft.genreIds.length < 1 ||
+              draft.languages.length < 1
             }
             type="button"
           >

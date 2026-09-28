@@ -16,7 +16,9 @@ export const preferencesSchema = z.object({
       z.literal(MIN_RATING_VALUES[2]),
     ])
     .nullable(),
-  eras: z.array(z.enum(ERA_VALUES as [string, ...string[]])).max(ERA_VALUES.length),
+  eras: z
+    .array(z.enum(ERA_VALUES as [string, ...string[]]))
+    .max(ERA_VALUES.length),
   genreIds: z.array(z.number().int().positive()).min(1).max(GENRE_MAX),
   languages: z
     .array(z.enum(LANGUAGE_CODES as [string, ...string[]]))
@@ -39,7 +41,9 @@ export const titleSuggestionsQuerySchema = z.object({
   mediaType: z
     .enum(["0", "1", "2"])
     .optional()
-    .transform((value) => (value === undefined ? 2 : (Number(value) as 0 | 1 | 2))),
+    .transform((value) =>
+      value === undefined ? 2 : (Number(value) as 0 | 1 | 2),
+    ),
   languages: z
     .string()
     .optional()

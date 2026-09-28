@@ -167,7 +167,7 @@ export function LibraryBrowseFields({
     const nextValue =
       nextOperator === 4
         ? selected.join(",") || query.filterValue
-        : selected[0] ?? query.filterValue;
+        : (selected[0] ?? query.filterValue);
 
     onChange({
       ...query,
@@ -264,7 +264,9 @@ export function LibraryBrowseFields({
         onChange({
           ...query,
           sortField: field as LibraryBrowseQuery["sortField"],
-          sortDirection: Number(direction) as LibraryBrowseQuery["sortDirection"],
+          sortDirection: Number(
+            direction,
+          ) as LibraryBrowseQuery["sortDirection"],
         });
       }}
       options={sortOptions.map((option) => ({
@@ -296,22 +298,22 @@ export function LibraryBrowseFields({
   );
 
   const content = stacked ? (
-      <div className="flex flex-col gap-4">
-        <FormField id="library-filter-field" label="Filter">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            {filterFieldControl}
-            {operatorControl}
-            {valueControl}
-          </div>
-        </FormField>
-        <FormField id="library-sort" label="Sort">
-          {sortControl}
-        </FormField>
-        <FormField id="library-group" label="Group">
-          {groupControl}
-        </FormField>
-      </div>
-    ) : (
+    <div className="flex flex-col gap-4">
+      <FormField id="library-filter-field" label="Filter">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {filterFieldControl}
+          {operatorControl}
+          {valueControl}
+        </div>
+      </FormField>
+      <FormField id="library-sort" label="Sort">
+        {sortControl}
+      </FormField>
+      <FormField id="library-group" label="Group">
+        {groupControl}
+      </FormField>
+    </div>
+  ) : (
     <>
       {filterFieldControl}
       {operatorControl}

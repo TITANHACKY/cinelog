@@ -59,9 +59,8 @@ function MovieItem({
       : undefined;
   const StatusIcon =
     watchStatus != null
-      ? (WATCH_STATUS_ICONS[
-          watchStatus as keyof typeof WATCH_STATUS_ICONS
-        ] ?? WATCH_STATUS_ICONS[0])
+      ? (WATCH_STATUS_ICONS[watchStatus as keyof typeof WATCH_STATUS_ICONS] ??
+        WATCH_STATUS_ICONS[0])
       : undefined;
   const showWatchStatus =
     state === "default" &&

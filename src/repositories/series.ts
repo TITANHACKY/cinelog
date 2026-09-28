@@ -1,12 +1,12 @@
 import { and, eq, sql } from "drizzle-orm";
 import { asBatch, getDb, type SqliteBatchQuery } from "@/db";
-import {
-  seasons,
-  series,
-  userSeasonProgress,
-  userSeries,
+import { seasons, series, userSeasonProgress, userSeries } from "@/db/schema";
+import type {
+  NewUserSeries,
+  Season,
+  UserSeasonProgress,
+  UserSeries,
 } from "@/db/schema";
-import type { NewUserSeries, Season, UserSeasonProgress, UserSeries } from "@/db/schema";
 import type { TmdbSeries } from "@/lib/types";
 import {
   listCatalogSeasons,
@@ -150,7 +150,9 @@ export async function ensureAllUserSeasonProgress(
     .where(eq(userSeasonProgress.userSeriesId, userSeriesId));
 
   const existingIds = new Set(existing.map((row) => row.seasonId));
-  const missing = catalogSeasons.filter((season) => !existingIds.has(season.id));
+  const missing = catalogSeasons.filter(
+    (season) => !existingIds.has(season.id),
+  );
 
   if (missing.length === 0) {
     return;

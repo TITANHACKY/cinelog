@@ -18,7 +18,9 @@ function parseMode(): Mode {
 
 async function main() {
   const mode = parseMode();
-  console.log(`[smart-collections:enable-existing] Running in ${mode.toUpperCase()} mode...`);
+  console.log(
+    `[smart-collections:enable-existing] Running in ${mode.toUpperCase()} mode...`,
+  );
 
   const db = getDb();
   const allUsers = await db.select().from(users);
@@ -44,8 +46,12 @@ async function main() {
   }
 
   console.log(`- Already enabled: ${alreadyEnabled}`);
-  console.log(`- Missing preferences (needs insert with enabled=true): ${needsInsert}`);
-  console.log(`- Disabled preferences (needs update to enabled=true): ${needsUpdate}`);
+  console.log(
+    `- Missing preferences (needs insert with enabled=true): ${needsInsert}`,
+  );
+  console.log(
+    `- Disabled preferences (needs update to enabled=true): ${needsUpdate}`,
+  );
   console.log(`- Total to enable: ${needsInsert + needsUpdate}`);
 
   if (mode === "dry-run") {

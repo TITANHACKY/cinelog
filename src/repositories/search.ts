@@ -1,12 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import {
-  genres,
-  movies,
-  series,
-  userMovies,
-  userSeries,
-} from "@/db/schema";
+import { genres, movies, series, userMovies, userSeries } from "@/db/schema";
 import type { SearchType } from "@/lib/types";
 
 const emptyLookups = {

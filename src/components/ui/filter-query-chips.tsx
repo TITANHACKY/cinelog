@@ -53,7 +53,9 @@ export function FilterQueryChips({
             )}
           </span>
           {index < filters.length - 1 ? (
-            <span className="text-[10px] font-bold text-outline-muted">AND</span>
+            <span className="text-[10px] font-bold text-outline-muted">
+              AND
+            </span>
           ) : null}
         </span>
       ))}

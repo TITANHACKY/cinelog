@@ -1,7 +1,4 @@
-import {
-  mapLibraryGroups,
-  withGroupHasMore,
-} from "@/lib/media/library-browse";
+import { mapLibraryGroups, withGroupHasMore } from "@/lib/media/library-browse";
 import type { LibraryMetadata, LibraryMovie, LibrarySeries } from "@/lib/types";
 import type { LibraryQueryInput } from "@/lib/validations/library";
 import { listLibraryRows } from "@/repositories/library";

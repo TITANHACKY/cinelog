@@ -35,17 +35,14 @@ export function CollectionCarousel({
     initialPageParam: initialItems.length,
   });
 
-  const fetched = (query.data?.pages ?? []).reduce<Array<LibraryMovie | LibrarySeries>>(
-    (all, page) => appendUnique(all, isMovie ? page.movies : page.series),
-    [],
-  );
+  const fetched = (query.data?.pages ?? []).reduce<
+    Array<LibraryMovie | LibrarySeries>
+  >((all, page) => appendUnique(all, isMovie ? page.movies : page.series), []);
   const items = appendUnique(initialItems, fetched);
   const count = isMovie
     ? (query.data?.pages[0]?.metadata.count.movies ?? initialCount)
     : (query.data?.pages[0]?.metadata.count.series ?? initialCount);
-  const hasMore = query.data
-    ? Boolean(query.hasNextPage)
-    : initialHasMore;
+  const hasMore = query.data ? Boolean(query.hasNextPage) : initialHasMore;
 
   return (
     <Carousel

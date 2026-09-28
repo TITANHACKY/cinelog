@@ -145,7 +145,11 @@ export async function updateMovieInLibrary(
     updateData.impression = body.impression;
   }
 
-  const updatedMovie = await updateUserMovieByTmdbId(tmdbId, userId, updateData);
+  const updatedMovie = await updateUserMovieByTmdbId(
+    tmdbId,
+    userId,
+    updateData,
+  );
 
   if (!updatedMovie) {
     throw new AppError("Movie not found in library", 404);

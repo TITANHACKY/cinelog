@@ -233,9 +233,7 @@ function DialogTitle({ className, ...props }: ComponentProps<"h2">) {
 }
 
 function DialogDescription({ className, ...props }: ComponentProps<"p">) {
-  return (
-    <p className={cn("text-sm text-secondary", className)} {...props} />
-  );
+  return <p className={cn("text-sm text-secondary", className)} {...props} />;
 }
 
 export {

@@ -28,7 +28,8 @@ function toggle<T>(list: T[], value: T, max: number): T[] {
 export function useContentPreferences() {
   const dispatch = useAppDispatch();
   const preferences = useGetPreferencesQuery();
-  const [updatePreferences, { isLoading: isSaving }] = useUpdatePreferencesMutation();
+  const [updatePreferences, { isLoading: isSaving }] =
+    useUpdatePreferencesMutation();
   const [draft, setDraft] = useState<UserPreferencesInput>(emptyDraft);
   const [seeded, setSeeded] = useState(false);
   const [message, setMessage] = useState<{

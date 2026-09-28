@@ -98,9 +98,7 @@ function planUserSeriesReopen(input: {
     input.seasonRows,
   );
 
-  if (
-    isSeriesFullyWatched(totalEpisodesWatched, input.catalogTotalEpisodes)
-  ) {
+  if (isSeriesFullyWatched(totalEpisodesWatched, input.catalogTotalEpisodes)) {
     return null;
   }
 
@@ -138,11 +136,17 @@ function projectedSeasonRows(
   show: Series,
   snapshot: CatalogSyncSnapshot,
   mutations: CatalogSyncMutations,
-): Array<{ seasonId: number | null; seasonNumber: number; episodeCount: number }> {
+): Array<{
+  seasonId: number | null;
+  seasonNumber: number;
+  episodeCount: number;
+}> {
   const existingSeasons = snapshot.seasonsBySeriesId.get(show.id) ?? [];
   const updatedById = new Map(
     mutations.seasonUpdates
-      .filter((update) => existingSeasons.some((season) => season.id === update.id))
+      .filter((update) =>
+        existingSeasons.some((season) => season.id === update.id),
+      )
       .map((update) => [update.id, update.values]),
   );
 
@@ -308,7 +312,10 @@ function seriesGenreInsert(
     .onConflictDoNothing();
 }
 
-function movieGenreDelete(movieId: number, genreIds: number[]): SqliteBatchQuery {
+function movieGenreDelete(
+  movieId: number,
+  genreIds: number[],
+): SqliteBatchQuery {
   return getDb()
     .delete(moviesToGenres)
     .where(
@@ -381,7 +388,9 @@ export async function previewUserSeriesReopens(
   const plans: UserSeriesReopenPlan[] = [];
 
   for (const row of completedRows) {
-    const show = snapshot.series.find((seriesRow) => seriesRow.id === row.seriesId);
+    const show = snapshot.series.find(
+      (seriesRow) => seriesRow.id === row.seriesId,
+    );
     if (!show) {
       continue;
     }
@@ -479,7 +488,10 @@ async function loadUserSeriesReopenPlans(
     )
     .where(
       and(
-        inArray(userSeries.id, completedRows.map((row) => row.userSeriesId)),
+        inArray(
+          userSeries.id,
+          completedRows.map((row) => row.userSeriesId),
+        ),
         inArray(seasons.seriesId, uniqueIds),
       ),
     );
@@ -524,7 +536,9 @@ async function applyUserSeriesReopenPlans(
 
   const db = getDb();
   const queries: SqliteBatchQuery[] = [];
-  const seasonProgressIds = plans.flatMap((plan) => plan.seasonProgressIdsToClear);
+  const seasonProgressIds = plans.flatMap(
+    (plan) => plan.seasonProgressIdsToClear,
+  );
 
   if (seasonProgressIds.length > 0) {
     queries.push(

@@ -102,7 +102,11 @@ export function LandingNav() {
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             className="flex size-9 items-center justify-center rounded-lg text-secondary transition-colors hover:bg-surface-container-high hover:text-on-surface"
           >
-            {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            {mobileOpen ? (
+              <X className="size-5" />
+            ) : (
+              <Menu className="size-5" />
+            )}
           </button>
         </div>
       </div>
@@ -110,7 +114,10 @@ export function LandingNav() {
       {/* Mobile Menu */}
       {mobileOpen && (
         <div className="border-t border-outline-alt bg-surface/95 backdrop-blur-xl md:hidden">
-          <nav className="flex flex-col gap-1 p-4" aria-label="Mobile navigation">
+          <nav
+            className="flex flex-col gap-1 p-4"
+            aria-label="Mobile navigation"
+          >
             {navLinks.map((link) => (
               <a
                 key={link.href}

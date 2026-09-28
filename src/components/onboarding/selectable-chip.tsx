@@ -34,7 +34,10 @@ export function SelectableChip({
         // selection doesn't shift the chip's width.
         inlineStart={
           <Check
-            className={cn("text-status-success", selected ? "visible" : "invisible")}
+            className={cn(
+              "text-status-success",
+              selected ? "visible" : "invisible",
+            )}
           />
         }
         text={label}

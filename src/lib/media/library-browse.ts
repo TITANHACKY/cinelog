@@ -5,7 +5,10 @@ import {
   SERIES_STATUS,
   WATCH_STATUS,
 } from "@/lib/constants";
-import { toMovieStatusDisplay, toSeriesStatusDisplay } from "@/lib/media/status";
+import {
+  toMovieStatusDisplay,
+  toSeriesStatusDisplay,
+} from "@/lib/media/status";
 import type {
   LibraryBrowseQuery,
   LibraryGroup,
@@ -123,7 +126,9 @@ export function libraryGroupLabel(
 
   if (groupBy === 0) {
     const status = Number(key);
-    return WATCH_STATUS[status as keyof typeof WATCH_STATUS]?.display_value ?? key;
+    return (
+      WATCH_STATUS[status as keyof typeof WATCH_STATUS]?.display_value ?? key
+    );
   }
 
   if (groupBy === 1) {

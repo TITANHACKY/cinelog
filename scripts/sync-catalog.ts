@@ -176,17 +176,13 @@ async function main() {
 
   const tmdbStarted = Date.now();
 
-  const [
-    tmdbLanguageList,
-    tmdbCountryList,
-    languageSnapshot,
-    countrySnapshot,
-  ] = await Promise.all([
-    limiter.run(() => fetchTmdbLanguages()),
-    limiter.run(() => fetchTmdbCountries()),
-    loadLanguageSyncSnapshot(),
-    loadCountrySyncSnapshot(),
-  ]);
+  const [tmdbLanguageList, tmdbCountryList, languageSnapshot, countrySnapshot] =
+    await Promise.all([
+      limiter.run(() => fetchTmdbLanguages()),
+      limiter.run(() => fetchTmdbCountries()),
+      loadLanguageSyncSnapshot(),
+      loadCountrySyncSnapshot(),
+    ]);
   const tmdbLanguages = normalizeTmdbLanguages(tmdbLanguageList);
   const tmdbCountries = normalizeTmdbCountries(tmdbCountryList);
   const { mutations: languageMutations, diffs: languageDiffs } =
@@ -271,7 +267,9 @@ async function main() {
         errors: titleErrors,
       });
     } catch (error) {
-      titleErrors.push(errorFromUnknown("movie", movie.id, movie.tmdbId, error));
+      titleErrors.push(
+        errorFromUnknown("movie", movie.id, movie.tmdbId, error),
+      );
     }
     diffs.push(...titleDiffs);
     errors.push(...titleErrors);
@@ -327,10 +325,7 @@ async function main() {
   const errorsPath = path.join(tempDir, `catalog-sync-${stamp}-errors.csv`);
   const summaryPath = path.join(tempDir, `catalog-sync-${stamp}-summary.json`);
 
-  await writeFile(
-    diffsPath,
-    toCsv(DIFF_CSV_HEADERS, diffs.map(diffRowRecord)),
-  );
+  await writeFile(diffsPath, toCsv(DIFF_CSV_HEADERS, diffs.map(diffRowRecord)));
   await writeFile(
     errorsPath,
     toCsv(ERROR_CSV_HEADERS, errors.map(errorRowRecord)),
@@ -345,8 +340,7 @@ async function main() {
     const dbStarted = Date.now();
     const result = await applyCatalogSyncMutations(mutations);
     dbMs = Date.now() - dbStarted;
-    written =
-      result.written + languageWritten + countryWritten + genreWritten;
+    written = result.written + languageWritten + countryWritten + genreWritten;
     progressInserted = result.progressInserted;
     userSeriesReopened = result.userSeriesReopened;
   }

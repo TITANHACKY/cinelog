@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
       {
         hostname: "image.tmdb.org",
         protocol: "https",
-      }
+      },
     ],
   },
   async headers() {

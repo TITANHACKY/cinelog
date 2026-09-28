@@ -20,7 +20,8 @@ export function ContentProgress({
 }: ContentProgressProps) {
   const mediaId = series?.id;
   const entry = useContentMutationState("series", mediaId);
-  const { seasons, selectedSeason, setSelectedSeason } = useProgressSeasons(series);
+  const { seasons, selectedSeason, setSelectedSeason } =
+    useProgressSeasons(series);
   const selectedSeasonDetails = seasons.find(
     (season) => season.seasonNumber === selectedSeason,
   );

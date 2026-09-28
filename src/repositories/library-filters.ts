@@ -138,7 +138,11 @@ function genreCondition(
   const parentId =
     mediaType === "movie" ? moviesToGenres.movieId : seriesToGenres.seriesId;
   const catalogId = mediaType === "movie" ? movies.id : series.id;
-  const nameMatch = textCompare(genres.name, operator === 1 ? 0 : operator, value);
+  const nameMatch = textCompare(
+    genres.name,
+    operator === 1 ? 0 : operator,
+    value,
+  );
 
   const matched = exists(
     db
@@ -238,7 +242,10 @@ function filterCondition(
   );
 }
 
-function searchCondition(mediaType: "movie" | "series", query: LibraryQueryInput) {
+function searchCondition(
+  mediaType: "movie" | "series",
+  query: LibraryQueryInput,
+) {
   if (!query.q) {
     return undefined;
   }
@@ -285,7 +292,10 @@ function groupKeyExpression(mediaType: "movie" | "series", groupBy: 0 | 1 | 2) {
   return sql<string>`coalesce(${catalog.status}, 'Unknown')`;
 }
 
-function sortExpression(mediaType: "movie" | "series", query: LibraryQueryInput) {
+function sortExpression(
+  mediaType: "movie" | "series",
+  query: LibraryQueryInput,
+) {
   const user = mediaType === "movie" ? userMovies : userSeries;
   const catalog = mediaType === "movie" ? movies : series;
   const titleColumn = mediaType === "movie" ? movies.title : series.name;

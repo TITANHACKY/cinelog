@@ -99,7 +99,8 @@ const STEPS = [
     number: "01",
     icon: UserPlus,
     title: "Create Account",
-    description: "Create your free account in seconds. No credit card required.",
+    description:
+      "Create your free account in seconds. No credit card required.",
   },
   {
     number: "02",
@@ -147,13 +148,7 @@ const FAQ_ITEMS = [
 ];
 
 /* ── FAQ Item ── */
-function FaqItem({
-  question,
-  answer,
-}: {
-  question: string;
-  answer: string;
-}) {
+function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -199,7 +194,9 @@ export function LandingPage() {
     return (
       <div className="flex min-h-screen w-full flex-col items-center justify-center bg-surface gap-3">
         <Loader2 className="size-8 animate-spin text-brand-primary" />
-        <p className="text-sm text-secondary font-medium">Entering CineLog...</p>
+        <p className="text-sm text-secondary font-medium">
+          Entering CineLog...
+        </p>
       </div>
     );
   }
@@ -287,10 +284,7 @@ export function LandingPage() {
       </section>
 
       {/* ═══ FEATURES ═══ */}
-      <section
-        id="features"
-        className="relative px-4 py-20 sm:px-6 sm:py-28"
-      >
+      <section id="features" className="relative px-4 py-20 sm:px-6 sm:py-28">
         <div className="mx-auto max-w-6xl">
           <div className="landing-reveal text-center">
             <p className="font-public-sans text-xs font-semibold uppercase tracking-[0.15em] text-brand-primary">
@@ -347,7 +341,8 @@ export function LandingPage() {
               See CineLog in action
             </h2>
             <p className="mx-auto mt-3 max-w-xl font-public-sans text-sm leading-relaxed text-secondary sm:text-base">
-              A glimpse of the polished, feature-rich experience waiting for you.
+              A glimpse of the polished, feature-rich experience waiting for
+              you.
             </p>
           </div>
 
@@ -358,10 +353,7 @@ export function LandingPage() {
       </section>
 
       {/* ═══ HOW IT WORKS ═══ */}
-      <section
-        id="how-it-works"
-        className="px-4 py-20 sm:px-6 sm:py-28"
-      >
+      <section id="how-it-works" className="px-4 py-20 sm:px-6 sm:py-28">
         <div className="mx-auto max-w-5xl">
           <div className="landing-reveal text-center">
             <p className="font-public-sans text-xs font-semibold uppercase tracking-[0.15em] text-status-success">
@@ -400,7 +392,6 @@ export function LandingPage() {
           </div>
         </div>
       </section>
-
 
       {/* ═══ FAQ ═══ */}
       <section id="faq" className="px-4 py-20 sm:px-6 sm:py-28">

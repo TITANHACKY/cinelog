@@ -43,7 +43,10 @@ export function useSmartCollections() {
     try {
       await result.refetch().unwrap();
     } catch (error) {
-      notify(apiErrorMessage(error, "Failed to load smart collections."), "error");
+      notify(
+        apiErrorMessage(error, "Failed to load smart collections."),
+        "error",
+      );
     }
   }, [notify, result]);
 
@@ -103,13 +106,17 @@ export function useSmartCollections() {
 
   async function reorderCollections(orderedIds: number[]) {
     const patch = dispatch(
-      collectionsApi.util.updateQueryData("getCollections", undefined, (draft) => {
-        const map = new Map(draft.collections.map((col) => [col.id, col]));
-        draft.collections = orderedIds.flatMap((id, index) => {
-          const col = map.get(id);
-          return col ? [{ ...col, displayOrder: index }] : [];
-        });
-      }),
+      collectionsApi.util.updateQueryData(
+        "getCollections",
+        undefined,
+        (draft) => {
+          const map = new Map(draft.collections.map((col) => [col.id, col]));
+          draft.collections = orderedIds.flatMap((id, index) => {
+            const col = map.get(id);
+            return col ? [{ ...col, displayOrder: index }] : [];
+          });
+        },
+      ),
     );
 
     try {

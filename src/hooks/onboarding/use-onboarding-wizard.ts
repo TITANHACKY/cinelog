@@ -45,7 +45,9 @@ export function useOnboardingWizard() {
   const [addedTitleKeys, setAddedTitleKeys] = useState<Set<string>>(new Set());
 
   const markTitleAdded = useCallback((key: string) => {
-    setAddedTitleKeys((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
+    setAddedTitleKeys((prev) =>
+      prev.has(key) ? prev : new Set(prev).add(key),
+    );
   }, []);
 
   // Restore an in-progress draft saved on a previous visit (same browser).
@@ -140,7 +142,12 @@ export function useOnboardingWizard() {
     if (stepIndex === 1) return draft.genreIds.length >= 1;
     if (stepIndex === 2) return draft.languages.length >= 1;
     return true; // era-rating and titles are optional
-  }, [stepIndex, mediaLeanChosen, draft.genreIds.length, draft.languages.length]);
+  }, [
+    stepIndex,
+    mediaLeanChosen,
+    draft.genreIds.length,
+    draft.languages.length,
+  ]);
 
   const next = useCallback(
     () => setStepIndex((i) => Math.min(i + 1, STEP_COUNT - 1)),

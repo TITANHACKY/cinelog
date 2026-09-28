@@ -52,9 +52,12 @@ export async function discoverTitles(params: {
     search.set(lteField, `${params.lteYear}-12-31`);
   }
 
-  const data = await tmdbFetch<TmdbDiscoverResponse>(`/discover/${params.type}`, {
-    searchParams: search,
-    failedMessage: "TMDB discover request failed",
-  });
+  const data = await tmdbFetch<TmdbDiscoverResponse>(
+    `/discover/${params.type}`,
+    {
+      searchParams: search,
+      failedMessage: "TMDB discover request failed",
+    },
+  );
   return data.results ?? [];
 }

@@ -30,7 +30,9 @@ export function emptyGenreMutations(): GenreSyncMutations {
 
 export function genreMutationWriteCount(mutations: GenreSyncMutations) {
   return (
-    mutations.inserts.length + mutations.updates.length + mutations.deletes.length
+    mutations.inserts.length +
+    mutations.updates.length +
+    mutations.deletes.length
   );
 }
 
@@ -136,7 +138,15 @@ export function diffCatalogGenres(input: {
     }
 
     mutations.deletes.push(genre);
-    pushGenreDiff(diffs, genre.id, genre.tmdbId, "name", genre.name, "", "delete");
+    pushGenreDiff(
+      diffs,
+      genre.id,
+      genre.tmdbId,
+      "name",
+      genre.name,
+      "",
+      "delete",
+    );
   }
 
   return { mutations, diffs };

@@ -32,7 +32,8 @@ export function useLocales() {
       languages,
       countries,
       loading: result.isLoading,
-      formatLanguage: (code?: string | null) => lookupName(languageByCode, code),
+      formatLanguage: (code?: string | null) =>
+        lookupName(languageByCode, code),
       formatCountry: (code?: string | null) => lookupName(countryByCode, code),
     };
   }, [result.data, result.isLoading]);
