@@ -2,12 +2,14 @@
 
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { SeasonSelect } from "@/components/content-detail/progress/season-select";
+import { Tooltip } from "@/components/ui/tooltip";
 import type { SeasonOption } from "@/hooks/title-details/use-progress-seasons";
 import { useContentMutation } from "@/hooks/title-details/use-content-mutation";
 import { usePopover } from "@/hooks/use-popover";
 import { useProgressStatus } from "@/hooks/title-details/use-progress-status";
 import type { SeriesDetails } from "@/lib/types";
-import { WATCH_STATUS } from "@/lib/constants";
+import { NON_RELEASED_MEDIA_TOOLTIP, WATCH_STATUS } from "@/lib/constants";
+import { isSeriesWatchable } from "@/lib/media/series-progress";
 import {
   WATCH_STATUS_ICONS,
   WATCH_STATUS_INDICATOR,
@@ -27,6 +29,7 @@ type ProgressStatusProps = {
   mutationStatus?: ContentMutationStatus;
   lastMutation?: ContentMutation;
   disabled?: boolean;
+  isWatchable?: boolean;
   seasons?: SeasonOption[];
   selectedSeason?: number;
   onSeasonChange?: (seasonNumber: number) => void;
@@ -40,6 +43,7 @@ export function ProgressStatus({
   mutationStatus = "idle",
   lastMutation,
   disabled = false,
+  isWatchable,
   seasons = [],
   selectedSeason,
   onSeasonChange,
@@ -63,36 +67,61 @@ export function ProgressStatus({
   const currentSeason = seasons.find(
     (season) => season.seasonNumber === selectedSeason,
   );
+  const isSeries = type === "series";
+  const resolvedIsWatchable =
+    isWatchable !== undefined
+      ? isWatchable
+      : isSeries
+        ? isSeriesWatchable(series?.status, series?.seasons ?? [])
+        : true;
+  const showUnreleasedTooltip = status === 0 && !resolvedIsWatchable;
+
+  const statusButton = (
+    <button
+      className="inline-flex min-h-10 items-center gap-3 rounded-xl border border-outline-variant bg-surface-container-high px-3.5 py-2.5 text-sm text-on-surface transition-colors hover:bg-surface-container-highest disabled:pointer-events-none disabled:opacity-50"
+      disabled={isDisabled}
+      onClick={toggle}
+      type="button"
+    >
+      {isStatusMutating ? (
+        <Loader2 className="h-4 w-4 animate-spin text-brand-primary" />
+      ) : (
+        <CurrentStatusIcon
+          className={cn(
+            "h-4 w-4",
+            WATCH_STATUS_INDICATOR_TEXT[currentIndicator],
+          )}
+        />
+      )}
+      <span className="font-medium">
+        {isStatusMutating ? "Updating..." : currentStatusObj.display_value}
+      </span>
+      <ChevronDown
+        className={cn(
+          "h-4 w-4 text-outline-muted transition-transform duration-200",
+          isOpen && "rotate-180",
+        )}
+      />
+    </button>
+  );
+
+  const statusTrigger = showUnreleasedTooltip ? (
+    <Tooltip
+      align="start"
+      content={NON_RELEASED_MEDIA_TOOLTIP}
+      contentClassName="whitespace-nowrap"
+      side="top"
+    >
+      {statusButton}
+    </Tooltip>
+  ) : (
+    statusButton
+  );
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="relative" ref={containerRef}>
-        <button
-          className="inline-flex min-h-10 items-center gap-3 rounded-xl border border-outline-variant bg-surface-container-high px-3.5 py-2.5 text-sm text-on-surface transition-colors hover:bg-surface-container-highest disabled:pointer-events-none disabled:opacity-50"
-          disabled={isDisabled}
-          onClick={toggle}
-          type="button"
-        >
-          {isStatusMutating ? (
-            <Loader2 className="h-4 w-4 animate-spin text-brand-primary" />
-          ) : (
-            <CurrentStatusIcon
-              className={cn(
-                "h-4 w-4",
-                WATCH_STATUS_INDICATOR_TEXT[currentIndicator],
-              )}
-            />
-          )}
-          <span className="font-medium">
-            {isStatusMutating ? "Updating..." : currentStatusObj.display_value}
-          </span>
-          <ChevronDown
-            className={cn(
-              "h-4 w-4 text-outline-muted transition-transform duration-200",
-              isOpen && "rotate-180",
-            )}
-          />
-        </button>
+        {statusTrigger}
 
         {isOpen ? (
           <div className="absolute top-full left-0 z-50 mt-2 w-full max-w-[min(18rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-outline-alt bg-surface-container shadow-[0_8px_24px_rgb(0_0_0/25%)]">

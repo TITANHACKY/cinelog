@@ -19,6 +19,10 @@ export type UserPreferencesInput = {
   eras: string[]; // subset of ERA_BUCKETS values
   genreIds: number[]; // TMDB genre ids, 1..10
   languages: string[]; // ISO-639-1 codes, 1..6
+  smartCollectionsEnabled?: boolean;
 };
 
-export type UserPreferences = UserPreferencesInput; // GET returns same shape
+export type UserPreferences = UserPreferencesInput & {
+  smartCollectionsEnabled?: boolean;
+}; // GET returns same shape
+

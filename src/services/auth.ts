@@ -14,20 +14,28 @@ import {
   insertUser,
   updateUser,
 } from "@/repositories/users";
+import {
+  getSmartCollectionsEnabled,
+  setSmartCollectionsEnabled,
+} from "@/repositories/preferences";
 
-function toPublicUser(user: {
-  id: number;
-  username: string;
-  email?: string;
-  displayName: string | null;
-  onboardingCompletedAt?: string | null;
-}) {
+function toPublicUser(
+  user: {
+    id: number;
+    username: string;
+    email?: string;
+    displayName: string | null;
+    onboardingCompletedAt?: string | null;
+  },
+  smartCollectionsEnabled = false,
+) {
   return {
     id: user.id,
     username: user.username,
     email: user.email,
     displayName: user.displayName,
     hasCompletedOnboarding: user.onboardingCompletedAt != null,
+    smartCollectionsEnabled,
   };
 }
 
@@ -50,7 +58,8 @@ export async function loginUser(input: LoginInput) {
     onboarding: user.onboardingCompletedAt != null ? "completed" : undefined,
   });
 
-  return { token, publicUser: toPublicUser(user) };
+  const smartCollectionsEnabled = await getSmartCollectionsEnabled(user.id);
+  return { token, publicUser: toPublicUser(user, smartCollectionsEnabled) };
 }
 
 export async function signupUser(input: SignupInput) {
@@ -86,7 +95,8 @@ export async function getCurrentUser(userId: number) {
     throw new AppError("User not found", 404);
   }
 
-  return toPublicUser(user);
+  const smartCollectionsEnabled = await getSmartCollectionsEnabled(userId);
+  return toPublicUser(user, smartCollectionsEnabled);
 }
 
 export async function updateUserProfile(
@@ -146,6 +156,10 @@ export async function updateUserProfile(
     throw new AppError("Failed to update user", 500);
   }
 
+  if (input.smartCollectionsEnabled !== undefined) {
+    await setSmartCollectionsEnabled(userId, input.smartCollectionsEnabled);
+  }
+
   let token: string | undefined;
   if (updates.username) {
     token = await createSessionToken({
@@ -154,5 +168,6 @@ export async function updateUserProfile(
     });
   }
 
-  return { token, publicUser: toPublicUser(updatedUser) };
+  const smartCollectionsEnabled = await getSmartCollectionsEnabled(userId);
+  return { token, publicUser: toPublicUser(updatedUser, smartCollectionsEnabled) };
 }

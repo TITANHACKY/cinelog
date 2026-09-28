@@ -65,20 +65,28 @@ export function calculateSeriesProgress(
 }
 
 export function hasAiredSeriesEpisodes(
-  seasons: LibrarySeriesSeason[],
+  seasons: Array<{
+    season_number?: number;
+    episode_count?: number;
+    air_date?: string | null;
+  }>,
   today = todayIsoDate(),
 ): boolean {
   return seasons.some(
     (season) =>
-      season.season_number > 0 &&
-      season.episode_count > 0 &&
+      (season.season_number ?? 0) > 0 &&
+      (season.episode_count ?? 0) > 0 &&
       hasAiredOnOrBeforeToday(season.air_date, today),
   );
 }
 
 export function isSeriesWatchable(
   status: string | null | undefined,
-  seasons: LibrarySeriesSeason[],
+  seasons: Array<{
+    season_number?: number;
+    episode_count?: number;
+    air_date?: string | null;
+  }>,
 ): boolean {
   return (
     canUpdateSeriesWatchActivity(status) && hasAiredSeriesEpisodes(seasons)

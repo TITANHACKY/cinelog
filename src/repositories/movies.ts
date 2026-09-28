@@ -28,6 +28,7 @@ export async function findUserMovie(tmdbId: number, userId: number) {
       impression: userMovies.impression,
       createdAt: userMovies.createdAt,
       updatedAt: userMovies.updatedAt,
+      lastWatchedAt: userMovies.lastWatchedAt,
       completedAt: userMovies.completedAt,
       status: movies.status,
     })

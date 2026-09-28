@@ -37,6 +37,8 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
   const { queries, selectedCollectionIds } = useAppSelector(
     (state) => state.library,
   );
+  const user = useAppSelector((state) => state.auth.user);
+  const smartCollectionsEnabled = Boolean(user?.smartCollectionsEnabled);
 
   const query = queries[mediaType];
   const selectedCollectionId = selectedCollectionIds[mediaType];
@@ -48,7 +50,7 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
   );
 
   const validSelectedCollectionId = useMemo(() => {
-    if (!selectedCollectionId) return null;
+    if (!smartCollectionsEnabled || !selectedCollectionId) return null;
     const selected = collections.find((col) => col.id === selectedCollectionId);
     if (
       !selected ||
@@ -58,7 +60,7 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
       return null;
     }
     return selectedCollectionId;
-  }, [collections, mediaType, selectedCollectionId]);
+  }, [collections, mediaType, selectedCollectionId, smartCollectionsEnabled]);
 
   const manual = useLibraryList(
     mediaType,
@@ -69,12 +71,14 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
 
   const libraryCollections = useMemo(
     () =>
-      collections.filter(
-        (col) =>
-          col.showInLibrary &&
-          col.mediaType === (mediaType === "movie" ? 0 : 1),
-      ),
-    [collections, mediaType],
+      !smartCollectionsEnabled
+        ? []
+        : collections.filter(
+            (col) =>
+              col.showInLibrary &&
+              col.mediaType === (mediaType === "movie" ? 0 : 1),
+          ),
+    [collections, mediaType, smartCollectionsEnabled],
   );
 
   const isMovies = mediaType === "movie";

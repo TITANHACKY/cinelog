@@ -3,6 +3,7 @@
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { ButtonLink } from "@/components/ui/button";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import { ContinueWatchingCarousel } from "@/components/dashboard/continue-watching-carousel";
 import { CollectionCarousel } from "@/components/library/collection-carousel";
 import { useDashboard } from "@/hooks/dashboard/use-dashboard";
 import { useAppSelector } from "@/store";
@@ -12,8 +13,14 @@ export function HomePage() {
   const { user } = useAppSelector((state) => state.auth);
   const displayName = user?.displayName || user?.username;
 
-  const { isLoading, errorMessage, movieCount, seriesCount, collections } =
-    useDashboard();
+  const {
+    isLoading,
+    errorMessage,
+    movieCount,
+    seriesCount,
+    continueWatching,
+    collections,
+  } = useDashboard();
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 pt-5 pb-8 sm:px-8 sm:pt-6 lg:pt-8 lg:pb-10">
@@ -63,6 +70,10 @@ export function HomePage() {
           <AlertBanner message={errorMessage} variant="error" />
         ) : null}
 
+        {!isLoading ? (
+          <ContinueWatchingCarousel items={continueWatching} />
+        ) : null}
+
         {!isLoading && collections.length > 0 ? (
           <div className="flex flex-col gap-8 sm:gap-10">
             {collections.map((col) => {
@@ -86,7 +97,9 @@ export function HomePage() {
               );
             })}
           </div>
-        ) : !isLoading ? (
+        ) : null}
+
+        {!isLoading && continueWatching.length === 0 && collections.length === 0 ? (
           <section className="flex flex-col items-center gap-3.5 rounded-2xl border border-dashed border-outline-variant bg-surface-container-low p-6 text-center sm:gap-4 sm:p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-primary-container/20 text-brand-primary sm:h-11 sm:w-11">
               <Search className="h-5 w-5" />

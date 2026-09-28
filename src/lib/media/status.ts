@@ -4,6 +4,7 @@ import {
   WATCHABLE_MOVIE_STATUSES,
   WATCHABLE_SERIES_STATUSES,
 } from "@/lib/constants";
+import { hasAiredOnOrBeforeToday } from "@/lib/media/air-date";
 
 export type MovieStatusValue =
   (typeof MOVIE_STATUS)[keyof typeof MOVIE_STATUS]["value"];
@@ -78,4 +79,14 @@ export function canUpdateSeriesWatchActivity(
 ): boolean {
   const normalized = normalizeSeriesStatus(status);
   return normalized !== null && WATCHABLE_SERIES_STATUSES.has(normalized);
+}
+
+export function isMovieWatchable(
+  status: string | null | undefined,
+  releaseDate?: string | null,
+): boolean {
+  return (
+    canUpdateMovieWatchActivity(status) &&
+    hasAiredOnOrBeforeToday(releaseDate)
+  );
 }

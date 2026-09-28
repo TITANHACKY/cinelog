@@ -7,6 +7,7 @@ import { ShareButton } from "@/components/content-detail/hero-header/share-butto
 import { ProgressStatus } from "@/components/content-detail/progress/progress-status";
 import { useContentMutation } from "@/hooks/title-details/use-content-mutation";
 import { IMPRESSION, IMPRESSION_CONFIG } from "@/lib/constants";
+import { isMovieWatchable } from "@/lib/media/status";
 import type { MovieDetails, SeriesDetails } from "@/lib/types";
 import { orFallback } from "@/lib/utils";
 import type {
@@ -52,6 +53,12 @@ export function ActionBar({
     });
   const isAddingWatchlist = isMutating && lastMutation === "add-watchlist";
   const isRemovingWatchlist = isMutating && lastMutation === "remove-watchlist";
+  const movieDetails =
+    type === "movie" ? (content as MovieDetails | undefined) : undefined;
+  const isWatchable =
+    type === "movie"
+      ? isMovieWatchable(movieDetails?.status, movieDetails?.release_date)
+      : undefined;
 
   return (
     <div className="mt-6 border-t border-outline-variant pt-4">
@@ -94,6 +101,7 @@ export function ActionBar({
           <ProgressStatus
             disabled={!isPresentInWatchlist || !canUpdateWatchActivity}
             id={id}
+            isWatchable={isWatchable}
             lastMutation={lastMutation}
             mutationStatus={mutationStatus}
             type="movie"

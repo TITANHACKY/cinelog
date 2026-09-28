@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useLibraryItemMutation } from "@/hooks/library/use-library-item-mutation";
 import { useLocales } from "@/hooks/locales/use-locales";
+import { NON_RELEASED_SERIES_TOOLTIP } from "@/lib/constants";
 import { formatMediaMeta, getYearString } from "@/lib/media/display";
 import {
   calculateSeriesProgress,
@@ -17,9 +18,13 @@ import {
 import { canUpdateSeriesWatchActivity } from "@/lib/media/status";
 import type { LibrarySeries } from "@/lib/types";
 
-const NON_RELEASED_SERIES_TOOLTIP = "Not yet released";
-
-export function SeriesCard({ series }: { series: LibrarySeries }) {
+export function SeriesCard({
+  series,
+  actionsPosition,
+}: {
+  series: LibrarySeries;
+  actionsPosition?: "inline" | "below";
+}) {
   const {
     isPending,
     isStatusPending,
@@ -30,6 +35,7 @@ export function SeriesCard({ series }: { series: LibrarySeries }) {
   } = useLibraryItemMutation("series", series.tmdb_id);
   const watchStatus = series.watch_status ?? 0;
   const isWatching = watchStatus === 1;
+  const resolvedActionsPosition = actionsPosition ?? "below";
   const seasonsInfo = series.seasons_info ?? [];
   const progress = calculateSeriesProgress(seasonsInfo);
   const nextEpisode = progress.nextEpisode;
@@ -87,6 +93,7 @@ export function SeriesCard({ series }: { series: LibrarySeries }) {
         isPending ||
         (watchStatus === 0 ? !isWatchable : !canUpdateWatchActivity)
       }
+      expanded={resolvedActionsPosition === "below"}
       loading={isStatusPending}
       onSelect={(nextWatchStatus) =>
         requestMutation({ watch_status: nextWatchStatus, title: series.name })
@@ -100,7 +107,7 @@ export function SeriesCard({ series }: { series: LibrarySeries }) {
       {removeButton}
       <Button
         aria-label={nextEpisodeLabel}
-        className="h-8 flex-1 justify-center gap-1.5 rounded-[6px] px-2.5 text-xs font-semibold"
+        className="h-8 flex-1 justify-center gap-1.5 rounded-[6px] border border-current/30 bg-current/10 px-2.5 text-xs font-semibold text-status-info transition-colors hover:bg-current/20"
         disabled={isNextDisabled}
         onClick={() => {
           if (isNextDisabled || !nextEpisode) return;
@@ -108,10 +115,10 @@ export function SeriesCard({ series }: { series: LibrarySeries }) {
         }}
         title={nextEpisodeLabel}
         type="button"
-        variant="primaryFilled"
+        variant="ghost"
       >
         {isProgressPending ? (
-          <Loader2 className="size-3.5 animate-spin text-white" />
+          <Loader2 className="size-3.5 animate-spin text-current" />
         ) : (
           <Check className="size-3.5" />
         )}
@@ -124,7 +131,19 @@ export function SeriesCard({ series }: { series: LibrarySeries }) {
     <>
       {removeButton}
       {watchStatus === 0 && !isWatchable ? (
-        <Tooltip content={NON_RELEASED_SERIES_TOOLTIP}>{statusToggle}</Tooltip>
+        <Tooltip
+          align="end"
+          className={
+            resolvedActionsPosition === "below" ? "flex-1 min-w-0" : undefined
+          }
+          content={NON_RELEASED_SERIES_TOOLTIP}
+          contentClassName="whitespace-nowrap"
+          triggerClassName={
+            resolvedActionsPosition === "below" ? "w-full" : undefined
+          }
+        >
+          {statusToggle}
+        </Tooltip>
       ) : (
         statusToggle
       )}
@@ -134,23 +153,25 @@ export function SeriesCard({ series }: { series: LibrarySeries }) {
   return (
     <MediaCard
       actions={actions}
-      actionsPosition={isWatching ? "below" : "inline"}
-      footerTop={
-        isWatching ? (
-          <div className="flex w-full flex-col gap-1.5 pb-0.5">
-            <div className="flex items-center justify-between font-public-sans text-[10px] font-semibold tracking-[0.35px] text-secondary uppercase">
-              <span>
-                {completedSeasons}/{totalSeasons} seasons
-              </span>
-              <span>
-                {currentSeasonEpisodesWatched}/{currentSeasonTotalEpisodes}{" "}
-                episodes
-              </span>
+      actionsPosition={resolvedActionsPosition}
+      overlay={
+        totalSeasons > 0 || totalEpisodes > 0 ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col justify-end bg-gradient-to-t from-black/90 via-black/55 to-transparent px-3 pt-8 pb-2 sm:px-3.5 sm:pb-2.5">
+            <div className="flex w-full flex-col gap-1.5">
+              <div className="flex items-center justify-between font-public-sans text-[10px] font-semibold tracking-[0.35px] text-white/90 uppercase drop-shadow-xs">
+                <span>
+                  {completedSeasons}/{totalSeasons} seasons
+                </span>
+                <span>
+                  {currentSeasonEpisodesWatched}/{currentSeasonTotalEpisodes}{" "}
+                  episodes
+                </span>
+              </div>
+              <Progress
+                className="h-1.5 rounded-[12px] bg-white/25"
+                value={percentage}
+              />
             </div>
-            <Progress
-              className="h-1.5 rounded-[12px] bg-surface-container-high"
-              value={percentage}
-            />
           </div>
         ) : undefined
       }

@@ -99,6 +99,7 @@ type LibraryMovie = {
   impression: number | null;
   created_at: string | null;
   updated_at: string | null;
+  last_watched_at?: string | null;
   completed_at: string | null;
   title: string;
   poster_path: string | null;

@@ -4,6 +4,7 @@ import { ProgressActions } from "@/components/content-detail/progress/progress-a
 import { ProgressMetrics } from "@/components/content-detail/progress/progress-metrics";
 import { ProgressStatus } from "@/components/content-detail/progress/progress-status";
 import { useProgressSeasons } from "@/hooks/title-details/use-progress-seasons";
+import { isSeriesWatchable } from "@/lib/media/series-progress";
 import { canUpdateSeriesWatchActivity } from "@/lib/media/status";
 import type { SeriesDetails } from "@/lib/types";
 import { useContentMutationState } from "@/hooks/title-details/use-content-mutation-state";
@@ -24,6 +25,7 @@ export function ContentProgress({
     (season) => season.seasonNumber === selectedSeason,
   );
   const canUpdateWatchActivity = canUpdateSeriesWatchActivity(series?.status);
+  const isWatchable = isSeriesWatchable(series?.status, series?.seasons ?? []);
   const isWatchActivityDisabled =
     !series?.is_present_in_watchlist || !canUpdateWatchActivity;
 
@@ -33,6 +35,7 @@ export function ContentProgress({
         <>
           <ProgressStatus
             id={mediaId}
+            isWatchable={isWatchable}
             series={series}
             type={type}
             watchStatus={series?.watch_status}
@@ -56,8 +59,9 @@ export function ContentProgress({
           episodeCount={selectedSeasonDetails?.episodeCount}
           episodesWatched={selectedSeasonDetails?.episodesWatched}
           id={mediaId}
-          mutationStatus={entry?.mutationStatus}
+          isWatchable={isWatchable && Boolean(selectedSeasonDetails?.hasAired)}
           lastMutation={entry?.lastMutation}
+          mutationStatus={entry?.mutationStatus}
           pendingProgress={entry?.pendingProgress}
           seasonNumber={selectedSeason}
         />

@@ -76,9 +76,9 @@ export function Tooltip({
 
   const alignArrowClasses =
     align === "start"
-      ? "left-2"
+      ? "left-3"
       : align === "end"
-        ? "right-2"
+        ? "right-3"
         : align === "responsive"
           ? "left-2 sm:left-1/2 sm:-translate-x-1/2"
           : "left-1/2 -translate-x-1/2";

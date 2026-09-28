@@ -103,6 +103,7 @@ export const userMovies = sqliteTable(
       .default(sql`(unixepoch())`),
     updatedAt: numeric("updated_at"),
     completedAt: numeric("completed_at"),
+    lastWatchedAt: numeric("last_watched_at"),
   },
   (table) => [
     check(
@@ -133,6 +134,10 @@ export const userMovies = sqliteTable(
     index("user_movies_user_id_completed_at_index").on(
       table.userId,
       table.completedAt,
+    ),
+    index("user_movies_user_id_last_watched_at_index").on(
+      table.userId,
+      table.lastWatchedAt,
     ),
   ],
 );
@@ -452,6 +457,11 @@ export const userPreferences = sqliteTable(
     mediaLean: integer("media_lean").notNull().default(2),
     minRating: real("min_rating"),
     eras: text("eras"), // JSON array of era bucket values
+    smartCollectionsEnabled: integer("smart_collections_enabled", {
+      mode: "boolean",
+    })
+      .notNull()
+      .default(false),
     createdAt: numeric("created_at")
       .notNull()
       .default(sql`(unixepoch())`),
