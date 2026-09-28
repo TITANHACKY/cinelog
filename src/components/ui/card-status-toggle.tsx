@@ -7,6 +7,7 @@ import {
   WATCH_STATUS_INDICATOR,
   WATCH_STATUS_INDICATOR_TEXT,
 } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 type CardStatusToggleProps = {
   watchStatus: number;
@@ -35,12 +36,10 @@ export function CardStatusToggle({
     }>
   ).find((option) => option.value === watchStatus) ?? WATCH_STATUS[0];
 
-  const expandedClass =
-    watchStatus === 1
-      ? "bg-brand-primary-container text-white hover:bg-brand-primary-container/85"
-      : watchStatus === 2
-        ? "border border-status-success/40 bg-status-success/20 text-status-success hover:bg-status-success/30"
-        : "border border-outline-variant bg-surface-container-high text-on-surface hover:bg-surface-container-highest";
+  const expandedClass = cn(
+    "border border-current/30 bg-current/10 hover:bg-current/20",
+    WATCH_STATUS_INDICATOR_TEXT[currentIndicator],
+  );
 
   return (
     <IconPopover

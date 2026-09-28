@@ -27,9 +27,7 @@ export function MovieCard({
   const watchStatus = movie.watch_status ?? 0;
   const isWatchable = isMovieWatchable(movie.status, movie.release_date);
   const { formatLanguage, formatCountry } = useLocales();
-  const isWatching = watchStatus === 1;
-  const resolvedActionsPosition =
-    actionsPosition ?? (isWatching ? "below" : "inline");
+  const resolvedActionsPosition = actionsPosition ?? "below";
 
   const removeButton = (
     <CardRemoveButton
