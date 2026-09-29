@@ -1,0 +1,1 @@
+ALTER TABLE `user_preferences` ADD `discover_rows_enabled` integer DEFAULT true NOT NULL;

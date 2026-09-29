@@ -24,4 +24,5 @@ export type UserPreferencesInput = {
 
 export type UserPreferences = UserPreferencesInput & {
   smartCollectionsEnabled?: boolean;
+  discoverRowsEnabled?: boolean;
 }; // GET returns same shape

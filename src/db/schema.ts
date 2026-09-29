@@ -462,6 +462,11 @@ export const userPreferences = sqliteTable(
     })
       .notNull()
       .default(false),
+    discoverRowsEnabled: integer("discover_rows_enabled", {
+      mode: "boolean",
+    })
+      .notNull()
+      .default(true),
     createdAt: numeric("created_at")
       .notNull()
       .default(sql`(unixepoch())`),

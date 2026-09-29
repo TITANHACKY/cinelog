@@ -79,6 +79,7 @@ export async function loadUserPreferences(
     genreIds: genreRows.map((row) => row.genreTmdbId),
     languages: languageRows.map((row) => row.languageCode),
     smartCollectionsEnabled: Boolean(prefs.smartCollectionsEnabled),
+    discoverRowsEnabled: Boolean(prefs.discoverRowsEnabled),
   };
 }
 
@@ -182,5 +183,30 @@ export async function setSmartCollectionsEnabled(
         smartCollectionsEnabled: enabled,
         updatedAt: now,
       },
+    });
+}
+
+export async function getDiscoverRowsEnabled(userId: number): Promise<boolean> {
+  const row = await getDb()
+    .select({ discoverRowsEnabled: userPreferences.discoverRowsEnabled })
+    .from(userPreferences)
+    .where(eq(userPreferences.userId, userId))
+    .get();
+  // No preferences row yet means the default: rows on.
+  return row ? Boolean(row.discoverRowsEnabled) : true;
+}
+
+export async function setDiscoverRowsEnabled(
+  userId: number,
+  enabled: boolean,
+): Promise<void> {
+  const db = getDb();
+  const now = String(Math.floor(Date.now() / 1000));
+  await db
+    .insert(userPreferences)
+    .values({ userId, discoverRowsEnabled: enabled })
+    .onConflictDoUpdate({
+      target: userPreferences.userId,
+      set: { discoverRowsEnabled: enabled, updatedAt: now },
     });
 }

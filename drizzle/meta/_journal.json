@@ -78,6 +78,13 @@
       "when": 1790584764759,
       "tag": "0010_ancient_vapor",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1790665432428,
+      "tag": "0011_silly_mister_fear",
+      "breakpoints": true
     }
   ]
 }
