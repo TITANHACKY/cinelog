@@ -1,4 +1,5 @@
 import type {
+  DiscoverLayout,
   DiscoverResponse,
   DiscoverRowPage,
   DiscoverTitle,
@@ -12,10 +13,15 @@ export const discoverApi = baseApi.injectEndpoints({
       query: () => ({ url: "/api/dashboard/discover" }),
       providesTags: ["Discover"],
     }),
+    getDiscoverLayout: build.query<DiscoverLayout, void>({
+      query: () => ({ url: "/api/dashboard/discover" }),
+      providesTags: ["Discover"],
+    }),
+
     getDiscoverRowPages: build.infiniteQuery<DiscoverRowPage, string, number>({
       infiniteQueryOptions: {
-        // Page 1 ships inline with getDiscover.
-        initialPageParam: 2,
+        // Every page, including page 1, comes from the row endpoint.
+        initialPageParam: 1,
         getNextPageParam: (lastPage) =>
           lastPage.hasMore ? lastPage.page + 1 : undefined,
       },
@@ -27,8 +33,11 @@ export const discoverApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetDiscoverQuery, useGetDiscoverRowPagesInfiniteQuery } =
-  discoverApi;
+export const {
+  useGetDiscoverQuery,
+  useGetDiscoverLayoutQuery,
+  useGetDiscoverRowPagesInfiniteQuery,
+} = discoverApi;
 
 export type DiscoverChange = {
   mediaType: LibraryMediaType;
