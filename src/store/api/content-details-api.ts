@@ -254,7 +254,17 @@ export const contentDetailsApi = baseApi.injectEndpoints({
               id,
               replace: data,
             });
-            dispatch(libraryApi.util.invalidateTags([...libraryTagIds]));
+            if (mediaType === "movie") {
+              const { patchCachedFranchiseDetails } =
+                await import("./franchises-api");
+              patchCachedFranchiseDetails(dispatch, getState, {
+                tmdbId,
+                add: true,
+              });
+            }
+            dispatch(
+              libraryApi.util.invalidateTags([...libraryTagIds, "Franchise"]),
+            );
             dispatch(
               showToast({
                 message: "Added to your watchlist",
@@ -275,7 +285,17 @@ export const contentDetailsApi = baseApi.injectEndpoints({
               tmdbId,
               remove: true,
             });
-            dispatch(libraryApi.util.invalidateTags([...libraryTagIds]));
+            if (mediaType === "movie") {
+              const { patchCachedFranchiseDetails } =
+                await import("./franchises-api");
+              patchCachedFranchiseDetails(dispatch, getState, {
+                tmdbId,
+                remove: true,
+              });
+            }
+            dispatch(
+              libraryApi.util.invalidateTags([...libraryTagIds, "Franchise"]),
+            );
             dispatch(
               showToast({
                 message: "Removed from your watchlist",
@@ -290,6 +310,15 @@ export const contentDetailsApi = baseApi.injectEndpoints({
             id,
             fields: data,
           });
+
+          if (mediaType === "movie" && typeof data.watch_status === "number") {
+            const { patchCachedFranchiseDetails } =
+              await import("./franchises-api");
+            patchCachedFranchiseDetails(dispatch, getState, {
+              tmdbId,
+              watch_status: data.watch_status,
+            });
+          }
 
           const seriesUpdate: SeriesProgressFields | undefined =
             mediaType === "series" && data.seasons
@@ -324,7 +353,9 @@ export const contentDetailsApi = baseApi.injectEndpoints({
             impression: data.impression,
             seriesUpdate,
           });
-          dispatch(libraryApi.util.invalidateTags([...libraryTagIds]));
+          dispatch(
+            libraryApi.util.invalidateTags([...libraryTagIds, "Franchise"]),
+          );
 
           const current = readCachedDetails(getState, mediaType, id);
           const title =

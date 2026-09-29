@@ -6,13 +6,19 @@ type TmdbCastMember = {
   id?: number;
   name?: string;
   order?: number;
+  character?: string;
+  profile_path?: string | null;
   known_for_department?: string;
+  department?: string;
   [key: string]: unknown;
 };
 
 type TmdbCrewMember = {
   id?: number;
   name?: string;
+  job?: string;
+  department?: string;
+  profile_path?: string | null;
   known_for_department?: string;
   [key: string]: unknown;
 };
@@ -42,9 +48,38 @@ type TmdbReleaseDate = {
   type?: number;
 };
 
+type TmdbCollectionPart = {
+  id: number;
+  title?: string;
+  overview?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  release_date?: string;
+  vote_average?: number;
+  vote_count?: number;
+  original_language?: string;
+  genre_ids?: number[];
+  popularity?: number;
+};
+
+type TmdbCollection = {
+  id: number;
+  name: string;
+  overview?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  parts: TmdbCollectionPart[];
+};
+
 type TmdbMovie = {
   backdrop_path?: string | null;
-  belongs_to_collection?: unknown;
+  belongs_to_collection?: {
+    id: number;
+    name: string;
+    poster_path?: string | null;
+    backdrop_path?: string | null;
+    overview?: string | null;
+  } | null;
   genres?: Array<{ id?: number; name?: string }> | null;
   id?: number;
   imdb_id?: string | null;
@@ -76,6 +111,51 @@ type TmdbMovie = {
         crew?: TmdbCrewMember[];
       }
     | Array<{ id?: number; name?: string; known_for_department?: string }>;
+  videos?: {
+    results?: Array<{
+      id?: string;
+      iso_639_1?: string;
+      iso_3166_1?: string;
+      key?: string;
+      name?: string;
+      site?: string;
+      size?: number;
+      type?: string;
+      official?: boolean;
+      published_at?: string;
+    }>;
+  };
+  "watch/providers"?: {
+    results?: Record<
+      string,
+      {
+        link?: string;
+        flatrate?: Array<{
+          logo_path?: string | null;
+          provider_id?: number;
+          provider_name?: string;
+          display_priority?: number;
+        }>;
+        rent?: Array<{
+          logo_path?: string | null;
+          provider_id?: number;
+          provider_name?: string;
+          display_priority?: number;
+        }>;
+        buy?: Array<{
+          logo_path?: string | null;
+          provider_id?: number;
+          provider_name?: string;
+          display_priority?: number;
+        }>;
+      }
+    >;
+  };
+  spoken_languages?: Array<{
+    iso_639_1?: string;
+    english_name?: string;
+    name?: string;
+  }>;
 };
 
 type MoviePayload = Omit<TmdbMovie, "release_dates"> & {
@@ -165,6 +245,8 @@ export type {
   RouteContext,
   SearchType,
   TmdbCastMember,
+  TmdbCollection,
+  TmdbCollectionPart,
   TmdbConfigurationCountry,
   TmdbConfigurationLanguage,
   TmdbContentRating,

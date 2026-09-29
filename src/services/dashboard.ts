@@ -6,6 +6,7 @@ import { getLibrary } from "@/services/library";
 import { findContinueWatchingTitles } from "@/repositories/dashboard";
 import { getSmartCollectionsEnabled } from "@/repositories/preferences";
 import type {
+  LibraryCount,
   LibraryMetadata,
   LibraryMovie,
   LibrarySeries,
@@ -21,10 +22,7 @@ export type DashboardCollection = SmartCollectionWithFilters & {
 };
 
 export type DashboardData = {
-  counts: {
-    movies: number;
-    series: number;
-  };
+  counts: LibraryCount;
   continueWatching: Array<LibraryMovie | LibrarySeries>;
   collections: DashboardCollection[];
 };

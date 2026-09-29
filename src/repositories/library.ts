@@ -7,6 +7,7 @@ import {
   seasons,
   series,
   seriesToGenres,
+  userFranchises,
   userMovies,
   userSeasonProgress,
   userSeries,
@@ -123,6 +124,7 @@ export async function listLibraryRows(
   seasons: UserSeasonRow[];
   movieCount: number;
   seriesCount: number;
+  franchiseCount: number;
   groups: LibraryGroupRow[];
 }> {
   const db = getDb();
@@ -206,6 +208,10 @@ export async function listLibraryRows(
           .from(userSeries)
           .innerJoin(series, eq(userSeries.seriesId, series.id))
           .where(libraryTotalWhere("series", userId)),
+    db
+      .select({ value: count() })
+      .from(userFranchises)
+      .where(eq(userFranchises.userId, userId)),
   ];
 
   if (groupKey) {
@@ -233,10 +239,11 @@ export async function listLibraryRows(
   const pageResults = await db.batch(asBatch(pageQueries));
   const typeCount = asCount(pageResults[0] as { value: number }[]);
   const otherTypeCount = asCount(pageResults[1] as { value: number }[]);
+  const franchiseCount = asCount(pageResults[2] as { value: number }[]);
   const movieCount = includeMovies ? typeCount : otherTypeCount;
   const seriesCount = includeSeries ? typeCount : otherTypeCount;
 
-  let resultIndex = 2;
+  let resultIndex = 3;
   const groups = groupKey
     ? ((pageResults[resultIndex++] as LibraryGroupRow[]) ?? []).map((row) => ({
         key: String(row.key),
@@ -459,6 +466,7 @@ export async function listLibraryRows(
     seasons: seasonRows,
     movieCount,
     seriesCount,
+    franchiseCount,
     groups,
   };
 }

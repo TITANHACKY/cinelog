@@ -104,6 +104,8 @@ export const baseApi = createApi({
     "Preferences",
     "Genres",
     "Locales",
+    "Franchise",
+    "Franchises",
   ],
   refetchOnFocus: false,
   refetchOnReconnect: false,
