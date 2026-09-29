@@ -41,6 +41,8 @@ export type DiscoverTitlesParams = {
   // Overrides the default vote floor that accompanies a rating filter.
   minVoteCount?: number | null;
   maxVoteCount?: number | null;
+  // Keyword ids; pipe = OR.
+  keywordIds?: number[];
   page?: number;
 };
 
@@ -61,6 +63,9 @@ function buildDiscoverSearch(params: DiscoverTitlesParams): URLSearchParams {
   }
   if (params.language) {
     search.set("with_original_language", params.language);
+  }
+  if (params.keywordIds && params.keywordIds.length > 0) {
+    search.set("with_keywords", params.keywordIds.join("|"));
   }
   const hasRating = params.minRating != null && params.minRating > 0;
   if (hasRating) {

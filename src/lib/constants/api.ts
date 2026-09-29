@@ -3,6 +3,9 @@ export const AUTH_COOKIE = "auth_token";
 
 export const TMDB_API_BASE = "https://api.themoviedb.org/3";
 
+// TMDB calls that hang (blocked networks) fail fast into the row's error state.
+export const TMDB_FETCH_TIMEOUT_MS = 8_000;
+
 export const LIBRARY_PAGE_SIZE_MAX = 50;
 export const SEARCH_PAGE_MAX = 500;
 export const MAX_COLLECTION_FILTERS = 3;

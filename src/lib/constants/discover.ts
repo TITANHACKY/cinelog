@@ -14,6 +14,7 @@ export const DISCOVER_TTL_SECONDS = {
   trending: 3 * 60 * 60,
   discover: 12 * 60 * 60,
   recommendations: 24 * 60 * 60,
+  keywords: 24 * 60 * 60,
 } as const;
 
 export const DISCOVER_GEMS = {
@@ -23,6 +24,9 @@ export const DISCOVER_GEMS = {
 } as const;
 
 export const DISCOVER_ERA_MIN_VOTES = 200;
+
+// "Because you watched" matches ANY of the seed's first N keywords.
+export const DISCOVER_SEED_KEYWORDS = 5;
 
 // TMDB movie and TV genre ids differ. Keys are the ids native to one media
 // type; the value is the equivalent id for the other type (null = none).

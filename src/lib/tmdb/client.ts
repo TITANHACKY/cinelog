@@ -1,4 +1,4 @@
-import { TMDB_API_BASE } from "@/lib/constants";
+import { TMDB_API_BASE, TMDB_FETCH_TIMEOUT_MS } from "@/lib/constants";
 import { AppError } from "@/lib/http/errors";
 
 export async function tmdbFetch<T>(
@@ -26,6 +26,7 @@ export async function tmdbFetch<T>(
         accept: "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
+      signal: AbortSignal.timeout(TMDB_FETCH_TIMEOUT_MS),
     });
 
     if (!response.ok) {
