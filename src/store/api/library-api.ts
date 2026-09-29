@@ -20,6 +20,7 @@ import type {
   LibraryMediaType,
 } from "@/lib/types";
 import type { DashboardData } from "@/services/dashboard";
+import { patchDiscoverCaches } from "@/store/api/discover-api";
 import {
   completionImpressionPrompt,
   impressionPromptFailed,
@@ -383,6 +384,19 @@ export function patchLibraryCaches(
       ),
     ) as { undo: () => void };
     undos.push(() => patch.undo());
+  }
+
+  const discoverStatus = change.remove
+    ? null
+    : (change.watch_status ?? change.seriesUpdate?.watch_status ?? undefined);
+  if (discoverStatus !== undefined) {
+    undos.push(
+      ...patchDiscoverCaches(dispatch, getState, {
+        mediaType: change.mediaType,
+        tmdbId: change.tmdbId,
+        watchStatus: discoverStatus,
+      }),
+    );
   }
 
   return undos;

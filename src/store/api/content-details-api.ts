@@ -9,6 +9,7 @@ import {
   type ContentMutationArg,
 } from "@/store/api/content-types";
 import { libraryApi, patchLibraryCaches } from "@/store/api/library-api";
+import { patchDiscoverCaches } from "@/store/api/discover-api";
 import { baseApi } from "@/store/api/base-api";
 import {
   completionImpressionPrompt,
@@ -241,6 +242,12 @@ export const contentDetailsApi = baseApi.injectEndpoints({
               replace: data,
             });
             dispatch(libraryApi.util.invalidateTags([...libraryTagIds]));
+            patchDiscoverCaches(dispatch, getState, {
+              mediaType,
+              tmdbId,
+              watchStatus:
+                typeof data.watch_status === "number" ? data.watch_status : 0,
+            });
             dispatch(
               showToast({
                 message: "Added to your watchlist",

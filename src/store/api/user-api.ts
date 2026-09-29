@@ -1,6 +1,7 @@
 import type { TitleCandidate, UserPreferencesInput } from "@/lib/types";
 import type { User } from "@/store/slices/authSlice";
 import { baseApi, libraryTagIds } from "@/store/api/base-api";
+import { patchDiscoverCaches } from "@/store/api/discover-api";
 
 export type TitleSuggestionArgs = {
   mediaLean: number;
@@ -57,6 +58,21 @@ export const userApi = baseApi.injectEndpoints({
         method: "POST",
       }),
       invalidatesTags: [...libraryTagIds],
+      async onQueryStarted(
+        { mediaType, tmdbId },
+        { dispatch, getState, queryFulfilled },
+      ) {
+        try {
+          await queryFulfilled;
+          patchDiscoverCaches(dispatch, getState, {
+            mediaType,
+            tmdbId,
+            watchStatus: 0,
+          });
+        } catch {
+          // The caller surfaces the error.
+        }
+      },
     }),
   }),
 });
