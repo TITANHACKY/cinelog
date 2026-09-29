@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { asBatch, getDb, type SqliteBatchQuery } from "@/db";
 import {
   movies,
@@ -62,11 +62,14 @@ export async function loadUserPreferences(
     db
       .select({ genreTmdbId: userPreferredGenres.genreTmdbId })
       .from(userPreferredGenres)
-      .where(eq(userPreferredGenres.userId, userId)),
+      .where(eq(userPreferredGenres.userId, userId))
+      // Pick order: discover uses the first genres and first language.
+      .orderBy(asc(userPreferredGenres.id)),
     db
       .select({ languageCode: userPreferredLanguages.languageCode })
       .from(userPreferredLanguages)
-      .where(eq(userPreferredLanguages.userId, userId)),
+      .where(eq(userPreferredLanguages.userId, userId))
+      .orderBy(asc(userPreferredLanguages.id)),
   ]);
 
   const prefs = prefsRows[0];

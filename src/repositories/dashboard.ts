@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { asBatch, getDb, type SqliteBatchQuery } from "@/db";
 import {
   genres,
@@ -12,6 +12,7 @@ import {
   userSeries,
 } from "@/db/schema";
 import type { LibraryMovie, LibrarySeries } from "@/lib/types";
+import type { DiscoverSeed } from "@/lib/discover/plan";
 
 export async function findContinueWatchingTitles(
   userId: number,
@@ -244,4 +245,61 @@ export async function findContinueWatchingTitles(
   );
 
   return combined.slice(0, limit);
+}
+
+// Recently completed titles the user didn't dislike seed the
+// "Because you watched" rows.
+export async function findRecommendationSeeds(
+  userId: number,
+  limit: number,
+): Promise<DiscoverSeed[]> {
+  const db = getDb();
+  const movieAt = sql<string>`coalesce(${userMovies.completedAt}, ${userMovies.updatedAt}, ${userMovies.createdAt})`;
+  const seriesAt = sql<string>`coalesce(${userSeries.completedAt}, ${userSeries.updatedAt}, ${userSeries.createdAt})`;
+
+  const [movieRows, seriesRows] = await Promise.all([
+    db
+      .select({ tmdbId: movies.tmdbId, title: movies.title, at: movieAt })
+      .from(userMovies)
+      .innerJoin(movies, eq(userMovies.movieId, movies.id))
+      .where(
+        and(
+          eq(userMovies.userId, userId),
+          eq(userMovies.watchStatus, 2),
+          or(
+            isNull(userMovies.impression),
+            inArray(userMovies.impression, [1, 2]),
+          ),
+        ),
+      )
+      .orderBy(desc(movieAt))
+      .limit(limit),
+    db
+      .select({ tmdbId: series.tmdbId, title: series.name, at: seriesAt })
+      .from(userSeries)
+      .innerJoin(series, eq(userSeries.seriesId, series.id))
+      .where(
+        and(
+          eq(userSeries.userId, userId),
+          eq(userSeries.watchStatus, 2),
+          or(
+            isNull(userSeries.impression),
+            inArray(userSeries.impression, [1, 2]),
+          ),
+        ),
+      )
+      .orderBy(desc(seriesAt))
+      .limit(limit),
+  ]);
+
+  const candidates = [
+    ...movieRows.map((row) => ({ ...row, mediaType: "movie" as const })),
+    ...seriesRows.map((row) => ({ ...row, mediaType: "series" as const })),
+  ].sort((left, right) => Number(right.at ?? 0) - Number(left.at ?? 0));
+
+  return candidates.slice(0, limit).map((row) => ({
+    tmdbId: row.tmdbId,
+    mediaType: row.mediaType,
+    title: row.title,
+  }));
 }
