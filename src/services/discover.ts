@@ -180,7 +180,9 @@ export async function getDiscoverRows(
     });
   });
 
-  if (plan.length > 0 && failures.length === plan.length) {
+  // Nothing to show and at least one row failed: surface the error so the
+  // user gets Retry instead of a silently empty section.
+  if (rows.length === 0 && failures.length > 0) {
     // Keep TMDB's own status (503 missing key, 429 rate limit) when known.
     const [first] = failures;
     throw isAppError(first)

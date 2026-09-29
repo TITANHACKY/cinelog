@@ -1,6 +1,6 @@
 "use client";
 
-import { Compass, RefreshCw, SlidersHorizontal } from "lucide-react";
+import { Compass, Loader2, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { DiscoverRow } from "@/components/dashboard/discover-row";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -11,6 +11,7 @@ type DiscoverSectionProps = {
   rows: DiscoverRowData[];
   isLoading: boolean;
   errorMessage: string | null;
+  isRetrying: boolean;
   retry: () => void;
 };
 
@@ -38,6 +39,7 @@ export function DiscoverSection({
   rows,
   isLoading,
   errorMessage,
+  isRetrying,
   retry,
 }: DiscoverSectionProps) {
   if (!enabled) return null;
@@ -79,11 +81,16 @@ export function DiscoverSection({
           action={
             <Button
               className="h-11 gap-2 px-4 sm:h-10"
+              disabled={isRetrying}
               onClick={retry}
               type="button"
               variant="darkTonal"
             >
-              <RefreshCw className="size-4" />
+              {isRetrying ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="size-4" />
+              )}
               Try again
             </Button>
           }

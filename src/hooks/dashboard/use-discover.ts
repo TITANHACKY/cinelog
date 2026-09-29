@@ -21,9 +21,12 @@ export function useDiscover() {
     rows,
     hasRows: rows.length > 0,
     isLoading: !userLoaded || result.isLoading,
-    errorMessage: result.isError
+    // RTK keeps `error` while a retry is pending (isError is false then), so
+    // the error card stays up instead of the section blanking mid-retry.
+    errorMessage: result.error
       ? apiErrorMessage(result.error, "Couldn't load recommendations.")
       : null,
+    isRetrying: Boolean(result.error) && result.isFetching,
     retry: () => {
       void result.refetch();
     },
