@@ -54,10 +54,16 @@ export type {
 } from "./onboarding";
 
 export type {
+  DiscoverGenreOption,
+  DiscoverLanguageOption,
+  DiscoverLayout,
+  DiscoverLayoutReady,
   DiscoverMedia,
   DiscoverResponse,
   DiscoverRow,
+  DiscoverRowId,
   DiscoverRowKind,
   DiscoverRowPage,
+  DiscoverSeedInfo,
   DiscoverTitle,
 } from "./discover";
