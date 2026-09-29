@@ -16,6 +16,7 @@ type CardStatusToggleProps = {
   onSelect: (watchStatus: number) => void;
   expanded?: boolean;
   showMenuLabels?: boolean;
+  className?: string;
 };
 
 export function CardStatusToggle({
@@ -25,6 +26,7 @@ export function CardStatusToggle({
   onSelect,
   expanded = false,
   showMenuLabels,
+  className,
 }: CardStatusToggleProps) {
   const currentIndicator =
     WATCH_STATUS_INDICATOR[watchStatus] ?? WATCH_STATUS_INDICATOR[0];
@@ -44,6 +46,7 @@ export function CardStatusToggle({
 
   return (
     <IconPopover
+      className={className}
       disabled={disabled}
       expanded={expanded}
       loading={loading}
