@@ -5,21 +5,22 @@ import { useGetDiscoverQuery } from "@/store/api/discover-api";
 import { useAppSelector } from "@/store";
 
 export function useDiscover() {
-  // Skip the request entirely for users who turned the rows off.
+  // Wait for the session user so disabled users never send the request.
+  const userLoaded = useAppSelector((state) => state.auth.user !== null);
   const enabledInProfile = useAppSelector(
     (state) => state.auth.user?.discoverRowsEnabled !== false,
   );
   const result = useGetDiscoverQuery(undefined, {
-    skip: !enabledInProfile,
+    skip: !userLoaded || !enabledInProfile,
     refetchOnMountOrArgChange: 300,
   });
   const rows = result.data?.rows ?? [];
 
   return {
-    enabled: enabledInProfile && (result.data?.enabled ?? true),
+    enabled: userLoaded && enabledInProfile && (result.data?.enabled ?? true),
     rows,
     hasRows: rows.length > 0,
-    isLoading: result.isLoading,
+    isLoading: !userLoaded || result.isLoading,
     errorMessage: result.isError
       ? apiErrorMessage(result.error, "Couldn't load recommendations.")
       : null,

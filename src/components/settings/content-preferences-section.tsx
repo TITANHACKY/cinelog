@@ -3,15 +3,18 @@
 import { Loader2, Sparkles } from "lucide-react";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { Button } from "@/components/ui/button";
+import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { StepMediaLean } from "@/components/onboarding/steps/step-media-lean";
 import { StepGenres } from "@/components/onboarding/steps/step-genres";
 import { StepLanguages } from "@/components/onboarding/steps/step-languages";
 import { StepEraRating } from "@/components/onboarding/steps/step-era-rating";
 import { useContentPreferences } from "@/hooks/settings/use-content-preferences";
+import { useDiscoverRowsToggle } from "@/hooks/settings/use-discover-rows-toggle";
 
 export function ContentPreferencesSection() {
   const { draft, actions, isLoading, isSaving, message, save } =
     useContentPreferences();
+  const discoverRows = useDiscoverRowsToggle();
 
   if (isLoading) {
     return (
@@ -42,6 +45,27 @@ export function ContentPreferencesSection() {
             era ratings.
           </p>
         </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 rounded-xl border border-outline-variant bg-surface-container-low p-4 sm:p-5">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="font-heading text-sm font-semibold text-on-surface sm:text-base">
+            Recommended rows on dashboard
+          </span>
+          <p className="font-public-sans text-xs text-secondary">
+            Trending, genre picks and titles like the ones you&apos;ve finished.
+          </p>
+        </div>
+        <ToggleSwitch
+          checked={discoverRows.enabled}
+          disabled={discoverRows.isToggling}
+          onChange={() => void discoverRows.toggle()}
+          title={
+            discoverRows.enabled
+              ? "Turn off recommended rows"
+              : "Turn on recommended rows"
+          }
+        />
       </div>
 
       {message ? (
