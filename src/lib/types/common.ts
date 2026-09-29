@@ -15,9 +15,39 @@ type CreditMember = {
   name?: string;
   profile_path?: string | null;
   character?: string;
+  department?: string;
   job?: string;
   known_for_department?: string;
   order?: number;
+};
+
+type DepartmentCredits = {
+  department: string;
+  members: CreditMember[];
+};
+
+type WatchProviderItem = {
+  logo_path?: string | null;
+  provider_id?: number;
+  provider_name?: string;
+  display_priority?: number;
+};
+
+type WatchProviderCountry = {
+  link?: string;
+  flatrate?: WatchProviderItem[];
+  rent?: WatchProviderItem[];
+  buy?: WatchProviderItem[];
+  ads?: WatchProviderItem[];
+};
+
+type MovieFranchiseInfo = {
+  id: number;
+  name: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  overview?: string | null;
+  is_following?: boolean;
 };
 
 type SeriesDetails = {
@@ -83,6 +113,7 @@ type MovieDetails = {
   } | null;
   runtime?: number | null;
   original_language?: string | null;
+  origin_country?: string[] | null;
   status?: string | null;
   tagline?: string | null;
   title?: string | null;
@@ -91,6 +122,25 @@ type MovieDetails = {
   impression?: number | null;
   watch_status?: number | null;
   credits?: CreditMember[];
+  director?: {
+    id?: number;
+    name?: string;
+    profile_path?: string | null;
+  } | null;
+  creators?: Array<{ id?: number; name?: string; job?: string }>;
+  lead_studio?: string | null;
+  network?: string | null;
+  trailer?: { key: string; name: string; site: string } | null;
+  watch_providers?: Record<string, WatchProviderCountry>;
+  available_countries?: string[];
+  spoken_languages?: Array<{
+    iso_639_1: string;
+    english_name: string;
+    name: string;
+  }>;
+  departments?: DepartmentCredits[];
+  all_cast?: CreditMember[];
+  franchise?: MovieFranchiseInfo | null;
 };
 
 type LibraryMovie = {
@@ -110,6 +160,7 @@ type LibraryMovie = {
   origin_country: string | null;
   certificate?: string | null;
   genres?: string[];
+  is_present_in_watchlist?: boolean;
 };
 
 type LibraryCount = {
@@ -210,6 +261,7 @@ export type {
   CollectionSortItem,
   CountryOption,
   CreditMember,
+  DepartmentCredits,
   LanguageOption,
   LibraryCount,
   LibraryGroup,
@@ -218,7 +270,10 @@ export type {
   LibrarySeries,
   LibrarySeriesSeason,
   MovieDetails,
+  MovieFranchiseInfo,
   SeriesDetails,
   SeriesSeason,
   SmartCollectionWithFilters,
+  WatchProviderCountry,
+  WatchProviderItem,
 };

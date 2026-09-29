@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { CardRemoveButton } from "@/components/ui/card-remove-button";
 import { CardStatusToggle } from "@/components/ui/card-status-toggle";
 import { MediaCard } from "@/components/ui/media-card";
@@ -25,20 +26,50 @@ export function MovieCard({
     isPending,
     isStatusPending,
     isRemovePending,
+    isAddPending,
     requestMutation,
     requestRemove,
+    requestAdd,
   } = useLibraryItemMutation("movie", movie.tmdb_id);
+
+  const [isInLibraryOverride, setIsInLibraryOverride] = useState<
+    boolean | null
+  >(null);
+  const [prevProp, setPrevProp] = useState(movie.is_present_in_watchlist);
+
+  if (movie.is_present_in_watchlist !== prevProp) {
+    setPrevProp(movie.is_present_in_watchlist);
+    setIsInLibraryOverride(null);
+  }
+
+  const isInLibrary =
+    isInLibraryOverride ??
+    (movie.is_present_in_watchlist !== undefined
+      ? movie.is_present_in_watchlist
+      : true);
+
   const canUpdateWatchActivity = canUpdateMovieWatchActivity(movie.status);
   const watchStatus = movie.watch_status ?? 0;
   const isWatchable = isMovieWatchable(movie.status, movie.release_date);
   const { formatLanguage, formatCountry } = useLocales();
   const resolvedActionsPosition = actionsPosition ?? "below";
 
+  const handleToggleLibrary = () => {
+    if (isInLibrary) {
+      setIsInLibraryOverride(false);
+      requestRemove({ title: movie.title });
+    } else {
+      setIsInLibraryOverride(true);
+      requestAdd({ title: movie.title });
+    }
+  };
+
   const removeButton = (
     <CardRemoveButton
       disabled={isPending}
-      loading={isRemovePending}
-      onClick={() => requestRemove({ title: movie.title })}
+      isInLibrary={isInLibrary}
+      loading={isRemovePending || isAddPending}
+      onClick={handleToggleLibrary}
     />
   );
 
@@ -46,6 +77,7 @@ export function MovieCard({
     <CardStatusToggle
       disabled={
         isPending ||
+        !isInLibrary ||
         (watchStatus === 0 ? !isWatchable : !canUpdateWatchActivity)
       }
       expanded={resolvedActionsPosition === "below"}
@@ -60,7 +92,7 @@ export function MovieCard({
   const actions = (
     <>
       {removeButton}
-      {watchStatus === 0 && !isWatchable ? (
+      {isInLibrary && watchStatus === 0 && !isWatchable ? (
         <Tooltip
           align="end"
           className={

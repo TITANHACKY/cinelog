@@ -8,7 +8,7 @@ import {
 import { getCachedTmdbMovie } from "@/lib/tmdb/cache";
 import { pickMovieCertification } from "@/lib/tmdb/catalog-fields";
 import { pickCastAndDirectors } from "@/lib/tmdb/credits";
-import type { TmdbMovie } from "@/lib/types";
+import type { CreditMember, DepartmentCredits, TmdbMovie } from "@/lib/types";
 import type { MoviePatchInput } from "@/lib/validations/library";
 import type { NewUserMovie } from "@/db/schema";
 import {
@@ -41,7 +41,160 @@ function toMovieLibraryFields(
   };
 }
 
-function toMovieDetails(movie: TmdbMovie, userMovie?: UserMovieLibraryRow) {
+import { isUserFollowingFranchise } from "@/repositories/franchises";
+
+function extractTrailer(movie: TmdbMovie) {
+  const videos = movie.videos?.results ?? [];
+  const officialTrailer = videos.find(
+    (v) =>
+      v.site === "YouTube" &&
+      v.type === "Trailer" &&
+      v.official === true &&
+      Boolean(v.key),
+  );
+  const anyTrailer = videos.find(
+    (v) => v.site === "YouTube" && v.type === "Trailer" && Boolean(v.key),
+  );
+  const teaser = videos.find(
+    (v) => v.site === "YouTube" && v.type === "Teaser" && Boolean(v.key),
+  );
+  const chosen = officialTrailer ?? anyTrailer ?? teaser;
+  if (!chosen?.key) return null;
+  return {
+    key: chosen.key,
+    name: chosen.name || "Official Trailer",
+    site: chosen.site || "YouTube",
+  };
+}
+
+function extractDirectorAndCreators(movie: TmdbMovie) {
+  let director: {
+    id?: number;
+    name?: string;
+    profile_path?: string | null;
+  } | null = null;
+  const creators: Array<{ id?: number; name?: string; job?: string }> = [];
+
+  if (movie.credits && !Array.isArray(movie.credits) && movie.credits.crew) {
+    const dir = movie.credits.crew.find((c) => c.job === "Director");
+    if (dir) {
+      director = {
+        id: dir.id,
+        name: dir.name,
+        profile_path: dir.profile_path,
+      };
+    }
+
+    const seen = new Set<string>();
+    for (const c of movie.credits.crew) {
+      if (
+        c.name &&
+        c.job &&
+        ["Screenplay", "Writer", "Story", "Characters"].includes(c.job) &&
+        !seen.has(c.name)
+      ) {
+        seen.add(c.name);
+        creators.push({ id: c.id, name: c.name, job: c.job });
+      }
+    }
+  }
+
+  return { director, creators };
+}
+
+function extractDepartments(movie: TmdbMovie): DepartmentCredits[] {
+  const departmentsMap = new Map<string, CreditMember[]>();
+
+  if (movie.credits && !Array.isArray(movie.credits)) {
+    const castMembers: CreditMember[] = (movie.credits.cast ?? [])
+      .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        character: c.character,
+        profile_path: c.profile_path,
+        order: c.order,
+        department: "Acting",
+      }));
+
+    if (castMembers.length > 0) {
+      departmentsMap.set("Acting", castMembers);
+    }
+
+    for (const member of movie.credits.crew ?? []) {
+      const dept = member.department || member.known_for_department || "Crew";
+      if (!departmentsMap.has(dept)) {
+        departmentsMap.set(dept, []);
+      }
+      departmentsMap.get(dept)!.push({
+        id: member.id,
+        name: member.name,
+        profile_path: member.profile_path,
+        job: member.job,
+        department: dept,
+      });
+    }
+  }
+
+  const result: DepartmentCredits[] = [];
+  if (departmentsMap.has("Acting")) {
+    result.push({
+      department: "Acting",
+      members: departmentsMap.get("Acting")!,
+    });
+    departmentsMap.delete("Acting");
+  }
+
+  for (const [dept, members] of departmentsMap.entries()) {
+    result.push({ department: dept, members });
+  }
+
+  return result;
+}
+
+function toMovieDetails(
+  movie: TmdbMovie,
+  userMovie?: UserMovieLibraryRow,
+  isFollowingFranchise = false,
+) {
+  const { director, creators } = extractDirectorAndCreators(movie);
+  const trailer = extractTrailer(movie);
+  const departments = extractDepartments(movie);
+  const watchProviders = movie["watch/providers"]?.results ?? {};
+  const availableCountries = Object.keys(watchProviders);
+
+  const allCast = (
+    movie.credits && !Array.isArray(movie.credits)
+      ? (movie.credits.cast ?? [])
+      : []
+  )
+    .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      character: c.character,
+      profile_path: c.profile_path,
+      order: c.order,
+      department: "Acting",
+    }));
+
+  const franchise = movie.belongs_to_collection
+    ? {
+        id: movie.belongs_to_collection.id,
+        name: movie.belongs_to_collection.name,
+        poster_path: movie.belongs_to_collection.poster_path,
+        backdrop_path: movie.belongs_to_collection.backdrop_path,
+        overview: movie.belongs_to_collection.overview ?? null,
+        is_following: isFollowingFranchise,
+      }
+    : null;
+
+  const leadStudio = movie.production_companies?.[0]?.name ?? null;
+  const network =
+    movie.production_companies?.[1]?.name ??
+    movie.production_companies?.[0]?.name ??
+    null;
+
   return {
     backdrop_path: movie.backdrop_path,
     belongs_to_collection: movie.belongs_to_collection,
@@ -61,6 +214,21 @@ function toMovieDetails(movie: TmdbMovie, userMovie?: UserMovieLibraryRow) {
     original_language: movie.original_language,
     origin_country: movie.origin_country,
     credits: pickCastAndDirectors(movie.credits),
+    director,
+    creators,
+    lead_studio: leadStudio,
+    network,
+    trailer,
+    watch_providers: watchProviders,
+    available_countries: availableCountries,
+    spoken_languages: (movie.spoken_languages ?? []).map((l) => ({
+      iso_639_1: l.iso_639_1 ?? "",
+      english_name: l.english_name ?? "",
+      name: l.name ?? "",
+    })),
+    departments,
+    all_cast: allCast,
+    franchise,
     ...toMovieLibraryFields(userMovie),
   };
 }
@@ -71,7 +239,12 @@ export async function getMovieDetails(tmdbId: number, userId?: number) {
     ? await findUserMovieData(tmdbId, userId)
     : undefined;
 
-  return toMovieDetails(movie, userMovie);
+  const isFollowingFranchise =
+    userId && movie.belongs_to_collection?.id
+      ? await isUserFollowingFranchise(userId, movie.belongs_to_collection.id)
+      : false;
+
+  return toMovieDetails(movie, userMovie, isFollowingFranchise);
 }
 
 export async function addMovieToLibrary(tmdbId: number, userId: number) {

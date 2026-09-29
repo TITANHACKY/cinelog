@@ -9,13 +9,18 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useLibraryBrowse } from "@/hooks/library/use-library-browse";
 import { LIBRARY_COLLECTION_ACTIVE_HINT, MEDIA_TYPES } from "@/lib/constants";
-import type { LibraryMediaType, SmartCollectionWithFilters } from "@/lib/types";
+import type {
+  LibraryMediaType,
+  LibraryNavTab,
+  SmartCollectionWithFilters,
+} from "@/lib/types";
 
-export type { LibraryMediaType };
+export type { LibraryMediaType, LibraryNavTab };
 
 type LibraryFilterControlsProps = {
   movieCount: number;
   seriesCount: number;
+  franchiseCount?: number;
   mediaType: LibraryMediaType;
   onMediaTypeChange?: (mediaType: LibraryMediaType) => void;
   libraryCollections: SmartCollectionWithFilters[];
@@ -24,13 +29,15 @@ type LibraryFilterControlsProps = {
 export function LibraryFilterControls({
   movieCount,
   seriesCount,
+  franchiseCount,
   mediaType,
   onMediaTypeChange,
   libraryCollections,
 }: LibraryFilterControlsProps) {
-  const counts: Record<LibraryMediaType, number> = {
+  const counts: Record<string, number | undefined> = {
     movie: movieCount,
     series: seriesCount,
+    franchises: franchiseCount,
   };
   const browse = useLibraryBrowse(mediaType);
   const presetActive = browse.selectedCollectionId !== null;
@@ -82,10 +89,14 @@ export function LibraryFilterControls({
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-3">
-      <SegmentedControl
+      <SegmentedControl<LibraryNavTab>
         aria-label="Filter library by media type"
         className="min-w-0 basis-full lg:basis-0 lg:flex-1"
-        onChange={onMediaTypeChange}
+        onChange={(val) => {
+          if (val === "movie" || val === "series") {
+            onMediaTypeChange?.(val);
+          }
+        }}
         options={MEDIA_TYPES.map(({ icon: Icon, label, value, href }) => ({
           value,
           label,
@@ -93,7 +104,7 @@ export function LibraryFilterControls({
           icon: <Icon className="size-3.5 shrink-0" />,
           badge: (
             <span
-              aria-label={`${counts[value]} ${value === "movie" ? "movies" : "series"}`}
+              aria-label={`${counts[value]} ${value}`}
               className={`inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-md px-1.5 font-public-sans text-[10px] leading-none font-medium ${
                 mediaType === value
                   ? "bg-white/25 text-white"

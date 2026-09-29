@@ -40,6 +40,7 @@ export type LibraryMutationInput = {
   watch_status?: number;
   impression?: number | null;
   remove?: boolean;
+  add?: boolean;
   progress?: {
     seasonNumber: number;
     episodeNumber: number;
@@ -185,6 +186,25 @@ export const libraryApi = baseApi.injectEndpoints({
             return { data: {} as MutationResponse };
           }
 
+          if (input.add) {
+            const response = await apiFetch(
+              `/api/${input.mediaType}/${input.tmdbId}`,
+              { method: "POST" },
+            );
+            const data = (await response.json()) as MutationResponse;
+            if (!response.ok) {
+              return {
+                error: {
+                  status: response.status,
+                  message:
+                    (data as { error?: string }).error ??
+                    "Failed to add to library",
+                },
+              };
+            }
+            return { data };
+          }
+
           const body = input.progress
             ? {
                 mark_season_to_watched: input.progress.seasonNumber,
@@ -272,7 +292,16 @@ export const libraryApi = baseApi.injectEndpoints({
           if (input.remove) {
             dispatch(
               showToast({
-                message: "Removed from your watchlist",
+                message: "Removed from your library",
+                variant: "success",
+              }),
+            );
+          }
+
+          if (input.add) {
+            dispatch(
+              showToast({
+                message: "Added to your library",
                 variant: "success",
               }),
             );
@@ -302,7 +331,13 @@ export const libraryApi = baseApi.injectEndpoints({
             );
           }
 
-          dispatch(libraryApi.util.invalidateTags([...libraryTagIds]));
+          dispatch(
+            libraryApi.util.invalidateTags([
+              ...libraryTagIds,
+              "Franchise",
+              "Franchises",
+            ]),
+          );
         } catch (caught) {
           for (const undo of undos) undo();
           const message = settledErrorMessage(caught, "Library update failed");

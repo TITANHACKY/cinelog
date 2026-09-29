@@ -2,14 +2,13 @@
 
 import { Bookmark, BookmarkOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CopyLinkButton } from "@/components/content-detail/hero-header/copy-link-button";
 import { ReactionButton } from "@/components/content-detail/hero-header/reaction-button";
-import { ShareButton } from "@/components/content-detail/hero-header/share-button";
 import { ProgressStatus } from "@/components/content-detail/progress/progress-status";
 import { useContentMutation } from "@/hooks/title-details/use-content-mutation";
 import { IMPRESSION, IMPRESSION_CONFIG } from "@/lib/constants";
 import { isMovieWatchable } from "@/lib/media/status";
 import type { MovieDetails, SeriesDetails } from "@/lib/types";
-import { orFallback } from "@/lib/utils";
 import type {
   ContentMutation,
   ContentMutationStatus,
@@ -31,7 +30,6 @@ type ActionBarProps = {
 
 export function ActionBar({
   id,
-  imdbId,
   type,
   isPresentInWatchlist = false,
   impression = null,
@@ -41,8 +39,6 @@ export function ActionBar({
   pendingValue,
   content,
 }: ActionBarProps) {
-  const tmdbId = id !== undefined ? id : "N/A";
-  const displayImdbId = orFallback(imdbId);
   const { requestMutation, isMutating, canUpdateWatchActivity } =
     useContentMutation({
       id,
@@ -93,7 +89,7 @@ export function ActionBar({
                 : "Add to Library"}
         </Button>
 
-        <ShareButton id={id} imdbId={imdbId} type={type} />
+        <CopyLinkButton />
 
         <div className="mx-1 hidden h-6 w-px bg-outline-variant sm:block" />
 
@@ -143,12 +139,6 @@ export function ActionBar({
             );
           })}
         </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-[12px] text-on-surface-variant">
-        <span>TMDB ID: {tmdbId}</span>
-        <span className="text-outline-muted">•</span>
-        <span>IMDB ID: {displayImdbId}</span>
       </div>
     </div>
   );

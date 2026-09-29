@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useAnchoredMenu } from "@/hooks/use-anchored-menu";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonVariant } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { OPTION_HEIGHT_PX, VISIBLE_OPTIONS } from "@/lib/constants";
@@ -29,6 +29,8 @@ type SearchFilterSelectProps = {
   labelClassName?: string;
   wrapperClassName?: string;
   value: string;
+  variant?: ButtonVariant;
+  activeVariant?: ButtonVariant;
 };
 
 export function SearchFilterSelect({
@@ -46,6 +48,8 @@ export function SearchFilterSelect({
   labelClassName,
   wrapperClassName,
   value,
+  variant,
+  activeVariant,
 }: SearchFilterSelectProps) {
   const {
     isOpen,
@@ -72,6 +76,10 @@ export function SearchFilterSelect({
     );
   }, [filter, options]);
 
+  const buttonVariant =
+    variant ??
+    (isOpen || value ? activeVariant ?? "primaryFilled" : "darkFilled");
+
   return (
     <>
       <span className={cn("inline-flex", wrapperClassName)} ref={triggerRef}>
@@ -90,7 +98,7 @@ export function SearchFilterSelect({
             toggleMenu();
           }}
           type="button"
-          variant={isOpen || value ? "primaryFilled" : "darkFilled"}
+          variant={buttonVariant}
         >
           {hideHeading ? null : <span>{heading}</span>}
           <span

@@ -63,13 +63,27 @@ export function pickMovieCertification(
   movie: TmdbMovie,
 ): TmdbReleaseDate | null {
   const releaseResults = movie.release_dates?.results ?? [];
-  const releaseCountry =
-    releaseResults.find((release) => release.iso_3166_1 === "IN") ??
-    releaseResults.find(
-      (release) => release.iso_3166_1 === movie.origin_country?.[0],
-    );
+  const originCountries = Array.isArray(movie.origin_country)
+    ? movie.origin_country
+    : movie.origin_country
+      ? [movie.origin_country]
+      : [];
 
-  return releaseCountry?.release_dates?.[0] ?? null;
+  for (const countryCode of originCountries) {
+    const countryReleases = releaseResults.find(
+      (release) => release.iso_3166_1 === countryCode,
+    );
+    if (!countryReleases?.release_dates) continue;
+
+    const certifiedRelease = countryReleases.release_dates.find(
+      (rd) => rd.certification && rd.certification.trim().length > 0,
+    );
+    if (certifiedRelease) {
+      return certifiedRelease;
+    }
+  }
+
+  return null;
 }
 
 export function pickMovieCertificate(
