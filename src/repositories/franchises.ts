@@ -1,5 +1,5 @@
-import { and, desc, eq } from "drizzle-orm";
-import { getDb } from "@/db";
+import { and, count, desc, eq } from "drizzle-orm";
+import { asBatch, getDb } from "@/db";
 import { franchises, userFranchises } from "@/db/schema";
 import { nowUnixSeconds } from "@/lib/media/display";
 
@@ -103,8 +103,37 @@ export async function deleteUserFranchise(
     );
 }
 
-export async function getUserFollowedFranchises(userId: number) {
-  return getDb()
+export type FollowedFranchiseRow = {
+  id: number;
+  tmdbId: number;
+  name: string;
+  overview: string | null;
+  posterPath: string | null;
+  backdropPath: string | null;
+  followedAt: string | null;
+};
+
+export type GetUserFollowedFranchisesOptions = {
+  limit?: number;
+  offset?: number;
+};
+
+export async function getUserFollowedFranchises(
+  userId: number,
+  options?: GetUserFollowedFranchisesOptions,
+): Promise<{
+  franchises: FollowedFranchiseRow[];
+  totalCount: number;
+  hasMore: boolean;
+}> {
+  const db = getDb();
+
+  const countQuery = db
+    .select({ value: count() })
+    .from(userFranchises)
+    .where(eq(userFranchises.userId, userId));
+
+  const itemsSelect = db
     .select({
       id: franchises.id,
       tmdbId: franchises.tmdbId,
@@ -117,6 +146,23 @@ export async function getUserFollowedFranchises(userId: number) {
     .from(userFranchises)
     .innerJoin(franchises, eq(userFranchises.franchiseId, franchises.id))
     .where(eq(userFranchises.userId, userId))
-    .orderBy(desc(userFranchises.createdAt))
-    .all();
+    .orderBy(desc(userFranchises.createdAt));
+
+  const itemsQuery =
+    options?.limit !== undefined
+      ? itemsSelect.limit(options.limit).offset(options.offset ?? 0)
+      : itemsSelect;
+
+  const [countResult, items] = await db.batch(asBatch([countQuery, itemsQuery]));
+
+  const totalCount = Number(countResult[0]?.value ?? 0);
+  const franchisesList = (items ?? []) as FollowedFranchiseRow[];
+  const offset = options?.offset ?? 0;
+  const hasMore = offset + franchisesList.length < totalCount;
+
+  return {
+    franchises: franchisesList,
+    totalCount,
+    hasMore,
+  };
 }

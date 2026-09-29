@@ -36,6 +36,8 @@ export const MEDIA_TYPES: {
   },
 ];
 
+export const FRANCHISES_PAGE_SIZE = 25;
+
 export const COLLECTION_MEDIA_TYPE: Record<LibraryMediaType, number> = {
   movie: 0,
   series: 1,

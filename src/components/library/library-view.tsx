@@ -116,7 +116,7 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
   const followedFranchisesQuery = useGetFollowedFranchisesQuery();
   const tabFranchiseCount =
     followedFranchisesQuery.data !== undefined
-      ? followedFranchisesQuery.data.length
+      ? followedFranchisesQuery.data.totalCount
       : (active?.franchiseCount ?? 0);
 
   return (
