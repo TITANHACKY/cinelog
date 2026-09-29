@@ -5,6 +5,8 @@ import Image from "next/image";
 import { Play, Tv } from "lucide-react";
 import { useLocales } from "@/hooks/locales/use-locales";
 import { SearchFilterSelect } from "@/components/search-popup/search-filter-select";
+import { useAppDispatch } from "@/store";
+import { showToast } from "@/store/slices/toastSlice";
 import type { WatchProviderCountry, WatchProviderItem } from "@/lib/types";
 
 type WhereToWatchProps = {
@@ -20,6 +22,7 @@ export function WhereToWatch({
   imdbId,
   tmdbId,
 }: WhereToWatchProps) {
+  const dispatch = useAppDispatch();
   const { countries } = useLocales();
 
   const countryNameMap = useMemo(() => {
@@ -70,15 +73,66 @@ export function WhereToWatch({
   const rent = currentCountryData?.rent ?? [];
   const buy = currentCountryData?.buy ?? [];
 
-  const stremioDeepLink = imdbId
-    ? `stremio:///detail/movie/${imdbId}`
-    : tmdbId
-      ? `stremio:///detail/movie/${tmdbId}`
-      : "stremio:///";
+  const mediaId = imdbId || (tmdbId ? `${tmdbId}` : null);
+  const detailPath = mediaId ? `detail/movie/${mediaId}` : "";
 
-  const stremioWebLink = imdbId
-    ? `https://web.stremio.com/#/detail/movie/${imdbId}`
+  const stremioDeepLink = detailPath
+    ? `stremio:///${detailPath}`
+    : "stremio:///";
+
+  const stremioWebLink = detailPath
+    ? `https://web.stremio.com/#/${detailPath}`
     : "https://web.stremio.com/";
+
+  const androidIntentUrl = detailPath
+    ? `intent://${detailPath}#Intent;scheme=stremio;package=com.stremio.one;S.browser_fallback_url=${encodeURIComponent(stremioWebLink)};end;`
+    : `intent://#Intent;scheme=stremio;package=com.stremio.one;S.browser_fallback_url=${encodeURIComponent(stremioWebLink)};end;`;
+
+  const handleStremioClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (typeof window === "undefined" || typeof navigator === "undefined") {
+      return;
+    }
+
+    const ua = navigator.userAgent || "";
+    const isIOS =
+      /iPad|iPhone|iPod/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isAndroid = /Android/i.test(ua);
+
+    if (isIOS) {
+      e.preventDefault();
+      // On iOS, Stremio app is not available on the App Store.
+      // Open Stremio Web directly in a new tab without showing a blank screen.
+      window.open(stremioWebLink, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    if (isAndroid) {
+      e.preventDefault();
+      // On Android, use Chrome Intent URI which launches Stremio app if installed,
+      // or seamlessly falls back to Stremio Web if not installed without a blank screen.
+      window.location.href = androidIntentUrl;
+      return;
+    }
+
+    // On Desktop:
+    // Prevent default so we don't open an orphaned blank tab with target="_blank"
+    e.preventDefault();
+    window.location.href = stremioDeepLink;
+
+    // Show a desktop toast with direct action to open Stremio Web
+    dispatch(
+      showToast({
+        message: "Opening Stremio desktop application...",
+        variant: "info",
+        duration: 7000,
+        action: {
+          label: "Didn't open? Watch on Stremio Web",
+          href: stremioWebLink,
+        },
+      }),
+    );
+  };
 
   return (
     <section className="space-y-4 rounded-2xl border border-outline-variant bg-surface-container/60 p-4 sm:p-6 backdrop-blur-xs">
@@ -135,17 +189,12 @@ export function WhereToWatch({
 
             {/* Stremio Option */}
             <a
-              className="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-high px-2.5 py-1.5 text-xs font-medium text-on-surface shadow-2xs"
-              href={stremioDeepLink}
+              className="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-high px-2.5 py-1.5 text-xs font-medium text-on-surface shadow-2xs transition hover:bg-surface-container-highest cursor-pointer"
+              href={stremioWebLink}
               rel="noopener noreferrer"
               target="_blank"
               title="Open in Stremio application or Web"
-              onClick={() => {
-                // If protocol doesn't launch, user can open web stremio
-                setTimeout(() => {
-                  window.open(stremioWebLink, "_blank", "noopener,noreferrer");
-                }, 500);
-              }}
+              onClick={handleStremioClick}
             >
               <div className="flex h-6 w-6 items-center justify-center rounded-md bg-purple-600 text-white">
                 <Play className="h-3.5 w-3.5 fill-current" />

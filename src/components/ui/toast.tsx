@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { ExternalLink, X } from "lucide-react";
 import { useEffect } from "react";
 import type { ToastProps } from "@/lib/types";
 import { VARIANT_CONFIG } from "@/lib/constants";
@@ -11,6 +11,7 @@ export function Toast({
   onDismiss,
   duration = 3000,
   variant = "success",
+  action,
 }: ToastProps) {
   useEffect(() => {
     const timeout = window.setTimeout(onDismiss, duration);
@@ -39,7 +40,21 @@ export function Toast({
         >
           <Icon className="size-3.5" />
         </span>
-        <span className="min-w-0 flex-1 leading-5 font-medium">{message}</span>
+        <div className="min-w-0 flex-1 flex flex-col gap-1.5">
+          <span className="leading-5 font-medium">{message}</span>
+          {action && (
+            <a
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-primary underline hover:text-brand-primary/80 transition-colors w-fit"
+              href={action.href}
+              rel="noopener noreferrer"
+              target="_blank"
+              onClick={onDismiss}
+            >
+              <span>{action.label}</span>
+              <ExternalLink className="size-3" />
+            </a>
+          )}
+        </div>
         <button
           type="button"
           aria-label="Dismiss notification"
