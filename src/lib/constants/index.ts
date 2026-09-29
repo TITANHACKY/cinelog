@@ -3,6 +3,7 @@ export * from "./common";
 export * from "./content-detail";
 export * from "./custom";
 export * from "./dashboard";
+export * from "./discover";
 export * from "./layout";
 export * from "./library";
 export * from "./onboarding";

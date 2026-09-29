@@ -52,3 +52,12 @@ export type {
   UserPreferences,
   UserPreferencesInput,
 } from "./onboarding";
+
+export type {
+  DiscoverMedia,
+  DiscoverResponse,
+  DiscoverRow,
+  DiscoverRowKind,
+  DiscoverRowPage,
+  DiscoverTitle,
+} from "./discover";
