@@ -14,8 +14,13 @@ export function useDiscoverCard(item: DiscoverTitle) {
   const [addTitle, addState] = useAddTitleMutation({
     fixedCacheKey: `discover-add-${mediaType}-${item.tmdbId}`,
   });
-  const { isPending, isStatusPending, requestMutation } =
-    useLibraryItemMutation(mediaType, item.tmdbId);
+  const {
+    isPending,
+    isStatusPending,
+    isRemovePending,
+    requestMutation,
+    requestRemove,
+  } = useLibraryItemMutation(mediaType, item.tmdbId);
 
   async function add() {
     try {
@@ -37,11 +42,13 @@ export function useDiscoverCard(item: DiscoverTitle) {
     href: `/${mediaType}/${item.tmdbId}`,
     isAdding: addState.isLoading,
     isStatusPending,
+    isRemovePending,
     isPending: isPending || addState.isLoading,
     add: () => {
       void add();
     },
     setStatus: (watchStatus: number) =>
       requestMutation({ watch_status: watchStatus, title: item.title }),
+    remove: () => requestRemove({ title: item.title }),
   };
 }

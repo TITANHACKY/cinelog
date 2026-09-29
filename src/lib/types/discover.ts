@@ -8,6 +8,8 @@ export type DiscoverRowKind =
 export type DiscoverTitle = TitleCandidate & {
   releaseDate: string | null;
   originalLanguage: string | null;
+  // First origin country (ISO 3166-1); TMDB only sends it for series.
+  originCountry: string | null;
   // null = not in the user's library
   watchStatus: number | null;
 };

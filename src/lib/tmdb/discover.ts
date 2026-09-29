@@ -10,6 +10,8 @@ export type TmdbDiscoverResult = {
   first_air_date?: string;
   vote_average?: number;
   original_language?: string;
+  // Present on TV results only.
+  origin_country?: string[];
   // Present on /trending/all results only.
   media_type?: string;
 };

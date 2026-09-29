@@ -20,10 +20,12 @@ import {
 } from "@/lib/tmdb/discover";
 import { fetchRecommendationsPage } from "@/lib/tmdb/recommendations";
 import { fetchTrendingPage } from "@/lib/tmdb/trending";
-import { findRecommendationSeeds } from "@/repositories/dashboard";
+import {
+  findDiscoverLibraryEntries,
+  findRecommendationSeeds,
+} from "@/repositories/dashboard";
 import { findGenreNamesByTmdbIds } from "@/repositories/genres";
 import { loadUserPreferences } from "@/repositories/preferences";
-import { findSearchLookups } from "@/repositories/search";
 import type {
   DiscoverMedia,
   DiscoverResponse,
@@ -62,6 +64,7 @@ function toDiscoverTitle(
     rating: result.vote_average ?? null,
     releaseDate,
     originalLanguage: result.original_language ?? null,
+    originCountry: result.origin_country?.[0] ?? null,
     watchStatus: null,
   };
 }
@@ -108,7 +111,8 @@ async function fetchRowPage(
   };
 }
 
-// Runs after the TMDB cache, so statuses are always current.
+// Runs after the TMDB cache, so statuses are always current. Library rows
+// also supply the origin country TMDB omits for movies.
 async function attachWatchStatus(userId: number, titles: DiscoverTitle[]) {
   const idsFor = (mediaType: 0 | 1) => [
     ...new Set(
@@ -117,16 +121,15 @@ async function attachWatchStatus(userId: number, titles: DiscoverTitle[]) {
         .map((title) => title.tmdbId),
     ),
   ];
-  const [movieLookups, seriesLookups] = await Promise.all([
-    findSearchLookups("movie", [], idsFor(0), userId),
-    findSearchLookups("tv", [], idsFor(1), userId),
-  ]);
+  const entries = await findDiscoverLibraryEntries(
+    userId,
+    idsFor(0),
+    idsFor(1),
+  );
   for (const title of titles) {
-    const statuses =
-      title.mediaType === 0
-        ? movieLookups.watchStatusByTmdbId
-        : seriesLookups.watchStatusByTmdbId;
-    title.watchStatus = statuses.get(title.tmdbId) ?? null;
+    const entry = entries.get(`${title.mediaType}-${title.tmdbId}`);
+    title.watchStatus = entry?.watchStatus ?? null;
+    title.originCountry = title.originCountry ?? entry?.originCountry ?? null;
   }
 }
 

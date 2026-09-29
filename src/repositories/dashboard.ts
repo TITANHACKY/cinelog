@@ -303,3 +303,65 @@ export async function findRecommendationSeeds(
     title: row.title,
   }));
 }
+
+// Library status and origin country for discover titles, keyed
+// `${mediaType}-${tmdbId}` (0 = movie, 1 = series).
+export async function findDiscoverLibraryEntries(
+  userId: number,
+  movieTmdbIds: number[],
+  seriesTmdbIds: number[],
+): Promise<Map<string, { watchStatus: number; originCountry: string | null }>> {
+  const db = getDb();
+  const [movieRows, seriesRows] = await Promise.all([
+    movieTmdbIds.length === 0
+      ? []
+      : db
+          .select({
+            tmdbId: movies.tmdbId,
+            watchStatus: userMovies.watchStatus,
+            originCountry: movies.originCountry,
+          })
+          .from(userMovies)
+          .innerJoin(movies, eq(userMovies.movieId, movies.id))
+          .where(
+            and(
+              eq(userMovies.userId, userId),
+              inArray(movies.tmdbId, movieTmdbIds),
+            ),
+          ),
+    seriesTmdbIds.length === 0
+      ? []
+      : db
+          .select({
+            tmdbId: series.tmdbId,
+            watchStatus: userSeries.watchStatus,
+            originCountry: series.originCountry,
+          })
+          .from(userSeries)
+          .innerJoin(series, eq(userSeries.seriesId, series.id))
+          .where(
+            and(
+              eq(userSeries.userId, userId),
+              inArray(series.tmdbId, seriesTmdbIds),
+            ),
+          ),
+  ]);
+
+  const entries = new Map<
+    string,
+    { watchStatus: number; originCountry: string | null }
+  >();
+  for (const row of movieRows) {
+    entries.set(`0-${row.tmdbId}`, {
+      watchStatus: row.watchStatus,
+      originCountry: row.originCountry,
+    });
+  }
+  for (const row of seriesRows) {
+    entries.set(`1-${row.tmdbId}`, {
+      watchStatus: row.watchStatus,
+      originCountry: row.originCountry,
+    });
+  }
+  return entries;
+}
