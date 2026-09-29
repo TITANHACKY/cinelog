@@ -1,4 +1,5 @@
 import { requireSession } from "@/lib/auth/session";
+import { AppError } from "@/lib/http/errors";
 import { parseSchema } from "@/lib/http/request";
 import { ok, toErrorResponse } from "@/lib/http/response";
 import { discoverRowPageQuerySchema } from "@/lib/validations/discover";
@@ -15,13 +16,17 @@ export async function GET(
   try {
     const session = await requireSession();
     const { key } = await params;
+    let decodedKey: string;
+    try {
+      decodedKey = decodeURIComponent(key);
+    } catch {
+      // Malformed %-escape, e.g. /rows/%25.
+      throw new AppError("Invalid discover row", 400);
+    }
     const { page } = parseSchema(discoverRowPageQuerySchema, {
       page: new URL(request.url).searchParams.get("page") ?? undefined,
     });
-    // Keys only contain [a-z0-9:-], so decoding is idempotent.
-    return ok(
-      await getDiscoverRowPage(session.userId, decodeURIComponent(key), page),
-    );
+    return ok(await getDiscoverRowPage(session.userId, decodedKey, page));
   } catch (error) {
     return toErrorResponse(
       error,

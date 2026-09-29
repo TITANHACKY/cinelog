@@ -11,8 +11,12 @@ import {
   userSeasonProgress,
   userSeries,
 } from "@/db/schema";
-import type { LibraryMovie, LibrarySeries } from "@/lib/types";
-import type { DiscoverSeed } from "@/lib/discover/plan";
+import type {
+  DiscoverMedia,
+  DiscoverSeedInfo,
+  LibraryMovie,
+  LibrarySeries,
+} from "@/lib/types";
 
 export async function findContinueWatchingTitles(
   userId: number,
@@ -247,12 +251,11 @@ export async function findContinueWatchingTitles(
   return combined.slice(0, limit);
 }
 
-// Recently completed titles the user didn't dislike seed the
-// "Because you watched" rows.
-export async function findRecommendationSeeds(
+// Recently completed titles the user didn't dislike, newest first.
+async function findSeedCandidates(
   userId: number,
   limit: number,
-): Promise<DiscoverSeed[]> {
+): Promise<DiscoverSeedInfo[]> {
   const db = getDb();
   const movieAt = sql<string>`coalesce(${userMovies.completedAt}, ${userMovies.updatedAt}, ${userMovies.createdAt})`;
   const seriesAt = sql<string>`coalesce(${userSeries.completedAt}, ${userSeries.updatedAt}, ${userSeries.createdAt})`;
@@ -364,4 +367,53 @@ export async function findDiscoverLibraryEntries(
     });
   }
   return entries;
+}
+
+// The most recently Completed title the user didn't dislike seeds the
+// "Because you watched" row.
+export async function findDiscoverSeed(
+  userId: number,
+): Promise<DiscoverSeedInfo | null> {
+  const [seed] = await findSeedCandidates(userId, 1);
+  return seed ?? null;
+}
+
+export async function isDiscoverSeedCandidate(
+  userId: number,
+  media: DiscoverMedia,
+  tmdbId: number,
+): Promise<boolean> {
+  const db = getDb();
+  const liked = (
+    impression: typeof userMovies.impression | typeof userSeries.impression,
+  ) => or(isNull(impression), inArray(impression, [1, 2]));
+  const rows =
+    media === "movie"
+      ? await db
+          .select({ id: userMovies.id })
+          .from(userMovies)
+          .innerJoin(movies, eq(userMovies.movieId, movies.id))
+          .where(
+            and(
+              eq(userMovies.userId, userId),
+              eq(movies.tmdbId, tmdbId),
+              eq(userMovies.watchStatus, 2),
+              liked(userMovies.impression),
+            ),
+          )
+          .limit(1)
+      : await db
+          .select({ id: userSeries.id })
+          .from(userSeries)
+          .innerJoin(series, eq(userSeries.seriesId, series.id))
+          .where(
+            and(
+              eq(userSeries.userId, userId),
+              eq(series.tmdbId, tmdbId),
+              eq(userSeries.watchStatus, 2),
+              liked(userSeries.impression),
+            ),
+          )
+          .limit(1);
+  return rows.length > 0;
 }

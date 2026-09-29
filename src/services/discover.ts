@@ -1,35 +1,34 @@
 import {
+  COMMON_LANGUAGES,
   DISCOVER_MAX_PAGE,
-  DISCOVER_MIN_ROW_ITEMS,
-  DISCOVER_SEED_LIMIT,
   DISCOVER_TTL_SECONDS,
 } from "@/lib/constants";
 import {
-  buildDiscoverPlan,
+  buildRowParams,
+  isRowAllowed,
   parseRowKey,
-  rowRequest,
-  type DiscoverRowSpec,
-  type RowPrefs,
-} from "@/lib/discover/plan";
-import { AppError, isAppError } from "@/lib/http/errors";
+  toMediaGenre,
+  type RowSpec,
+  type SeedDetails,
+} from "@/lib/discover/rows";
+import { AppError } from "@/lib/http/errors";
 import { getYearString } from "@/lib/media/display";
+import { getCachedTmdbMovie, getCachedTmdbSeries } from "@/lib/tmdb/cache";
 import {
   discoverTitlesPage,
-  type TmdbDiscoverPage,
   type TmdbDiscoverResult,
 } from "@/lib/tmdb/discover";
-import { fetchRecommendationsPage } from "@/lib/tmdb/recommendations";
-import { fetchTrendingPage } from "@/lib/tmdb/trending";
+import { fetchTitleKeywords } from "@/lib/tmdb/keywords";
 import {
   findDiscoverLibraryEntries,
-  findRecommendationSeeds,
+  findDiscoverSeed,
+  isDiscoverSeedCandidate,
 } from "@/repositories/dashboard";
 import { findGenreNamesByTmdbIds } from "@/repositories/genres";
 import { loadUserPreferences } from "@/repositories/preferences";
 import type {
+  DiscoverLayout,
   DiscoverMedia,
-  DiscoverResponse,
-  DiscoverRow,
   DiscoverRowPage,
   DiscoverTitle,
 } from "@/lib/types";
@@ -41,22 +40,15 @@ function titleKey(title: DiscoverTitle): string {
 
 function toDiscoverTitle(
   result: TmdbDiscoverResult,
-  media: DiscoverMedia | null,
+  media: DiscoverMedia,
 ): DiscoverTitle | null {
-  const resolved: DiscoverMedia | null =
-    media ??
-    (result.media_type === "movie"
-      ? "movie"
-      : result.media_type === "tv"
-        ? "series"
-        : null);
   const title = (result.title ?? result.name ?? "").trim();
-  if (!resolved || !title) return null;
+  if (!title) return null;
   const releaseDate = result.release_date || result.first_air_date || null;
 
   return {
     tmdbId: result.id,
-    mediaType: resolved === "movie" ? 0 : 1,
+    mediaType: media === "movie" ? 0 : 1,
     title,
     // Raw TMDB path; MediaCard falls back to FALLBACK_POSTER when null.
     posterPath: result.poster_path,
@@ -66,48 +58,6 @@ function toDiscoverTitle(
     originalLanguage: result.original_language ?? null,
     originCountry: result.origin_country?.[0] ?? null,
     watchStatus: null,
-  };
-}
-
-async function fetchRowPage(
-  spec: DiscoverRowSpec,
-  prefs: RowPrefs,
-  page: number,
-): Promise<{ titles: DiscoverTitle[]; hasMore: boolean }> {
-  const request = rowRequest(spec, prefs);
-  let data: TmdbDiscoverPage;
-  if (request.source === "trending") {
-    data = await fetchTrendingPage(
-      request.media,
-      page,
-      DISCOVER_TTL_SECONDS.trending,
-    );
-  } else if (request.source === "recommendations") {
-    data = await fetchRecommendationsPage(
-      request.media,
-      request.tmdbId,
-      page,
-      DISCOVER_TTL_SECONDS.recommendations,
-    );
-  } else {
-    data = await discoverTitlesPage(
-      { ...request.params, page },
-      DISCOVER_TTL_SECONDS.discover,
-    );
-  }
-
-  const media = spec.media === "all" ? null : spec.media;
-  const seen = new Set<string>();
-  const titles: DiscoverTitle[] = [];
-  for (const result of data.results) {
-    const title = toDiscoverTitle(result, media);
-    if (!title || seen.has(titleKey(title))) continue;
-    seen.add(titleKey(title));
-    titles.push(title);
-  }
-  return {
-    titles,
-    hasMore: page < Math.min(data.totalPages, DISCOVER_MAX_PAGE),
   };
 }
 
@@ -127,74 +77,65 @@ async function attachWatchStatus(userId: number, titles: DiscoverTitle[]) {
     idsFor(1),
   );
   for (const title of titles) {
-    const entry = entries.get(`${title.mediaType}-${title.tmdbId}`);
+    const entry = entries.get(titleKey(title));
     title.watchStatus = entry?.watchStatus ?? null;
     title.originCountry = title.originCountry ?? entry?.originCountry ?? null;
   }
 }
 
-export async function getDiscoverRows(
+function languageLabel(code: string): string {
+  return (
+    COMMON_LANGUAGES.find((language) => language.code === code)?.label ??
+    code.toUpperCase()
+  );
+}
+
+export async function getDiscoverLayout(
   userId: number,
-): Promise<DiscoverResponse> {
+): Promise<DiscoverLayout> {
   const prefs = await loadUserPreferences(userId);
-  if (!prefs || prefs.discoverRowsEnabled === false) {
-    return { enabled: false, rows: [] };
-  }
+  if (!prefs || prefs.discoverRowsEnabled === false) return { enabled: false };
 
-  const [seeds, genreRows] = await Promise.all([
-    findRecommendationSeeds(userId, DISCOVER_SEED_LIMIT),
+  const [genreRows, seed] = await Promise.all([
     findGenreNamesByTmdbIds(prefs.genreIds),
+    findDiscoverSeed(userId),
   ]);
-  const plan = buildDiscoverPlan({
-    prefs,
-    seeds,
-    genreNames: new Map(genreRows.map((genre) => [genre.tmdbId, genre.name])),
-  });
+  const names = new Map(genreRows.map((genre) => [genre.tmdbId, genre.name]));
 
-  const settled = await Promise.allSettled(
-    plan.map((row) => fetchRowPage(row.spec, prefs, 1)),
-  );
+  return {
+    enabled: true,
+    mediaLean: prefs.mediaLean,
+    genres: prefs.genreIds.map((id) => ({
+      id,
+      name: names.get(id) ?? `Genre ${id}`,
+      movieId: toMediaGenre(id, "movie"),
+      seriesId: toMediaGenre(id, "series"),
+    })),
+    languages: prefs.languages.map((code) => ({
+      code,
+      label: languageLabel(code),
+    })),
+    seed,
+  };
+}
 
-  const failures: unknown[] = [];
-  const shown = new Set<string>();
-  const rows: DiscoverRow[] = [];
-  settled.forEach((result, index) => {
-    const planned = plan[index];
-    if (result.status === "rejected") {
-      failures.push(result.reason);
-      console.error(`Discover row ${planned.key} failed`, result.reason);
-      return;
-    }
-    const items = result.value.titles.filter(
-      (title) => !shown.has(titleKey(title)),
-    );
-    if (items.length < DISCOVER_MIN_ROW_ITEMS) return;
-    for (const title of items) shown.add(titleKey(title));
-    rows.push({
-      key: planned.key,
-      kind: planned.spec.kind,
-      title: planned.title,
-      mediaType: planned.spec.media === "all" ? "mixed" : planned.spec.media,
-      items,
-      hasMore: result.value.hasMore,
-    });
-  });
-
-  // Nothing to show and at least one row failed: surface the error so the
-  // user gets Retry instead of a silently empty section.
-  if (rows.length === 0 && failures.length > 0) {
-    // Keep TMDB's own status (503 missing key, 429 rate limit) when known.
-    const [first] = failures;
-    throw isAppError(first)
-      ? first
-      : new AppError("Couldn't load recommendations", 502);
-  }
-
-  await attachWatchStatus(
-    userId,
-    rows.flatMap((row) => row.items),
-  );
-  return { enabled: true, rows };
+async function loadSeedDetails(
+  spec: Extract<RowSpec, { kind: "because" }>,
+): Promise<SeedDetails> {
+  const tmdbMedia = spec.media === "movie" ? "movie" : "tv";
+  const [details, keywordIds] = await Promise.all([
+    spec.media === "movie"
+      ? getCachedTmdbMovie(spec.tmdbId)
+      : getCachedTmdbSeries(spec.tmdbId),
+    fetchTitleKeywords(tmdbMedia, spec.tmdbId),
+  ]);
+  return {
+    genreIds: (details.genres ?? [])
+      .map((genre) => genre.id)
+      .filter((id): id is number => typeof id === "number"),
+    language: details.original_language ?? null,
+    keywordIds,
+  };
 }
 
 export async function getDiscoverRowPage(
@@ -207,8 +148,37 @@ export async function getDiscoverRowPage(
 
   const prefs = await loadUserPreferences(userId);
   if (!prefs) throw new AppError("Preferences not found", 404);
+  if (!isRowAllowed(spec, prefs))
+    throw new AppError("Invalid discover row", 400);
+  if (
+    spec.kind === "because" &&
+    !(await isDiscoverSeedCandidate(userId, spec.media, spec.tmdbId))
+  ) {
+    throw new AppError("Invalid discover row", 400);
+  }
 
-  const { titles, hasMore } = await fetchRowPage(spec, prefs, page);
-  await attachWatchStatus(userId, titles);
-  return { items: titles, page, hasMore };
+  const seed = spec.kind === "because" ? await loadSeedDetails(spec) : null;
+  const data = await discoverTitlesPage(
+    { ...buildRowParams(spec, prefs, seed), page },
+    spec.kind === "trending"
+      ? DISCOVER_TTL_SECONDS.trending
+      : DISCOVER_TTL_SECONDS.discover,
+  );
+
+  const seen = new Set<string>();
+  const items: DiscoverTitle[] = [];
+  for (const result of data.results) {
+    const title = toDiscoverTitle(result, spec.media);
+    if (!title || seen.has(titleKey(title))) continue;
+    if (spec.kind === "because" && title.tmdbId === spec.tmdbId) continue;
+    seen.add(titleKey(title));
+    items.push(title);
+  }
+
+  await attachWatchStatus(userId, items);
+  return {
+    items,
+    page,
+    hasMore: page < Math.min(data.totalPages, DISCOVER_MAX_PAGE),
+  };
 }
