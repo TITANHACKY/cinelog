@@ -19,7 +19,10 @@ export function useLibraryItemMutation(
   const isPending = mutation.isLoading;
 
   function requestMutation(
-    payload: Omit<LibraryMutationInput, "mediaType" | "tmdbId" | "remove">,
+    payload: Omit<
+      LibraryMutationInput,
+      "mediaType" | "tmdbId" | "remove" | "add"
+    >,
   ) {
     void submitLibraryMutation(dispatch, { mediaType, tmdbId, ...payload });
   }
@@ -33,12 +36,23 @@ export function useLibraryItemMutation(
     });
   }
 
+  function requestAdd(payload?: { title?: string }) {
+    void submitLibraryMutation(dispatch, {
+      mediaType,
+      tmdbId,
+      add: true,
+      ...payload,
+    });
+  }
+
   return {
     isPending,
     isStatusPending: isPending && variables?.watch_status !== undefined,
     isProgressPending: isPending && variables?.progress !== undefined,
     isRemovePending: isPending && variables?.remove === true,
+    isAddPending: isPending && variables?.add === true,
     requestMutation,
     requestRemove,
+    requestAdd,
   };
 }

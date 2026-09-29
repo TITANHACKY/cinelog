@@ -56,8 +56,10 @@ export function SpecificationsMeta({
       .map((c) => c.name)
       .filter(Boolean)
       .join(", ");
-  } else if (media.credits) {
-    const director = media.credits.find((c) => c.job === "Director");
+  } else if (isMovie && movie?.director?.name) {
+    creator = movie.director.name;
+  } else if (series?.credits) {
+    const director = series.credits.find((c) => c.job === "Director");
     if (director?.name) {
       creator = director.name;
     }

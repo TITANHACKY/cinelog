@@ -1,6 +1,7 @@
 import { SMART_COLLECTIONS } from "@/lib/constants/api";
 
 type LibraryMediaType = "movie" | "series";
+type LibraryNavTab = "movie" | "series" | "franchises";
 
 type LibraryFilterField = keyof typeof SMART_COLLECTIONS.filter_field;
 type LibrarySortField = keyof typeof SMART_COLLECTIONS.sort_field;
@@ -24,6 +25,7 @@ export type {
   LibraryFilterField,
   LibraryGroupBy,
   LibraryMediaType,
+  LibraryNavTab,
   LibraryOperator,
   LibrarySortField,
 };

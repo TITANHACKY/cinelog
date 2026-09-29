@@ -26,6 +26,7 @@ import {
   impressionPromptRequested,
   impressionPromptResolved,
 } from "@/store/slices/impressionPromptSlice";
+import { WATCH_STATUS } from "@/lib/constants";
 import { showToast } from "@/store/slices/toastSlice";
 import {
   baseApi,
@@ -40,6 +41,7 @@ export type LibraryMutationInput = {
   watch_status?: number;
   impression?: number | null;
   remove?: boolean;
+  add?: boolean;
   progress?: {
     seasonNumber: number;
     episodeNumber: number;
@@ -185,6 +187,25 @@ export const libraryApi = baseApi.injectEndpoints({
             return { data: {} as MutationResponse };
           }
 
+          if (input.add) {
+            const response = await apiFetch(
+              `/api/${input.mediaType}/${input.tmdbId}`,
+              { method: "POST" },
+            );
+            const data = (await response.json()) as MutationResponse;
+            if (!response.ok) {
+              return {
+                error: {
+                  status: response.status,
+                  message:
+                    (data as { error?: string }).error ??
+                    "Failed to add to library",
+                },
+              };
+            }
+            return { data };
+          }
+
           const body = input.progress
             ? {
                 mark_season_to_watched: input.progress.seasonNumber,
@@ -237,6 +258,22 @@ export const libraryApi = baseApi.injectEndpoints({
         });
         if (detailsUndo) undos.push(detailsUndo);
 
+        if (input.mediaType === "movie") {
+          const { patchCachedFranchiseDetails } =
+            await import("./franchises-api");
+          const franchiseUndos = patchCachedFranchiseDetails(
+            dispatch,
+            getState,
+            {
+              tmdbId: input.tmdbId,
+              watch_status: input.watch_status,
+              remove: input.remove,
+              add: input.add,
+            },
+          );
+          if (franchiseUndos.length > 0) undos.push(...franchiseUndos);
+        }
+
         try {
           const { data } = await queryFulfilled;
           const seriesUpdate =
@@ -272,7 +309,36 @@ export const libraryApi = baseApi.injectEndpoints({
           if (input.remove) {
             dispatch(
               showToast({
-                message: "Removed from your watchlist",
+                message: "Removed from your library",
+                variant: "success",
+              }),
+            );
+          } else if (input.add) {
+            dispatch(
+              showToast({
+                message: "Added to your library",
+                variant: "success",
+              }),
+            );
+          } else if (input.watch_status !== undefined) {
+            const statusName =
+              Object.values(WATCH_STATUS).find(
+                (item) => item.value === input.watch_status,
+              )?.display_value ?? "Status";
+            dispatch(
+              showToast({
+                message: `Status updated to ${statusName}`,
+                variant: "success",
+              }),
+            );
+          } else if (input.progress) {
+            const isUnmark = input.progress.episodeNumber === 0;
+            const message = isUnmark
+              ? "Progress updated"
+              : `Episode ${input.progress.episodeNumber} marked as completed`;
+            dispatch(
+              showToast({
+                message,
                 variant: "success",
               }),
             );
@@ -302,7 +368,12 @@ export const libraryApi = baseApi.injectEndpoints({
             );
           }
 
-          dispatch(libraryApi.util.invalidateTags([...libraryTagIds]));
+          dispatch(
+            libraryApi.util.invalidateTags([
+              ...libraryTagIds,
+              "Franchise",
+            ]),
+          );
         } catch (caught) {
           for (const undo of undos) undo();
           const message = settledErrorMessage(caught, "Library update failed");

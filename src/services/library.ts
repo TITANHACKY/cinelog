@@ -10,6 +10,7 @@ export async function getLibrary(userId: number, query: LibraryQueryInput) {
     seasons: seasonRows,
     movieCount,
     seriesCount,
+    franchiseCount,
     groups,
   } = await listLibraryRows(userId, query);
 
@@ -86,6 +87,7 @@ export async function getLibrary(userId: number, query: LibraryQueryInput) {
     count: {
       movies: movieCount,
       series: seriesCount,
+      franchises: franchiseCount,
     },
     offset: query.offset,
     limit: query.limit,
