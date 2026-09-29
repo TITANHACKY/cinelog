@@ -43,3 +43,23 @@ export async function getCachedTmdbSeries(tmdbId: number) {
     { revalidate: TMDB_DETAIL_REVALIDATE_SECONDS },
   )();
 }
+
+// Cached TMDB list request shared by every user who asks for the same
+// path + params. Params are sorted so equivalent requests share one entry.
+export async function cachedTmdbFetch<T>(
+  path: string,
+  searchParams: URLSearchParams,
+  revalidateSeconds: number,
+  failedMessage: string,
+): Promise<T> {
+  const sorted = new URLSearchParams(
+    [...searchParams.entries()].sort(([left], [right]) =>
+      left.localeCompare(right),
+    ),
+  );
+  return unstable_cache(
+    async () => tmdbFetch<T>(path, { searchParams: sorted, failedMessage }),
+    ["tmdb-list", path, sorted.toString()],
+    { revalidate: revalidateSeconds },
+  )();
+}
