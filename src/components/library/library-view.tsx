@@ -26,6 +26,7 @@ import type {
   LibrarySeries,
 } from "@/lib/types";
 import { useGetCollectionsQuery } from "@/store/api/collections-api";
+import { useGetFollowedFranchisesQuery } from "@/store/api/franchises-api";
 import { useAppSelector } from "@/store";
 
 type LibraryViewProps = {
@@ -112,6 +113,11 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
     presetData?.collection?.mediaType === 1
       ? presetData.seriesCount
       : (active?.seriesCount ?? 0);
+  const followedFranchisesQuery = useGetFollowedFranchisesQuery();
+  const tabFranchiseCount =
+    followedFranchisesQuery.data !== undefined
+      ? followedFranchisesQuery.data.length
+      : (active?.franchiseCount ?? 0);
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 py-6 sm:px-6 lg:py-8">
@@ -133,6 +139,7 @@ export function LibraryView({ mediaType = "movie" }: LibraryViewProps) {
         </header>
 
         <LibraryFilterControls
+          franchiseCount={tabFranchiseCount}
           libraryCollections={libraryCollections}
           mediaType={mediaType}
           movieCount={tabMovieCount}

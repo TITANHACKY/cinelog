@@ -21,7 +21,18 @@ export async function generateMetadata({
   }
 
   try {
-    const series = await getSeriesDetails(seriesId);
+    const series = await Promise.race([
+      getSeriesDetails(seriesId),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+    ]);
+
+    if (!series) {
+      return {
+        title: "CineLog - Series Details",
+        description: "TV Series details, seasons and episodes on CineLog",
+      };
+    }
+
     const seriesTitle = series.name || "Series Details";
     const releaseYear = series.first_air_date
       ? ` (${new Date(series.first_air_date).getFullYear()})`

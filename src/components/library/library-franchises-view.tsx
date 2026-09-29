@@ -1,20 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, Layers, Loader2, Trash2 } from "lucide-react";
+import { Layers, Loader2 } from "lucide-react";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { MEDIA_TYPES } from "@/lib/constants/library";
+import { FranchiseCard } from "@/components/library/franchise-card";
+import { LIBRARY_DESCRIPTION, MEDIA_TYPES } from "@/lib/constants/library";
 import {
   useGetFollowedFranchisesQuery,
   useGetFranchiseDetailsQuery,
-  useUnfollowFranchiseMutation,
-  type FollowedFranchiseItem,
 } from "@/store/api/franchises-api";
 import { useGetDashboardQuery } from "@/store/api/library-api";
-import { showToast } from "@/store/slices/toastSlice";
-import { useAppDispatch } from "@/store";
 import { Button } from "@/components/ui/button";
 import { MovieCard } from "@/components/ui/movie-card";
 import type { LibraryMovie } from "@/lib/types";
@@ -31,56 +27,56 @@ export function LibraryFranchisesView() {
   const franchiseCount = franchises.length;
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6">
-      {/* Media Type Navigation Switcher */}
-      <div className="flex min-w-0 flex-wrap items-center gap-3">
-        <SegmentedControl
-          aria-label="Filter library by media type"
-          className="min-w-0 basis-full lg:basis-0 lg:flex-1"
-          options={MEDIA_TYPES.map(({ icon: Icon, label, value, href }) => {
-            const count =
-              value === "movie"
-                ? movieCount
-                : value === "series"
-                  ? seriesCount
-                  : franchiseCount;
+    <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 py-6 sm:px-6 lg:py-8">
+      <div className="mx-auto flex w-full max-w-[1720px] min-w-0 flex-col gap-6 sm:gap-8">
+        <header className="space-y-2 border-b border-outline-alt pb-4">
+          <div>
+            <h1 className="font-heading text-2xl font-semibold tracking-tight text-on-surface sm:text-4xl">
+              My library
+            </h1>
+            <p className="mt-1 font-public-sans text-xs text-secondary sm:text-sm">
+              {LIBRARY_DESCRIPTION}
+            </p>
+          </div>
+        </header>
 
-            return {
-              value,
-              label,
-              href,
-              icon: <Icon className="size-3.5 shrink-0" />,
-              badge: (
-                <span
-                  aria-label={`${count} ${label}`}
-                  className={`inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-md px-1.5 font-public-sans text-[10px] leading-none font-medium ${
-                    value === "franchises"
-                      ? "bg-white/25 text-white"
-                      : "bg-surface-container text-secondary"
-                  }`}
-                >
-                  {count}
-                </span>
-              ),
-            };
-          })}
-          value="franchises"
-        />
-      </div>
+        {/* Media Type Navigation Switcher */}
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
+          <SegmentedControl
+            aria-label="Filter library by media type"
+            options={MEDIA_TYPES.map(({ icon: Icon, label, value, href }) => {
+              const count =
+                value === "movie"
+                  ? movieCount
+                  : value === "series"
+                    ? seriesCount
+                    : franchiseCount;
 
-      {/* Header Info */}
-      <div className="flex flex-col gap-1">
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-on-surface">
-          Followed Franchises
-        </h1>
-        <p className="text-xs sm:text-sm text-on-surface-variant">
-          Franchises you follow. All movies in these franchises are
-          automatically synced to your library.
-        </p>
-      </div>
+              return {
+                value,
+                label,
+                href,
+                icon: <Icon className="size-3.5 shrink-0" />,
+                badge: (
+                  <span
+                    aria-label={`${count} ${label}`}
+                    className={`inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-md px-1.5 font-public-sans text-[10px] leading-none font-medium ${
+                      value === "franchises"
+                        ? "bg-white/25 text-white"
+                        : "bg-surface-container text-secondary"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                ),
+              };
+            })}
+            value="franchises"
+          />
+        </div>
 
-      {/* Content */}
-      {isLoading ? (
+        {/* Content */}
+        {isLoading ? (
         <div className="flex items-center justify-center py-24">
           <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
         </div>
@@ -107,7 +103,7 @@ export function LibraryFranchisesView() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {franchises.map((franchise) => (
-            <FranchiseLibraryCard
+            <FranchiseCard
               franchise={franchise}
               key={franchise.id}
               onSelect={() => setSelectedFranchiseId(franchise.tmdbId)}
@@ -123,99 +119,8 @@ export function LibraryFranchisesView() {
           onClose={() => setSelectedFranchiseId(null)}
         />
       )}
-    </div>
-  );
-}
-
-function FranchiseLibraryCard({
-  franchise,
-  onSelect,
-}: {
-  franchise: FollowedFranchiseItem;
-  onSelect: () => void;
-}) {
-  const dispatch = useAppDispatch();
-  const [unfollowFranchise, { isLoading }] = useUnfollowFranchiseMutation();
-
-  async function handleUnfollow(e: React.MouseEvent) {
-    e.stopPropagation();
-    try {
-      await unfollowFranchise({ id: franchise.tmdbId }).unwrap();
-      dispatch(
-        showToast({
-          message: `Unfollowed ${franchise.name}`,
-          variant: "info",
-        }),
-      );
-    } catch {
-      dispatch(
-        showToast({
-          message: "Failed to unfollow franchise",
-          variant: "error",
-        }),
-      );
-    }
-  }
-
-  return (
-    <div
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-outline-variant bg-surface-container/70 transition hover:border-outline hover:bg-surface-container cursor-pointer"
-      onClick={onSelect}
-    >
-      <div className="relative aspect-16/9 w-full overflow-hidden bg-surface-container-high">
-        {franchise.backdropPath || franchise.posterPath ? (
-          <Image
-            alt={franchise.name}
-            className="object-cover transition duration-300 group-hover:scale-105 opacity-80"
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            src={`https://image.tmdb.org/t/p/w780${franchise.backdropPath || franchise.posterPath}`}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-surface-container-high">
-            <Layers className="h-10 w-10 text-outline-muted/40" />
-          </div>
-        )}
-
-        <div className="absolute inset-0 bg-linear-to-t from-surface via-transparent to-transparent" />
-
-        <button
-          aria-label={`Unfollow ${franchise.name}`}
-          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-outline-muted transition hover:bg-black/90 hover:text-red-400"
-          disabled={isLoading}
-          onClick={handleUnfollow}
-          title="Unfollow franchise"
-          type="button"
-        >
-          {isLoading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Trash2 className="h-3.5 w-3.5" />
-          )}
-        </button>
       </div>
-
-      <div className="flex flex-1 flex-col justify-between p-4">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-brand-primary">
-            Franchise
-          </span>
-          <h2 className="font-heading text-base font-bold text-on-surface group-hover:text-brand-primary transition">
-            {franchise.name}
-          </h2>
-          {franchise.overview && (
-            <p className="mt-1 line-clamp-2 text-xs text-on-surface-variant leading-relaxed">
-              {franchise.overview}
-            </p>
-          )}
-        </div>
-
-        <div className="mt-4 flex items-center justify-between border-t border-outline-variant/60 pt-3 text-xs text-brand-primary font-semibold">
-          <span>View all movies</span>
-          <ChevronRight className="h-4 w-4 transition group-hover:translate-x-1" />
-        </div>
-      </div>
-    </div>
+    </main>
   );
 }
 
@@ -234,6 +139,11 @@ function FranchiseDetailModal({
     <div
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
       role="dialog"
     >
       <div className="relative flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-outline-variant bg-surface-container shadow-2xl">
@@ -295,11 +205,7 @@ function FranchiseDetailModal({
                   };
 
                   return (
-                    <div
-                      className="min-w-0 w-full"
-                      key={part.id}
-                      onClick={onClose}
-                    >
+                    <div className="min-w-0 w-full" key={part.id}>
                       <MovieCard actionsPosition="below" movie={movieItem} />
                     </div>
                   );

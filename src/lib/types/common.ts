@@ -115,13 +115,11 @@ type MovieDetails = {
   original_language?: string | null;
   origin_country?: string[] | null;
   status?: string | null;
-  tagline?: string | null;
   title?: string | null;
   vote_average?: number;
   is_present_in_watchlist?: boolean;
   impression?: number | null;
   watch_status?: number | null;
-  credits?: CreditMember[];
   director?: {
     id?: number;
     name?: string;
@@ -166,6 +164,7 @@ type LibraryMovie = {
 type LibraryCount = {
   movies: number;
   series: number;
+  franchises?: number;
 };
 
 type LibraryGroup = {

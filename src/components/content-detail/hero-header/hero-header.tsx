@@ -25,7 +25,7 @@ export function HeroHeader({ movie, series, type }: HeroHeaderProps) {
   const releaseYear =
     releaseDate && releaseDate.length >= 4 ? releaseDate.slice(0, 4) : null;
   const synopsis = movie?.overview?.trim();
-  const tagline = series?.tagline?.trim() || movie?.tagline?.trim();
+  const tagline = series?.tagline?.trim();
   const descriptionText = mediaType === "movie" ? synopsis : tagline;
   const genres = movie?.genres ?? series?.genres;
   const imdbId = movie?.imdb_id ?? series?.imdb_id;

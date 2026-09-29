@@ -7,7 +7,6 @@ import {
 } from "@/lib/media/status";
 import { getCachedTmdbMovie } from "@/lib/tmdb/cache";
 import { pickMovieCertification } from "@/lib/tmdb/catalog-fields";
-import { pickCastAndDirectors } from "@/lib/tmdb/credits";
 import type { CreditMember, DepartmentCredits, TmdbMovie } from "@/lib/types";
 import type { MoviePatchInput } from "@/lib/validations/library";
 import type { NewUserMovie } from "@/db/schema";
@@ -208,12 +207,10 @@ function toMovieDetails(
     certification: pickMovieCertification(movie),
     runtime: movie.runtime,
     status: toMovieStatusDisplay(movie.status),
-    tagline: movie.tagline,
     title: movie.title,
     vote_average: movie.vote_average,
     original_language: movie.original_language,
     origin_country: movie.origin_country,
-    credits: pickCastAndDirectors(movie.credits),
     director,
     creators,
     lead_studio: leadStudio,

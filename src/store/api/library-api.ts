@@ -26,6 +26,7 @@ import {
   impressionPromptRequested,
   impressionPromptResolved,
 } from "@/store/slices/impressionPromptSlice";
+import { WATCH_STATUS } from "@/lib/constants";
 import { showToast } from "@/store/slices/toastSlice";
 import {
   baseApi,
@@ -257,6 +258,22 @@ export const libraryApi = baseApi.injectEndpoints({
         });
         if (detailsUndo) undos.push(detailsUndo);
 
+        if (input.mediaType === "movie") {
+          const { patchCachedFranchiseDetails } =
+            await import("./franchises-api");
+          const franchiseUndos = patchCachedFranchiseDetails(
+            dispatch,
+            getState,
+            {
+              tmdbId: input.tmdbId,
+              watch_status: input.watch_status,
+              remove: input.remove,
+              add: input.add,
+            },
+          );
+          if (franchiseUndos.length > 0) undos.push(...franchiseUndos);
+        }
+
         try {
           const { data } = await queryFulfilled;
           const seriesUpdate =
@@ -296,12 +313,32 @@ export const libraryApi = baseApi.injectEndpoints({
                 variant: "success",
               }),
             );
-          }
-
-          if (input.add) {
+          } else if (input.add) {
             dispatch(
               showToast({
                 message: "Added to your library",
+                variant: "success",
+              }),
+            );
+          } else if (input.watch_status !== undefined) {
+            const statusName =
+              Object.values(WATCH_STATUS).find(
+                (item) => item.value === input.watch_status,
+              )?.display_value ?? "Status";
+            dispatch(
+              showToast({
+                message: `Status updated to ${statusName}`,
+                variant: "success",
+              }),
+            );
+          } else if (input.progress) {
+            const isUnmark = input.progress.episodeNumber === 0;
+            const message = isUnmark
+              ? "Progress updated"
+              : `Episode ${input.progress.episodeNumber} marked as completed`;
+            dispatch(
+              showToast({
+                message,
                 variant: "success",
               }),
             );
@@ -335,7 +372,6 @@ export const libraryApi = baseApi.injectEndpoints({
             libraryApi.util.invalidateTags([
               ...libraryTagIds,
               "Franchise",
-              "Franchises",
             ]),
           );
         } catch (caught) {

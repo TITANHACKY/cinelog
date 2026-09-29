@@ -55,17 +55,19 @@ async function afterBlockAddFranchiseMovies(
   collection: TmdbCollection,
   userId: number,
 ) {
-  for (const part of collection.parts ?? []) {
-    try {
-      const existing = await findUserMovieData(part.id, userId);
-      if (!existing) {
-        const fullMovie = await getCachedTmdbMovie(part.id);
-        await insertUserMovie(part.id, userId, fullMovie);
+  await Promise.allSettled(
+    (collection.parts ?? []).map(async (part) => {
+      try {
+        const existing = await findUserMovieData(part.id, userId);
+        if (!existing) {
+          const fullMovie = await getCachedTmdbMovie(part.id);
+          await insertUserMovie(part.id, userId, fullMovie);
+        }
+      } catch {
+        // Continue inserting remaining movies if one fails
       }
-    } catch {
-      // Continue inserting remaining movies if one fails
-    }
-  }
+    }),
+  );
 }
 
 export async function followFranchise(collectionId: number, userId: number) {

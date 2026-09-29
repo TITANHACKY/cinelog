@@ -34,10 +34,10 @@ export function LibraryFilterControls({
   onMediaTypeChange,
   libraryCollections,
 }: LibraryFilterControlsProps) {
-  const counts: Record<string, number | undefined> = {
+  const counts: Record<string, number> = {
     movie: movieCount,
     series: seriesCount,
-    franchises: franchiseCount,
+    franchises: franchiseCount ?? 0,
   };
   const browse = useLibraryBrowse(mediaType);
   const presetActive = browse.selectedCollectionId !== null;
@@ -104,14 +104,14 @@ export function LibraryFilterControls({
           icon: <Icon className="size-3.5 shrink-0" />,
           badge: (
             <span
-              aria-label={`${counts[value]} ${value}`}
+              aria-label={`${counts[value] ?? 0} ${value}`}
               className={`inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-md px-1.5 font-public-sans text-[10px] leading-none font-medium ${
                 mediaType === value
                   ? "bg-white/25 text-white"
                   : "bg-surface-container text-secondary"
               }`}
             >
-              {counts[value]}
+              {counts[value] ?? 0}
             </span>
           ),
         }))}
