@@ -16,6 +16,7 @@ type MediaCardProps = {
   actions?: ReactNode;
   footerTop?: ReactNode;
   actionsPosition?: "inline" | "below";
+  imageLoading?: "eager" | "lazy";
 };
 
 export function MediaCard({
@@ -29,6 +30,7 @@ export function MediaCard({
   actions,
   footerTop,
   actionsPosition = "inline",
+  imageLoading = "eager",
 }: MediaCardProps) {
   return (
     <Card className={MEDIA_CARD_CLASS}>
@@ -42,7 +44,7 @@ export function MediaCard({
             alt={`${title} poster`}
             className="absolute inset-0 h-full w-full object-cover"
             fill
-            loading="eager"
+            loading={imageLoading}
             sizes="(max-width: 640px) 50vw, (max-width: 1720px) 20vw, 240px"
             src={posterUrl(posterPath, FALLBACK_POSTER)}
           />
