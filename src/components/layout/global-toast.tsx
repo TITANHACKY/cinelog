@@ -6,16 +6,20 @@ import { Toast } from "@/components/ui/toast";
 
 export function GlobalToast() {
   const dispatch = useAppDispatch();
-  const { message, variant, key } = useAppSelector((state) => state.toast);
+  const { message, variant, action, duration, key } = useAppSelector(
+    (state) => state.toast,
+  );
 
   if (!message) return null;
 
   return (
     <Toast
+      action={action}
+      duration={duration}
       key={key}
       message={message}
-      variant={variant}
       onDismiss={() => dispatch(hideToast())}
+      variant={variant}
     />
   );
 }
