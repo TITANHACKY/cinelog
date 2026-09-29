@@ -100,7 +100,10 @@ export async function unfollowFranchise(collectionId: number, userId: number) {
   };
 }
 
-export async function getUserFollowedFranchises(userId: number) {
-  const followed = await getRepoFollowedFranchises(userId);
+export async function getUserFollowedFranchises(
+  userId: number,
+  options?: { limit?: number; offset?: number },
+) {
+  const followed = await getRepoFollowedFranchises(userId, options);
   return followed;
 }

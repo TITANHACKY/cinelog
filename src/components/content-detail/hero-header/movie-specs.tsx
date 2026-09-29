@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { Clock, Globe, Shield, User, Video } from "lucide-react";
+import { Clock, Film, Globe, Shield, User, Video } from "lucide-react";
+import { toMovieStatusDisplay } from "@/lib/media/status";
 import { useLocales } from "@/hooks/locales/use-locales";
 import { useGetPreferencesQuery } from "@/store/api/user-api";
 import type { MovieDetails } from "@/lib/types";
@@ -16,6 +17,8 @@ export function MovieSpecs({ movie }: MovieSpecsProps) {
 
   const ageRating = movie.certification?.certification?.trim() || "NR";
   const runtimeDisplay = movie.runtime ? `${movie.runtime}m` : "N/A";
+  const statusDisplay =
+    toMovieStatusDisplay(movie.status) ?? movie.status?.trim() ?? null;
 
   const originalLangCode = movie.original_language;
   const originalLangName = originalLangCode
@@ -88,6 +91,14 @@ export function MovieSpecs({ movie }: MovieSpecsProps) {
             <span>{langName}</span>
           </span>
         ))}
+
+        {/* Movie Status */}
+        {statusDisplay && (
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-high px-2.5 py-1 font-medium text-on-surface">
+            <Film className="h-3.5 w-3.5 text-outline-muted" />
+            <span>{statusDisplay}</span>
+          </span>
+        )}
       </div>
 
       {/* Credits & Production Grid */}

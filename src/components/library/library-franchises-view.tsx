@@ -6,17 +6,23 @@ import { Layers, Loader2 } from "lucide-react";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { FranchiseCard } from "@/components/library/franchise-card";
 import { LIBRARY_DESCRIPTION, MEDIA_TYPES } from "@/lib/constants/library";
-import {
-  useGetFollowedFranchisesQuery,
-  useGetFranchiseDetailsQuery,
-} from "@/store/api/franchises-api";
+import { useGetFranchiseDetailsQuery } from "@/store/api/franchises-api";
 import { useGetDashboardQuery } from "@/store/api/library-api";
 import { Button } from "@/components/ui/button";
 import { MovieCard } from "@/components/ui/movie-card";
+import { useLibraryFranchises } from "@/hooks/library/use-library-franchises";
+import { useInfiniteScroll } from "@/hooks/library/use-infinite-scroll";
 import type { LibraryMovie } from "@/lib/types";
 
 export function LibraryFranchisesView() {
-  const { data: franchises = [], isLoading } = useGetFollowedFranchisesQuery();
+  const {
+    franchises,
+    totalCount,
+    hasMore,
+    isLoading,
+    loadingMore,
+    loadMore,
+  } = useLibraryFranchises();
   const { data: dashboard } = useGetDashboardQuery();
   const [selectedFranchiseId, setSelectedFranchiseId] = useState<number | null>(
     null,
@@ -24,7 +30,13 @@ export function LibraryFranchisesView() {
 
   const movieCount = dashboard?.counts?.movies ?? 0;
   const seriesCount = dashboard?.counts?.series ?? 0;
-  const franchiseCount = franchises.length;
+  const franchiseCount = totalCount;
+
+  const sentinelRef = useInfiniteScroll(
+    loadMore,
+    hasMore && !loadingMore,
+    franchises.length,
+  );
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 py-6 sm:px-6 lg:py-8">
@@ -77,40 +89,56 @@ export function LibraryFranchisesView() {
 
         {/* Content */}
         {isLoading ? (
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
-        </div>
-      ) : franchises.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-outline-variant bg-surface-container/60 p-12 text-center backdrop-blur-xs">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-outline-variant bg-surface-container-high text-outline-muted">
-            <Layers className="h-7 w-7" />
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
           </div>
-          <h2 className="font-heading text-lg font-bold text-on-surface">
-            No followed franchises yet
-          </h2>
-          <p className="mt-2 max-w-md text-xs sm:text-sm text-on-surface-variant leading-relaxed">
-            When you view a movie that is part of a franchise (e.g. Harry
-            Potter, Marvel, Avatar), click &quot;Follow Franchise&quot; to track
-            the entire franchise and its movies right here.
-          </p>
-          <Link
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-primary px-5 py-2.5 text-xs font-semibold text-brand-on-primary hover:bg-brand-primary/90 transition"
-            href="/library/movies"
-          >
-            <span>Explore Movies</span>
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {franchises.map((franchise) => (
-            <FranchiseCard
-              franchise={franchise}
-              key={franchise.id}
-              onSelect={() => setSelectedFranchiseId(franchise.tmdbId)}
-            />
-          ))}
-        </div>
-      )}
+        ) : franchises.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-outline-variant bg-surface-container/60 p-12 text-center backdrop-blur-xs">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-outline-variant bg-surface-container-high text-outline-muted">
+              <Layers className="h-7 w-7" />
+            </div>
+            <h2 className="font-heading text-lg font-bold text-on-surface">
+              No followed franchises yet
+            </h2>
+            <p className="mt-2 max-w-md text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+              When you view a movie that is part of a franchise (e.g. Harry
+              Potter, Marvel, Avatar), click &quot;Follow Franchise&quot; to track
+              the entire franchise and its movies right here.
+            </p>
+            <Link
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-primary px-5 py-2.5 text-xs font-semibold text-brand-on-primary hover:bg-brand-primary/90 transition"
+              href="/library/movies"
+            >
+              <span>Explore Movies</span>
+            </Link>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {franchises.map((franchise) => (
+                <FranchiseCard
+                  franchise={franchise}
+                  key={franchise.id}
+                  onSelect={() => setSelectedFranchiseId(franchise.tmdbId)}
+                />
+              ))}
+            </div>
+            {hasMore ? (
+              <div
+                aria-hidden={!loadingMore}
+                className="flex justify-center pt-2"
+                ref={sentinelRef}
+              >
+                {loadingMore ? (
+                  <Loader2
+                    aria-label="Loading more"
+                    className="h-5 w-5 animate-spin text-secondary"
+                  />
+                ) : null}
+              </div>
+            ) : null}
+          </>
+        )}
 
       {/* Franchise Modal / Drawer if a franchise is selected */}
       {selectedFranchiseId && (

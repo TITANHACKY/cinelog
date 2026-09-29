@@ -1,3 +1,5 @@
+import { FRANCHISES_PAGE_SIZE } from "@/lib/constants/library";
+import { apiFetch } from "@/lib/http/client";
 import { baseApi } from "@/store/api/base-api";
 
 export type FranchisePartItem = {
@@ -32,6 +34,12 @@ export type FollowedFranchiseItem = {
   posterPath: string | null;
   backdropPath: string | null;
   followedAt: string | null;
+};
+
+export type FollowedFranchisesData = {
+  franchises: FollowedFranchiseItem[];
+  totalCount: number;
+  hasMore: boolean;
 };
 
 // RTK's updateQueryData thunk is generic over the whole api state
@@ -219,6 +227,21 @@ export const franchisesApi = baseApi.injectEndpoints({
         ) as { undo: () => void };
         undos.push(() => patchDetails.undo());
 
+        const patchFollowed = dispatch(
+          franchisesApi.util.updateQueryData(
+            "getFollowedFranchises",
+            undefined,
+            (draft) => {
+              const index = draft.franchises.findIndex((f) => f.tmdbId === id);
+              if (index !== -1) {
+                draft.franchises.splice(index, 1);
+                draft.totalCount = Math.max(0, draft.totalCount - 1);
+              }
+            },
+          ),
+        ) as { undo: () => void };
+        undos.push(() => patchFollowed.undo());
+
         try {
           const { contentDetailsApi } = await import("./content-details-api");
           const state = getState() as RootState;
@@ -261,16 +284,57 @@ export const franchisesApi = baseApi.injectEndpoints({
         "Franchises",
       ],
     }),
-    getFollowedFranchises: build.query<FollowedFranchiseItem[], void>({
+    getFollowedFranchises: build.query<FollowedFranchisesData, void>({
       query: () => ({
-        url: "/api/library/franchises",
+        url: `/api/library/franchises?limit=${FRANCHISES_PAGE_SIZE}&offset=0`,
       }),
-      transformResponse: (response: { franchises: FollowedFranchiseItem[] }) =>
-        response.franchises ?? [],
+      transformResponse: (response: {
+        franchises: FollowedFranchiseItem[];
+        totalCount?: number;
+        hasMore?: boolean;
+      }) => ({
+        franchises: response.franchises ?? [],
+        totalCount: response.totalCount ?? (response.franchises?.length ?? 0),
+        hasMore: Boolean(response.hasMore),
+      }),
       providesTags: ["Franchises"],
     }),
   }),
 });
+
+export async function loadMoreFollowedFranchises(
+  dispatch: AppDispatch,
+  offset: number,
+) {
+  const response = await apiFetch(
+    `/api/library/franchises?limit=${FRANCHISES_PAGE_SIZE}&offset=${offset}`,
+  );
+  const json = (await response.json()) as {
+    franchises: FollowedFranchiseItem[];
+    totalCount: number;
+    hasMore: boolean;
+  };
+  if (!response.ok) {
+    throw new Error("Failed to load more franchises");
+  }
+  dispatch(
+    franchisesApi.util.updateQueryData(
+      "getFollowedFranchises",
+      undefined,
+      (draft) => {
+        const existingIds = new Set(draft.franchises.map((f) => f.id));
+        for (const item of json.franchises) {
+          if (!existingIds.has(item.id)) {
+            draft.franchises.push(item);
+            existingIds.add(item.id);
+          }
+        }
+        draft.totalCount = json.totalCount;
+        draft.hasMore = json.hasMore;
+      },
+    ),
+  );
+}
 
 export const {
   useGetFranchiseDetailsQuery,
