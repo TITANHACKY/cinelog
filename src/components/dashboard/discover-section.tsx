@@ -1,49 +1,31 @@
 "use client";
 
 import { Compass, Loader2, RefreshCw, SlidersHorizontal } from "lucide-react";
-import { DiscoverRow } from "@/components/dashboard/discover-row";
+import { DiscoverRows } from "@/components/dashboard/discover-rows";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import type { DiscoverRow as DiscoverRowData } from "@/lib/types";
+import type { DiscoverLayoutReady } from "@/lib/types";
 
 type DiscoverSectionProps = {
   enabled: boolean;
-  rows: DiscoverRowData[];
+  layout: DiscoverLayoutReady | null;
   isLoading: boolean;
   errorMessage: string | null;
   isRetrying: boolean;
   retry: () => void;
 };
 
-function DiscoverRowSkeleton() {
-  return (
-    <div aria-hidden className="flex w-full min-w-0 flex-col gap-4">
-      <div className="flex items-center gap-2.5 sm:gap-3">
-        <div className="h-8 w-8 shrink-0 rounded-lg bg-surface-container motion-safe:animate-pulse" />
-        <div className="h-5 w-48 max-w-full rounded-md bg-surface-container motion-safe:animate-pulse sm:h-6" />
-      </div>
-      <div className="flex gap-3 overflow-hidden sm:gap-4">
-        {Array.from({ length: 6 }, (_, index) => (
-          <div
-            className="aspect-2/3 w-40 shrink-0 rounded-xl bg-surface-container motion-safe:animate-pulse sm:w-60"
-            key={index}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
+const HEADER_PLACEHOLDERS = 5;
 
 export function DiscoverSection({
   enabled,
-  rows,
+  layout,
   isLoading,
   errorMessage,
   isRetrying,
   retry,
 }: DiscoverSectionProps) {
   if (!enabled) return null;
-  if (!isLoading && !errorMessage && rows.length === 0) return null;
 
   return (
     <section
@@ -71,11 +53,19 @@ export function DiscoverSection({
         </ButtonLink>
       </div>
 
-      {isLoading ? (
-        <>
-          <DiscoverRowSkeleton />
-          <DiscoverRowSkeleton />
-        </>
+      {layout ? (
+        <DiscoverRows layout={layout} />
+      ) : isLoading ? (
+        Array.from({ length: HEADER_PLACEHOLDERS }, (_, index) => (
+          <div
+            aria-hidden
+            className="flex items-center gap-2.5 sm:gap-3"
+            key={index}
+          >
+            <div className="h-8 w-8 shrink-0 rounded-lg bg-surface-container motion-safe:animate-pulse" />
+            <div className="h-5 w-48 max-w-full rounded-md bg-surface-container motion-safe:animate-pulse sm:h-6" />
+          </div>
+        ))
       ) : errorMessage ? (
         <EmptyState
           action={
@@ -97,9 +87,7 @@ export function DiscoverSection({
           description={errorMessage}
           title="Recommendations unavailable"
         />
-      ) : (
-        rows.map((row) => <DiscoverRow key={row.key} row={row} />)
-      )}
+      ) : null}
     </section>
   );
 }

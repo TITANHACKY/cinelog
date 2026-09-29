@@ -1,6 +1,5 @@
 import type {
   DiscoverLayout,
-  DiscoverResponse,
   DiscoverRowPage,
   DiscoverTitle,
   LibraryMediaType,
@@ -9,10 +8,6 @@ import { baseApi } from "@/store/api/base-api";
 
 export const discoverApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getDiscover: build.query<DiscoverResponse, void>({
-      query: () => ({ url: "/api/dashboard/discover" }),
-      providesTags: ["Discover"],
-    }),
     getDiscoverLayout: build.query<DiscoverLayout, void>({
       query: () => ({ url: "/api/dashboard/discover" }),
       providesTags: ["Discover"],
@@ -34,7 +29,6 @@ export const discoverApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetDiscoverQuery,
   useGetDiscoverLayoutQuery,
   useGetDiscoverRowPagesInfiniteQuery,
 } = discoverApi;
@@ -63,8 +57,8 @@ function patchItems(items: DiscoverTitle[], change: DiscoverChange) {
   }
 }
 
-// Update a title's status in every cached discover row without refetching,
-// so rows never reshuffle under the user.
+// Update a title's status in every cached discover row page without
+// refetching, so rows never reshuffle under the user.
 export function patchDiscoverCaches(
   dispatch: AppDispatch,
   getState: () => unknown,
@@ -72,18 +66,6 @@ export function patchDiscoverCaches(
 ) {
   const state = getState() as RootState;
   const undos: Array<() => void> = [];
-
-  for (const arg of discoverApi.util.selectCachedArgsForQuery(
-    state,
-    "getDiscover",
-  )) {
-    const patch = dispatch(
-      discoverApi.util.updateQueryData("getDiscover", arg, (draft) => {
-        for (const row of draft.rows) patchItems(row.items, change);
-      }),
-    ) as { undo: () => void };
-    undos.push(() => patch.undo());
-  }
 
   for (const arg of discoverApi.util.selectCachedArgsForQuery(
     state,

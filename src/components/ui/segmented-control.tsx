@@ -25,6 +25,8 @@ type SegmentedControlProps<T extends string> = {
    */
   stretch?: boolean;
   "aria-label"?: string;
+  /** Extra classes for every option button (e.g. taller tap targets). */
+  optionClassName?: string;
 };
 
 export function SegmentedControl<T extends string>({
@@ -34,6 +36,7 @@ export function SegmentedControl<T extends string>({
   className,
   stretch = false,
   "aria-label": ariaLabel,
+  optionClassName,
 }: SegmentedControlProps<T>) {
   return (
     <div
@@ -49,6 +52,7 @@ export function SegmentedControl<T extends string>({
         const className = cn(
           "min-h-8 rounded-lg px-2.5 py-1 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm",
           stretch && "min-w-0",
+          optionClassName,
         );
         const content = (
           <>

@@ -7,7 +7,7 @@ import { ContinueWatchingCarousel } from "@/components/dashboard/continue-watchi
 import { CollectionCarousel } from "@/components/library/collection-carousel";
 import { DiscoverSection } from "@/components/dashboard/discover-section";
 import { useDashboard } from "@/hooks/dashboard/use-dashboard";
-import { useDiscover } from "@/hooks/dashboard/use-discover";
+import { useDiscoverLayout } from "@/hooks/dashboard/use-discover-layout";
 import { useAppSelector } from "@/store";
 import { BookOpen, Film, Search, Sparkles, Tv } from "lucide-react";
 
@@ -23,7 +23,7 @@ export function HomePage() {
     continueWatching,
     collections,
   } = useDashboard();
-  const discover = useDiscover();
+  const discover = useDiscoverLayout();
 
   return (
     <main className="relative min-h-[calc(100vh-3.5rem)] px-3.5 pt-5 pb-8 sm:px-8 sm:pt-6 lg:pt-8 lg:pb-10">
@@ -106,7 +106,7 @@ export function HomePage() {
         continueWatching.length === 0 &&
         collections.length === 0 &&
         !discover.isLoading &&
-        !discover.hasRows ? (
+        discover.layout === null ? (
           <section className="flex flex-col items-center gap-3.5 rounded-2xl border border-dashed border-outline-variant bg-surface-container-low p-6 text-center sm:gap-4 sm:p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-primary-container/20 text-brand-primary sm:h-11 sm:w-11">
               <Search className="h-5 w-5" />
