@@ -230,6 +230,20 @@ export const contentDetailsApi = baseApi.injectEndpoints({
       },
       async onQueryStarted(arg, { dispatch, getState, queryFulfilled }) {
         const { id, mediaType, mutation, value, progress } = arg;
+        let previousSeasonEpisodesWatched: number | undefined;
+        if (
+          mutation === "update-progress" &&
+          progress &&
+          mediaType === "series"
+        ) {
+          const cached = readCachedDetails(getState, mediaType, id);
+          if (cached && "seasons" in cached && Array.isArray(cached.seasons)) {
+            const season = cached.seasons.find(
+              (item) => item.season_number === progress.seasonNumber,
+            );
+            previousSeasonEpisodesWatched = season?.episodes_watched ?? 0;
+          }
+        }
         try {
           const { data } = await queryFulfilled;
           const tmdbId = Number(id);
@@ -350,11 +364,17 @@ export const contentDetailsApi = baseApi.injectEndpoints({
             const isSeasonCompleted = season
               ? season.episodes_watched >= (season.episode_count ?? 0)
               : false;
+            const isUnmark =
+              previousSeasonEpisodesWatched !== undefined &&
+              progress.episodeNumber < previousSeasonEpisodesWatched;
+            const message = isUnmark
+              ? `Episode ${previousSeasonEpisodesWatched} unmarked`
+              : isSeasonCompleted
+                ? `Season ${progress.seasonNumber} completed!`
+                : `Episode ${progress.episodeNumber} marked as completed`;
             dispatch(
               showToast({
-                message: isSeasonCompleted
-                  ? `Season ${progress.seasonNumber} completed!`
-                  : `Episode ${progress.episodeNumber} marked as completed`,
+                message,
                 variant: "success",
               }),
             );

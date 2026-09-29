@@ -6,12 +6,18 @@ type ButtonVariant =
   | "primaryFilled"
   | "accentFilled"
   | "darkFilled"
+  | "progressEpisode"
+  | "progressSeason"
+  | "progressUndo"
   | "darkTonal"
   | "ghost"
   | "dark"
   | "link";
 
 type ButtonSize = "default" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
+
+const progressFilledBase =
+  "border border-outline-variant bg-surface-container-high hover:bg-surface-container-highest active:bg-surface-container-high";
 
 const variantClasses: Record<ButtonVariant, string> = {
   primaryFilled:
@@ -20,6 +26,9 @@ const variantClasses: Record<ButtonVariant, string> = {
     "bg-brand-primary text-brand-on-primary hover:bg-brand-primary/85",
   darkFilled:
     "border border-outline-variant bg-surface-container-high text-on-surface hover:bg-surface-container-highest",
+  progressEpisode: `${progressFilledBase} text-status-info`,
+  progressSeason: `${progressFilledBase} text-brand-tertiary-accent-alt`,
+  progressUndo: `${progressFilledBase} text-on-surface`,
   darkTonal:
     "border border-current/30 bg-current/10 text-brand-primary hover:bg-current/20 hover:text-brand-primary",
   ghost:

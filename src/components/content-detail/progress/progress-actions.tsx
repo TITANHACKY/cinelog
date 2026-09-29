@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CheckCheck, Loader2 } from "lucide-react";
+import { Check, CheckCheck, ChevronLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useContentMutation } from "@/hooks/title-details/use-content-mutation";
@@ -23,6 +23,9 @@ type ProgressActionsProps = {
   seasonNumber?: number;
 };
 
+const progressActionClassName =
+  "h-12 w-full min-w-0 shrink justify-center gap-2 rounded-xl px-2 text-sm font-semibold sm:h-14 sm:flex-1 sm:px-3 sm:text-base [&_span]:truncate";
+
 export function ProgressActions({
   disabled = false,
   isWatchable,
@@ -40,19 +43,27 @@ export function ProgressActions({
     mutationStatus,
   });
   const isComplete = episodeCount <= 0 || episodesWatched >= episodeCount;
-  const isDisabled = disabled || id === undefined || isMutating || isComplete;
+  const isForwardDisabled =
+    disabled || id === undefined || isMutating || isComplete;
+  const isUndoDisabled =
+    disabled || id === undefined || isMutating || episodesWatched <= 0;
   const nextEpisode = Math.min(episodesWatched + 1, episodeCount);
+  const previousEpisode = Math.max(episodesWatched - 1, 0);
   const isEpisodeMutating =
     isMutating &&
     lastMutation === "update-progress" &&
     pendingProgress?.episodeNumber === nextEpisode;
+  const isUndoMutating =
+    isMutating &&
+    lastMutation === "update-progress" &&
+    pendingProgress?.episodeNumber === previousEpisode;
   const isSeasonMutating =
     isMutating &&
     lastMutation === "update-progress" &&
     pendingProgress?.episodeNumber === episodeCount;
 
-  function updateProgress(episodeNumber: number) {
-    if (isDisabled) return;
+  function updateProgress(episodeNumber: number, isActionDisabled: boolean) {
+    if (isActionDisabled) return;
     requestMutation("update-progress", {
       progress: { seasonNumber, episodeNumber },
       requireWatchlist: false,
@@ -61,76 +72,83 @@ export function ProgressActions({
   }
 
   const showUnreleasedTooltip = isWatchable === false;
+  const undoLabel = `Unmark Ep ${episodesWatched}`;
 
-  const episodeButton = (
-    <Button
-      className="h-12 w-full justify-center gap-2 rounded-xl border border-brand-primary-container bg-brand-primary-container px-4 text-sm font-semibold text-white hover:bg-brand-primary-container/90 sm:h-14 sm:text-base"
-      disabled={isDisabled}
-      onClick={() => updateProgress(nextEpisode)}
-      type="button"
-      variant="primaryFilled"
-    >
-      {isEpisodeMutating ? (
-        <Loader2 className="h-4 w-4 animate-spin text-white" />
-      ) : (
-        <Check className="h-4 w-4" />
-      )}
-      {isEpisodeMutating
-        ? "Updating Episode..."
-        : `Mark Ep ${nextEpisode || 1} Watched`}
-    </Button>
-  );
+  const progressActions = (
+    <div className="flex flex-col gap-3 sm:flex-row">
+      <Button
+        aria-label={undoLabel}
+        className={progressActionClassName}
+        disabled={isUndoDisabled}
+        onClick={() => updateProgress(previousEpisode, isUndoDisabled)}
+        type="button"
+        variant="progressUndo"
+      >
+        {isUndoMutating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <ChevronLeft className="h-4 w-4" />
+        )}
+        <span>
+          {isUndoMutating ? `Unmarking Ep ${episodesWatched}...` : undoLabel}
+        </span>
+      </Button>
 
-  const seasonButton = (
-    <Button
-      className="h-12 w-full justify-center gap-2 rounded-xl border border-outline-variant bg-surface-container-high px-4 text-sm font-semibold text-on-surface hover:bg-surface-container-highest sm:h-14 sm:text-base"
-      disabled={isDisabled}
-      onClick={() => updateProgress(episodeCount)}
-      type="button"
-      variant="darkFilled"
-    >
-      {isSeasonMutating ? (
-        <Loader2 className="h-4 w-4 animate-spin text-brand-tertiary-accent-alt" />
-      ) : (
-        <CheckCheck className="h-4 w-4 text-brand-tertiary-accent-alt" />
-      )}
-      {isSeasonMutating
-        ? "Marking Season Watched..."
-        : `Mark Season ${seasonNumber} Watched`}
-    </Button>
-  );
+      <Button
+        className={progressActionClassName}
+        disabled={isForwardDisabled}
+        onClick={() => updateProgress(nextEpisode, isForwardDisabled)}
+        type="button"
+        variant="progressEpisode"
+      >
+        {isEpisodeMutating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Check className="h-4 w-4" />
+        )}
+        <span>
+          {isEpisodeMutating
+            ? "Updating Episode..."
+            : `Mark Ep ${nextEpisode || 1} Watched`}
+        </span>
+      </Button>
 
-  return (
-    <div className="grid gap-3 md:grid-cols-2">
-      {showUnreleasedTooltip ? (
-        <Tooltip
-          className="w-full"
-          content={NON_RELEASED_SERIES_TOOLTIP}
-          contentClassName="whitespace-nowrap"
-          side="top"
-          triggerClassName="w-full"
-        >
-          {episodeButton}
-        </Tooltip>
-      ) : (
-        episodeButton
-      )}
-
-      {showUnreleasedTooltip ? (
-        <Tooltip
-          className="w-full"
-          content={NON_RELEASED_SERIES_TOOLTIP}
-          contentClassName="whitespace-nowrap"
-          side="top"
-          triggerClassName="w-full"
-        >
-          {seasonButton}
-        </Tooltip>
-      ) : (
-        seasonButton
-      )}
+      <Button
+        className={progressActionClassName}
+        disabled={isForwardDisabled}
+        onClick={() => updateProgress(episodeCount, isForwardDisabled)}
+        type="button"
+        variant="progressSeason"
+      >
+        {isSeasonMutating ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <CheckCheck className="h-4 w-4" />
+        )}
+        <span>
+          {isSeasonMutating
+            ? "Marking Season Watched..."
+            : `Mark Season ${seasonNumber} Watched`}
+        </span>
+      </Button>
     </div>
   );
+
+  if (showUnreleasedTooltip) {
+    return (
+      <Tooltip
+        className="w-full"
+        content={NON_RELEASED_SERIES_TOOLTIP}
+        contentClassName="whitespace-nowrap"
+        side="top"
+        triggerClassName="w-full"
+      >
+        {progressActions}
+      </Tooltip>
+    );
+  }
+
+  return progressActions;
 }
 
 export default ProgressActions;
