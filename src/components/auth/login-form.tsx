@@ -60,6 +60,7 @@ export function LoginForm() {
 
       <form
         className="flex flex-col gap-2.5 sm:gap-4.5"
+        method="post"
         onSubmit={handleSubmit(onSubmit)}
       >
         <FormField
