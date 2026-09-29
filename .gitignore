@@ -39,6 +39,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
+.env.local
 .env
 .env.prod
 **/http-client.private.env.json
