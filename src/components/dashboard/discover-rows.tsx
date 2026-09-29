@@ -61,15 +61,21 @@ function SelectableRow({
       select?.optionsFor(media).map((option) => option.value) ?? [],
   });
 
+  const options = select?.optionsFor(selection.media) ?? [];
+  const selectedLabel =
+    options.find((option) => option.value === selection.value)?.label ?? "None";
+  const rowKey = keyFor(selection.media, selection.value);
+
   const controls = (
     <div className="flex min-w-0 flex-wrap items-center gap-2">
       {select ? (
         <SearchFilterSelect
-          aria-label={select.label}
+          // Keep the visible value in the accessible name (WCAG 2.5.3).
+          aria-label={`${select.label}: ${selectedLabel}`}
           heading={select.label}
           hideHeading
           onChange={selection.setValue}
-          options={select.optionsFor(selection.media)}
+          options={options}
           placeholder={select.label}
           triggerClassName="min-h-11 sm:min-h-9"
           value={selection.value ?? ""}
@@ -93,8 +99,10 @@ function SelectableRow({
     <DiscoverRow
       controls={controls}
       icon={icon}
+      // Remount per selection so a new genre/language starts scrolled to the start.
+      key={rowKey ?? "none"}
       rowId={rowId}
-      rowKey={keyFor(selection.media, selection.value)}
+      rowKey={rowKey}
       title={title}
     />
   );

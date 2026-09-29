@@ -86,6 +86,22 @@ export function DiscoverRow({
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         ) : null}
+        {row.loadMoreFailed ? (
+          <div className="flex w-40 shrink-0 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-outline-variant bg-surface-container-low p-3 text-center sm:w-60">
+            <p className="font-public-sans text-xs text-secondary">
+              Couldn&apos;t load more
+            </p>
+            <Button
+              className="h-11 gap-2 px-3 sm:h-9"
+              onClick={row.retryMore}
+              type="button"
+              variant="darkTonal"
+            >
+              <RefreshCw className="size-4" />
+              Try again
+            </Button>
+          </div>
+        ) : null}
       </>
     );
   }

@@ -24,6 +24,9 @@ export const discoverApi = baseApi.injectEndpoints({
         url: `/api/dashboard/discover/rows/${encodeURIComponent(key)}?page=${pageParam}`,
       }),
       providesTags: ["Discover"],
+      // Keep switched-away selections for the 5-minute revisit window, so
+      // switching back is instant (the default would evict after 60 s).
+      keepUnusedDataFor: 300,
     }),
   }),
 });
