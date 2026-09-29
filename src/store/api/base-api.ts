@@ -104,6 +104,7 @@ export const baseApi = createApi({
     "Preferences",
     "Genres",
     "Locales",
+    "Discover",
   ],
   refetchOnFocus: false,
   refetchOnReconnect: false,

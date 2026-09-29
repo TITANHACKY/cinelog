@@ -9,6 +9,7 @@ export type User = {
   displayName?: string | null;
   hasCompletedOnboarding?: boolean;
   smartCollectionsEnabled?: boolean;
+  discoverRowsEnabled?: boolean;
 };
 
 export type AuthState = {

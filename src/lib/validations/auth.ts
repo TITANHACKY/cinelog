@@ -67,6 +67,7 @@ export const updateProfileSchema = z
     currentPassword: z.string().optional(),
     newPassword: passwordSchema.optional(),
     smartCollectionsEnabled: z.boolean().optional(),
+    discoverRowsEnabled: z.boolean().optional(),
   })
   .superRefine((data, context) => {
     if (data.newPassword && !data.currentPassword) {
@@ -82,7 +83,8 @@ export const updateProfileSchema = z
       data.email === undefined &&
       data.displayName === undefined &&
       data.newPassword === undefined &&
-      data.smartCollectionsEnabled === undefined
+      data.smartCollectionsEnabled === undefined &&
+      data.discoverRowsEnabled === undefined
     ) {
       context.addIssue({
         code: "custom",

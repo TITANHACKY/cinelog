@@ -24,11 +24,14 @@ export const userApi = baseApi.injectEndpoints({
       UserPreferencesInput
     >({
       query: (body) => ({ url: "/api/user/preferences", method: "PUT", body }),
-      invalidatesTags: ["Preferences", "Me"],
+      invalidatesTags: ["Preferences", "Me", "Discover"],
     }),
     updateProfile: build.mutation<{ user: User }, Record<string, unknown>>({
       query: (body) => ({ url: "/api/user/profile", method: "PATCH", body }),
-      invalidatesTags: ["Me", "Dashboard", "Collections", "CollectionCarousel"],
+      invalidatesTags: (_result, _error, body) =>
+        "discoverRowsEnabled" in body
+          ? ["Me", "Dashboard", "Collections", "CollectionCarousel", "Discover"]
+          : ["Me", "Dashboard", "Collections", "CollectionCarousel"],
     }),
     getTitleSuggestions: build.query<
       { titles: TitleCandidate[] },

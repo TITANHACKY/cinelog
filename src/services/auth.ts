@@ -15,9 +15,21 @@ import {
   updateUser,
 } from "@/repositories/users";
 import {
+  getDiscoverRowsEnabled,
   getSmartCollectionsEnabled,
+  setDiscoverRowsEnabled,
   setSmartCollectionsEnabled,
 } from "@/repositories/preferences";
+
+type PublicUserFlags = {
+  smartCollectionsEnabled: boolean;
+  discoverRowsEnabled: boolean;
+};
+
+const DEFAULT_PUBLIC_FLAGS: PublicUserFlags = {
+  smartCollectionsEnabled: false,
+  discoverRowsEnabled: true,
+};
 
 function toPublicUser(
   user: {
@@ -27,7 +39,7 @@ function toPublicUser(
     displayName: string | null;
     onboardingCompletedAt?: string | null;
   },
-  smartCollectionsEnabled = false,
+  flags: PublicUserFlags = DEFAULT_PUBLIC_FLAGS,
 ) {
   return {
     id: user.id,
@@ -35,8 +47,16 @@ function toPublicUser(
     email: user.email,
     displayName: user.displayName,
     hasCompletedOnboarding: user.onboardingCompletedAt != null,
-    smartCollectionsEnabled,
+    ...flags,
   };
+}
+
+async function loadPublicFlags(userId: number): Promise<PublicUserFlags> {
+  const [smartCollectionsEnabled, discoverRowsEnabled] = await Promise.all([
+    getSmartCollectionsEnabled(userId),
+    getDiscoverRowsEnabled(userId),
+  ]);
+  return { smartCollectionsEnabled, discoverRowsEnabled };
 }
 
 export async function loginUser(input: LoginInput) {
@@ -58,8 +78,10 @@ export async function loginUser(input: LoginInput) {
     onboarding: user.onboardingCompletedAt != null ? "completed" : undefined,
   });
 
-  const smartCollectionsEnabled = await getSmartCollectionsEnabled(user.id);
-  return { token, publicUser: toPublicUser(user, smartCollectionsEnabled) };
+  return {
+    token,
+    publicUser: toPublicUser(user, await loadPublicFlags(user.id)),
+  };
 }
 
 export async function signupUser(input: SignupInput) {
@@ -95,8 +117,7 @@ export async function getCurrentUser(userId: number) {
     throw new AppError("User not found", 404);
   }
 
-  const smartCollectionsEnabled = await getSmartCollectionsEnabled(userId);
-  return toPublicUser(user, smartCollectionsEnabled);
+  return toPublicUser(user, await loadPublicFlags(userId));
 }
 
 export async function updateUserProfile(
@@ -160,6 +181,10 @@ export async function updateUserProfile(
     await setSmartCollectionsEnabled(userId, input.smartCollectionsEnabled);
   }
 
+  if (input.discoverRowsEnabled !== undefined) {
+    await setDiscoverRowsEnabled(userId, input.discoverRowsEnabled);
+  }
+
   let token: string | undefined;
   if (updates.username) {
     token = await createSessionToken({
@@ -168,9 +193,8 @@ export async function updateUserProfile(
     });
   }
 
-  const smartCollectionsEnabled = await getSmartCollectionsEnabled(userId);
   return {
     token,
-    publicUser: toPublicUser(updatedUser, smartCollectionsEnabled),
+    publicUser: toPublicUser(updatedUser, await loadPublicFlags(userId)),
   };
 }
