@@ -25,7 +25,7 @@ export function SpecificationsMeta({
   // Age Rating
   const ageRatingRaw = isMovie
     ? movie?.certification?.certification
-    : series?.content_ratings?.rating;
+    : series?.certification?.certification;
   const ageRating = ageRatingRaw?.trim() ? ageRatingRaw : "NR";
 
   // Runtime / Episodes

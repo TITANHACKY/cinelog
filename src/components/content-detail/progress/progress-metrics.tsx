@@ -1,7 +1,7 @@
 import { useProgressMetrics } from "@/hooks/title-details/use-progress-metrics";
 import type { SeriesDetails } from "@/lib/types";
 
-type ProgressStatusProps = {
+type ProgressMetricsProps = {
   series?: SeriesDetails | null;
   selectedSeason?: number;
 };
@@ -9,11 +9,11 @@ type ProgressStatusProps = {
 export function ProgressMetrics({
   series,
   selectedSeason,
-}: ProgressStatusProps) {
+}: ProgressMetricsProps) {
   const metrics = useProgressMetrics(series, selectedSeason);
 
   return (
-    <div className="space-y-5">
+    <div className="grid gap-5 sm:grid-cols-2 sm:gap-4">
       {metrics.map((metric) => (
         <ProgressRow
           key={metric.id}
@@ -41,17 +41,24 @@ function ProgressRow({
   const percent = total > 0 ? Math.round((value / total) * 100) : 0;
 
   return (
-    <div className="grid gap-2">
-      <div className="flex items-center justify-between gap-4 text-sm text-on-surface">
-        <span className="font-medium text-on-surface">{label}</span>
-        <span className="font-semibold text-on-surface">
-          {value} / {total} Episodes ({percent}%)
+    <div className="grid min-w-0 gap-2">
+      <div className="flex items-center justify-between gap-3 text-sm text-on-surface">
+        <span className="min-w-0 truncate font-medium">{label}</span>
+        <span className="shrink-0 font-semibold tabular-nums">
+          {value}/{total} ({percent}%)
         </span>
       </div>
 
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-surface-container-high">
+      <div
+        aria-label={`${label}: ${value} of ${total} episodes, ${percent} percent`}
+        aria-valuemax={total}
+        aria-valuemin={0}
+        aria-valuenow={value}
+        className="h-2.5 w-full overflow-hidden rounded-full bg-surface-container-high"
+        role="progressbar"
+      >
         <div
-          className={`h-full rounded-full ${colorClass}`}
+          className={`h-full rounded-full transition-[width] duration-300 ${colorClass}`}
           style={{ width: `${percent}%` }}
         />
       </div>

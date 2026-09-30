@@ -18,10 +18,8 @@
     "db:studio": "drizzle-kit studio",
     "catalog:sync": "tsx scripts/sync-catalog.ts --mode dry-run",
     "catalog:sync:execute": "tsx scripts/sync-catalog.ts --mode execute",
-    "dropped:cleanup": "tsx scripts/remove-dropped-entries.ts --mode dry-run",
-    "dropped:cleanup:execute": "tsx scripts/remove-dropped-entries.ts --mode execute",
-    "smart-collections:enable-existing": "tsx scripts/enable-smart-collections-existing-users.ts --mode dry-run",
-    "smart-collections:enable-existing:execute": "tsx scripts/enable-smart-collections-existing-users.ts --mode execute"
+    "franchise:link-catalog": "tsx scripts/link-franchise-catalog.ts --mode dry-run",
+    "franchise:link-catalog:execute": "tsx scripts/link-franchise-catalog.ts --mode execute"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

@@ -1,22 +1,37 @@
 import {
+  DEFAULT_FRANCHISE_SORT_OPTION,
   DEFAULT_LIBRARY_BROWSE_QUERY,
+  FRANCHISE_SORT_OPTIONS,
   LIBRARY_BROWSE_SESSION_KEY,
 } from "@/lib/constants";
 import { SMART_COLLECTIONS } from "@/lib/constants/api";
 import { browseQueriesEqual } from "@/lib/media/library-browse";
-import type { LibraryBrowseQuery, LibraryMediaType } from "@/lib/types";
+import type {
+  FranchiseSortOption,
+  LibraryBrowseQuery,
+  LibraryMediaType,
+} from "@/lib/types";
 
 export type LibraryBrowseMediaSession = {
   query: LibraryBrowseQuery;
   selectedCollectionId: number | null;
 };
 
+export type LibraryFranchisesSession = {
+  sortOption: FranchiseSortOption;
+};
+
 export type LibraryBrowseSession = Record<
   LibraryMediaType,
   LibraryBrowseMediaSession
->;
+> & {
+  franchises?: LibraryFranchisesSession;
+};
 
 const MEDIA_TYPES: LibraryMediaType[] = ["movie", "series"];
+const VALID_FRANCHISE_SORT_OPTIONS = new Set<FranchiseSortOption>(
+  FRANCHISE_SORT_OPTIONS.map((option) => option.value),
+);
 
 const VALID_SORT_FIELDS = new Set(
   Object.keys(SMART_COLLECTIONS.sort_field),
@@ -118,6 +133,28 @@ function createDefaultSession(): LibraryBrowseSession {
   };
 }
 
+function parseFranchisesSession(
+  value: unknown,
+): LibraryFranchisesSession | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const sortOption = value.sortOption;
+  if (
+    typeof sortOption !== "string" ||
+    !VALID_FRANCHISE_SORT_OPTIONS.has(sortOption as FranchiseSortOption)
+  ) {
+    return null;
+  }
+
+  return { sortOption: sortOption as FranchiseSortOption };
+}
+
+function isDefaultFranchisesSession(session?: LibraryFranchisesSession) {
+  return !session || session.sortOption === DEFAULT_FRANCHISE_SORT_OPTION;
+}
+
 function parseMediaSession(value: unknown): LibraryBrowseMediaSession | null {
   if (!isRecord(value)) {
     return null;
@@ -159,6 +196,11 @@ function parseSession(value: unknown): LibraryBrowseSession | null {
       if (parsed) {
         session[mediaType] = parsed;
       }
+    }
+
+    const franchises = parseFranchisesSession(value.franchises);
+    if (franchises) {
+      session.franchises = franchises;
     }
 
     return session;
@@ -205,8 +247,10 @@ export function isDefaultLibraryBrowseMediaSession(
 }
 
 export function isDefaultLibraryBrowseSession(session: LibraryBrowseSession) {
-  return MEDIA_TYPES.every((mediaType) =>
-    isDefaultLibraryBrowseMediaSession(session[mediaType]),
+  return (
+    MEDIA_TYPES.every((mediaType) =>
+      isDefaultLibraryBrowseMediaSession(session[mediaType]),
+    ) && isDefaultFranchisesSession(session.franchises)
   );
 }
 
@@ -224,10 +268,21 @@ export function readLibraryBrowseSession(): LibraryBrowseSession | null {
 }
 
 export function writeLibraryBrowseSession(session: LibraryBrowseSession) {
-  if (isDefaultLibraryBrowseSession(session)) {
+  const existing = readLibraryBrowseSession();
+  const merged: LibraryBrowseSession = {
+    movie: session.movie,
+    series: session.series,
+    franchises: session.franchises ?? existing?.franchises,
+  };
+
+  if (isDefaultLibraryBrowseSession(merged)) {
     removeSessionStorage(LIBRARY_BROWSE_SESSION_KEY);
     return;
   }
 
-  writeSessionStorage(LIBRARY_BROWSE_SESSION_KEY, JSON.stringify(session));
+  writeSessionStorage(LIBRARY_BROWSE_SESSION_KEY, JSON.stringify(merged));
+}
+
+export function clearLibraryBrowseSession() {
+  removeSessionStorage(LIBRARY_BROWSE_SESSION_KEY);
 }

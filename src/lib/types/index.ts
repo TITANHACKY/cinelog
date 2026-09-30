@@ -34,12 +34,14 @@ export type {
   MovieDetails,
   MovieFranchiseInfo,
   SeriesDetails,
+  SeriesEpisodeToAir,
   SeriesSeason,
   WatchProviderCountry,
   WatchProviderItem,
 } from "./common";
 
 export type {
+  FranchiseSortOption,
   LibraryBrowseQuery,
   LibraryDirection,
   LibraryFilterField,

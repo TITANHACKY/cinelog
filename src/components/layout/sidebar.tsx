@@ -84,9 +84,6 @@ export function Sidebar() {
         className="flex flex-1 flex-col gap-1 px-4 py-8"
         aria-label="Main navigation"
       >
-        <p className="px-3 pb-3 font-public-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-outline-muted">
-          Workspace
-        </p>
         {navigation.map((item) => (
           <NavLink key={item.label} pathname={pathname} {...item} />
         ))}

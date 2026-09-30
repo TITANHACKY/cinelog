@@ -1,6 +1,16 @@
+type SeriesEpisodeToAir = {
+  air_date?: string;
+  episode_number?: number;
+  id?: number;
+  name?: string;
+  overview?: string;
+  season_number?: number;
+};
+
 type SeriesSeason = {
   air_date?: string | null;
   episode_count?: number;
+  episodes_aired?: number;
   episodes_watched?: number;
   id?: number;
   name?: string;
@@ -52,10 +62,10 @@ type MovieFranchiseInfo = {
 
 type SeriesDetails = {
   backdrop_path?: string | null;
-  content_ratings?: {
-    iso_3166_1?: string;
-    rating?: string;
-  };
+  certification?: {
+    certification?: string | null;
+    iso_3166_1?: string | null;
+  } | null;
   created_by?: Array<{
     id?: number;
     name?: string;
@@ -73,8 +83,8 @@ type SeriesDetails = {
   poster_path?: string | null;
   seasons?: SeriesSeason[];
   original_language?: string | null;
+  origin_country?: string[] | null;
   status?: string | null;
-  tagline?: string | null;
   type?: string;
   vote_average?: number;
   is_present_in_watchlist?: boolean;
@@ -82,11 +92,26 @@ type SeriesDetails = {
   watch_status?: number | null;
   total_number_of_episodes_watched?: number;
   total_number_of_seasons_watched?: number;
+  total_episodes_aired?: number;
   production_companies?: Array<{
     id?: number;
     name?: string;
     origin_country?: string;
   }>;
+  lead_studio?: string | null;
+  network?: string | null;
+  trailer?: { key: string; name: string; site: string } | null;
+  watch_providers?: Record<string, WatchProviderCountry>;
+  available_countries?: string[];
+  spoken_languages?: Array<{
+    iso_639_1: string;
+    english_name: string;
+    name: string;
+  }>;
+  departments?: DepartmentCredits[];
+  all_cast?: CreditMember[];
+  next_episode_to_air?: SeriesEpisodeToAir | null;
+  last_episode_to_air?: SeriesEpisodeToAir | null;
   credits?: CreditMember[];
 };
 
@@ -271,6 +296,7 @@ export type {
   MovieDetails,
   MovieFranchiseInfo,
   SeriesDetails,
+  SeriesEpisodeToAir,
   SeriesSeason,
   SmartCollectionWithFilters,
   WatchProviderCountry,

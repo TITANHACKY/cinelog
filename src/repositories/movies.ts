@@ -1,8 +1,11 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { movies, userMovies } from "@/db/schema";
 import type { MoviePayload } from "@/lib/types";
-import { upsertCatalogMovieWithGenres } from "@/repositories/catalog";
+import {
+  findCatalogMovieByTmdbId,
+  upsertCatalogMovieWithGenres,
+} from "@/repositories/catalog";
 
 export async function findUserMovieData(tmdbId: number, userId: number) {
   return getDb()
@@ -47,6 +50,69 @@ export async function insertUserMovie(
     userId,
     movieId: catalogMovie.id,
   });
+}
+
+export async function ensureUserMovie(
+  tmdbId: number,
+  userId: number,
+  body?: MoviePayload,
+) {
+  const existing = await findUserMovie(tmdbId, userId);
+  if (existing) {
+    return existing;
+  }
+
+  const catalogMovie = body
+    ? await upsertCatalogMovieWithGenres(tmdbId, body)
+    : await findCatalogMovieByTmdbId(tmdbId);
+
+  if (!catalogMovie) {
+    throw new Error(`Catalog movie not found for tmdb_id ${tmdbId}`);
+  }
+
+  await getDb()
+    .insert(userMovies)
+    .values({
+      userId,
+      movieId: catalogMovie.id,
+    })
+    .onConflictDoNothing();
+
+  const created = await findUserMovie(tmdbId, userId);
+  if (!created) {
+    throw new Error(`Failed to ensure user movie for tmdb_id ${tmdbId}`);
+  }
+
+  return created;
+}
+
+export async function getUserMovieStatusesForTmdbIds(
+  userId: number,
+  tmdbIds: number[],
+) {
+  if (tmdbIds.length === 0) {
+    return new Map<
+      number,
+      { watchStatus: number; impression: number | null }
+    >();
+  }
+
+  const rows = await getDb()
+    .select({
+      tmdbId: movies.tmdbId,
+      watchStatus: userMovies.watchStatus,
+      impression: userMovies.impression,
+    })
+    .from(userMovies)
+    .innerJoin(movies, eq(userMovies.movieId, movies.id))
+    .where(and(eq(userMovies.userId, userId), inArray(movies.tmdbId, tmdbIds)));
+
+  return new Map(
+    rows.map((row) => [
+      row.tmdbId,
+      { watchStatus: row.watchStatus, impression: row.impression },
+    ]),
+  );
 }
 
 export async function deleteUserMovie(tmdbId: number, userId: number) {

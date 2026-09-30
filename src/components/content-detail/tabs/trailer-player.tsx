@@ -8,16 +8,16 @@ type TrailerPlayerProps = {
     name: string;
     site: string;
   } | null;
-  movieTitle?: string | null;
+  title?: string | null;
 };
 
-export function TrailerPlayer({ trailer, movieTitle }: TrailerPlayerProps) {
+export function TrailerPlayer({ trailer, title }: TrailerPlayerProps) {
   if (!trailer?.key) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-outline-variant bg-surface-container/60 p-6 text-center">
         <Film className="h-8 w-8 text-outline-muted mb-2" />
         <p className="text-xs sm:text-sm text-secondary">
-          No official trailer available for {movieTitle || "this movie"}.
+          No official trailer available for {title || "this title"}.
         </p>
       </div>
     );

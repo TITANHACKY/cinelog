@@ -26,8 +26,22 @@ type ProgressStatusProps = {
   seasons?: SeasonOption[];
   selectedSeason?: number;
   onSeasonChange?: (seasonNumber: number) => void;
+  showWatchStatus?: boolean;
+  showSeasonControls?: boolean;
   size?: "default" | "lg";
 };
+
+export function getPositionSummary(watched: number, aired: number): string {
+  if (aired <= 0) return "No episodes released yet";
+  if (watched <= 0) {
+    return `${aired} episode${aired === 1 ? "" : "s"} available`;
+  }
+  if (watched >= aired) {
+    return `Ep ${watched} of ${aired} · Season complete`;
+  }
+  const remaining = aired - watched;
+  return `Ep ${watched} of ${aired} · ${remaining} left`;
+}
 
 export function ProgressStatus({
   id,
@@ -41,6 +55,8 @@ export function ProgressStatus({
   seasons = [],
   selectedSeason,
   onSeasonChange,
+  showWatchStatus = true,
+  showSeasonControls = false,
   size = "lg",
 }: ProgressStatusProps) {
   const { episodeCount } = useProgressStatus(series);
@@ -100,34 +116,30 @@ export function ProgressStatus({
     </div>
   );
 
+  const seasonEpisodeTotal = currentSeason?.episodeCount ?? episodeCount;
+  const airedCount = currentSeason?.episodesAired ?? seasonEpisodeTotal;
+  const watchedCount = currentSeason?.episodesWatched ?? 0;
+  const positionSummary = getPositionSummary(watchedCount, airedCount);
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      {statusTrigger}
+      {showWatchStatus ? statusTrigger : null}
 
-      {type === "series" ? (
-        <div className="flex flex-wrap items-center gap-3">
+      {type === "series" && showSeasonControls ? (
+        <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-3">
           <SeasonSelect
             onSelect={(seasonNumber) => onSeasonChange?.(seasonNumber)}
             seasons={seasons}
             selectedSeason={selectedSeason}
           />
-          <ProgressMetadata
-            label="EPISODE"
-            value={`${currentSeason?.episodesWatched ?? 0} of ${
-              currentSeason?.episodeCount ?? episodeCount
-            }`}
-          />
+          <p
+            aria-live="polite"
+            className="min-w-0 text-sm font-medium text-on-surface sm:text-base"
+          >
+            {positionSummary}
+          </p>
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function ProgressMetadata({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="inline-flex h-10 items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-high px-3 py-2 text-[11px] font-semibold tracking-[0.12em] text-secondary uppercase">
-      <span className="text-outline-muted">{label}</span>
-      <span className="text-on-surface">{value}</span>
     </div>
   );
 }
