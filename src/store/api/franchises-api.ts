@@ -1,16 +1,28 @@
 import { FRANCHISES_PAGE_SIZE } from "@/lib/constants/library";
+import { WATCH_STATUS } from "@/lib/constants";
+import {
+  calculateFranchiseProgress,
+  progressFromCounts,
+  toFranchiseProgressApi,
+} from "@/lib/media/franchise-progress";
 import { apiFetch } from "@/lib/http/client";
 import { baseApi } from "@/store/api/base-api";
+
+export type FranchiseProgressData = {
+  watched_count: number;
+  total_count: number;
+  percentage: number;
+};
 
 export type FranchisePartItem = {
   id: number;
   title?: string;
-  overview?: string;
+  overview?: string | null;
   poster_path?: string | null;
   backdrop_path?: string | null;
-  release_date?: string;
-  vote_average?: number;
-  vote_count?: number;
+  release_date?: string | null;
+  vote_average?: number | null;
+  vote_count?: number | null;
   is_present_in_watchlist?: boolean;
   watch_status?: number | null;
   original_language?: string | null;
@@ -23,28 +35,29 @@ export type FranchiseDetailsData = {
   poster_path: string | null;
   backdrop_path: string | null;
   is_following: boolean;
+  progress: FranchiseProgressData;
   parts: FranchisePartItem[];
 };
 
 export type FollowedFranchiseItem = {
   id: number;
-  tmdbId: number;
   name: string;
   overview: string | null;
-  posterPath: string | null;
-  backdropPath: string | null;
-  followedAt: string | null;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  followed_at: string | null;
+  progress: FranchiseProgressData;
 };
 
 export type FollowedFranchisesData = {
   franchises: FollowedFranchiseItem[];
-  totalCount: number;
-  hasMore: boolean;
+  total_count: number;
+  has_more: boolean;
 };
 
 export type FollowedFranchisesQueryArgs = {
   q?: string;
-  sortBy?: "name" | "followedAt";
+  sortBy?: "name" | "followed_at";
   sortOrder?: "asc" | "desc";
 };
 
@@ -54,6 +67,81 @@ type AppDispatch = (action: any) => any;
 type RootState = Parameters<
   typeof franchisesApi.util.selectCachedArgsForQuery
 >[0];
+
+const COMPLETED_WATCH_STATUS = WATCH_STATUS[2].value;
+
+function recomputeFranchiseProgress(parts: FranchisePartItem[]) {
+  return toFranchiseProgressApi(calculateFranchiseProgress(parts));
+}
+
+function patchFranchisePartsProgress(draft: {
+  parts: FranchisePartItem[];
+  progress?: FranchiseProgressData;
+}) {
+  draft.progress = recomputeFranchiseProgress(draft.parts);
+}
+
+function adjustStoredFranchiseProgress(
+  progress: FranchiseProgressData,
+  previousStatus: number | null | undefined,
+  nextStatus: number | null | undefined,
+) {
+  const wasCompleted = previousStatus === COMPLETED_WATCH_STATUS;
+  const isCompleted = nextStatus === COMPLETED_WATCH_STATUS;
+
+  if (!wasCompleted && isCompleted) {
+    progress.watched_count += 1;
+  } else if (wasCompleted && !isCompleted) {
+    progress.watched_count = Math.max(0, progress.watched_count - 1);
+  } else {
+    return;
+  }
+
+  progress.percentage = progressFromCounts(
+    progress.watched_count,
+    progress.total_count,
+  ).percentage;
+}
+
+function patchFollowedFranchiseProgress(
+  dispatch: AppDispatch,
+  getState: () => unknown,
+  franchiseTmdbId: number,
+  previousStatus: number | null | undefined,
+  nextStatus: number | null | undefined,
+) {
+  const state = getState() as RootState;
+  const undos: Array<() => void> = [];
+
+  for (const arg of franchisesApi.util.selectCachedArgsForQuery(
+    state,
+    "getFollowedFranchises",
+  )) {
+    const patch = dispatch(
+      franchisesApi.util.updateQueryData(
+        "getFollowedFranchises",
+        arg,
+        (draft) => {
+          const franchise = draft.franchises.find(
+            (item) => item.id === franchiseTmdbId,
+          );
+          if (!franchise?.progress) {
+            return;
+          }
+
+          adjustStoredFranchiseProgress(
+            franchise.progress,
+            previousStatus,
+            nextStatus,
+          );
+        },
+      ),
+    ) as { undo: () => void };
+    undos.push(() => patch.undo());
+  }
+
+  return undos;
+}
 
 export function patchCachedFranchiseDetails(
   dispatch: AppDispatch,
@@ -80,6 +168,8 @@ export function patchCachedFranchiseDetails(
           const part = draft.parts?.find((p) => p.id === change.tmdbId);
           if (!part) return;
 
+          const previousStatus = part.watch_status;
+
           if (change.remove) {
             part.is_present_in_watchlist = false;
             part.watch_status = null;
@@ -92,6 +182,25 @@ export function patchCachedFranchiseDetails(
             part.watch_status = change.watch_status;
             part.is_present_in_watchlist = true;
           }
+
+          if (draft.progress) {
+            adjustStoredFranchiseProgress(
+              draft.progress,
+              previousStatus,
+              part.watch_status,
+            );
+          } else {
+            patchFranchisePartsProgress(draft);
+          }
+
+          const followedUndos = patchFollowedFranchiseProgress(
+            dispatch,
+            getState,
+            draft.id,
+            previousStatus,
+            part.watch_status,
+          );
+          undos.push(...followedUndos);
         },
       ),
     ) as { undo: () => void };
@@ -122,7 +231,6 @@ export const franchisesApi = baseApi.injectEndpoints({
       async onQueryStarted({ id }, { dispatch, queryFulfilled, getState }) {
         const undos: Array<() => void> = [];
 
-        // 1. Optimistically update getFranchiseDetails
         const patchDetails = dispatch(
           franchisesApi.util.updateQueryData(
             "getFranchiseDetails",
@@ -138,12 +246,12 @@ export const franchisesApi = baseApi.injectEndpoints({
                   part.watch_status = 0;
                 }
               }
+              patchFranchisePartsProgress(draft);
             },
           ),
         ) as { undo: () => void };
         undos.push(() => patchDetails.undo());
 
-        // 2. Also patch matching contentDetailsApi entries if cached
         try {
           const { patchCachedContentDetails, contentDetailsApi } =
             await import("./content-details-api");
@@ -205,9 +313,6 @@ export const franchisesApi = baseApi.injectEndpoints({
           for (const undo of undos) undo();
         }
       },
-      // Note: we intentionally do not invalidate `{ type: "Franchise", id: arg.id }` here
-      // because the backend adds movies asynchronously in an after-block; an immediate refetch
-      // would overwrite this optimistic update before the background insertion finishes.
       invalidatesTags: ["Franchises", "Library", "Dashboard"],
     }),
     unfollowFranchise: build.mutation<
@@ -242,12 +347,10 @@ export const franchisesApi = baseApi.injectEndpoints({
               "getFollowedFranchises",
               arg,
               (draft) => {
-                const index = draft.franchises.findIndex(
-                  (f) => f.tmdbId === id,
-                );
+                const index = draft.franchises.findIndex((f) => f.id === id);
                 if (index !== -1) {
                   draft.franchises.splice(index, 1);
-                  draft.totalCount = Math.max(0, draft.totalCount - 1);
+                  draft.total_count = Math.max(0, draft.total_count - 1);
                 }
               },
             ),
@@ -311,12 +414,12 @@ export const franchisesApi = baseApi.injectEndpoints({
       },
       transformResponse: (response: {
         franchises: FollowedFranchiseItem[];
-        totalCount?: number;
-        hasMore?: boolean;
+        total_count?: number;
+        has_more?: boolean;
       }) => ({
         franchises: response.franchises ?? [],
-        totalCount: response.totalCount ?? response.franchises?.length ?? 0,
-        hasMore: Boolean(response.hasMore),
+        total_count: response.total_count ?? response.franchises?.length ?? 0,
+        has_more: Boolean(response.has_more),
       }),
       providesTags: ["Franchises"],
     }),
@@ -338,11 +441,7 @@ export async function loadMoreFollowedFranchises(
   const response = await apiFetch(
     `/api/library/franchises?${params.toString()}`,
   );
-  const json = (await response.json()) as {
-    franchises: FollowedFranchiseItem[];
-    totalCount: number;
-    hasMore: boolean;
-  };
+  const json = (await response.json()) as FollowedFranchisesData;
   if (!response.ok) {
     throw new Error("Failed to load more franchises");
   }
@@ -358,8 +457,8 @@ export async function loadMoreFollowedFranchises(
             existingIds.add(item.id);
           }
         }
-        draft.totalCount = json.totalCount;
-        draft.hasMore = json.hasMore;
+        draft.total_count = json.total_count;
+        draft.has_more = json.has_more;
       },
     ),
   );

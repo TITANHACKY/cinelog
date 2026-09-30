@@ -5,6 +5,7 @@ import type { SeriesDetails } from "@/lib/types";
 
 export type SeasonOption = {
   episodeCount: number;
+  episodesAired: number;
   episodesWatched: number;
   hasAired: boolean;
   id: string | number;
@@ -19,10 +20,14 @@ export function useProgressSeasons(series?: SeriesDetails | null) {
       (series?.seasons ?? []).map((season, index) => {
         const seasonNumber = season.season_number ?? index + 1;
 
+        const episodesAired = season.episodes_aired ?? 0;
+
         return {
           episodeCount: season.episode_count ?? 0,
+          episodesAired,
           episodesWatched: season.episodes_watched ?? 0,
-          hasAired: hasAiredOnOrBeforeToday(season.air_date),
+          hasAired:
+            episodesAired > 0 || hasAiredOnOrBeforeToday(season.air_date),
           id: season.id ?? seasonNumber,
           label: season.name ?? `${seasonNumber}`,
           seasonNumber,

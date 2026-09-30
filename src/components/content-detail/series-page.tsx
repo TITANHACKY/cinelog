@@ -1,9 +1,8 @@
 "use client";
 
-import { CastCrew } from "@/components/content-detail/cast-crew";
 import { HeroHeader } from "@/components/content-detail/hero-header/hero-header";
 import { ContentProgress } from "@/components/content-detail/progress/content-progress";
-import { SpecificationsMeta } from "@/components/content-detail/specifications-meta";
+import { SeriesTabs } from "@/components/content-detail/tabs/series-tabs";
 import { ErrorState } from "@/components/ui/error-state";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import { useContentDetails } from "@/hooks/title-details/use-content-details";
@@ -25,7 +24,6 @@ export function SeriesPage() {
         <div aria-hidden="true" className="blur-sm">
           <HeroHeader type="series" />
           <ContentProgress type="series" />
-          <SpecificationsMeta type="series" />
         </div>
         <LoadingOverlay />
       </main>
@@ -42,13 +40,10 @@ export function SeriesPage() {
   }
 
   return (
-    <main>
+    <main className="pb-12">
       <HeroHeader series={series} type="series" />
       <ContentProgress series={series} type="series" />
-      <div className="grid grid-cols-1 items-start lg:grid-cols-2">
-        <SpecificationsMeta series={series} type="series" />
-        <CastCrew credits={series.credits} createdBy={series.created_by} />
-      </div>
+      <SeriesTabs series={series} />
     </main>
   );
 }

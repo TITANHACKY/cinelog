@@ -67,6 +67,9 @@ export const movies = sqliteTable(
     originalLanguage: text("original_language"),
     originCountry: text("origin_country"),
     certificate: text("certificate"),
+    franchiseId: integer("franchise_id").references(() => franchises.id, {
+      onDelete: "set null",
+    }),
     createdAt: numeric("created_at")
       .notNull()
       .default(sql`(unixepoch())`),
@@ -83,6 +86,7 @@ export const movies = sqliteTable(
     ),
     uniqueIndex("movies_tmdb_id_unique").on(table.tmdbId),
     index("movies_status_index").on(table.status),
+    index("movies_franchise_id_index").on(table.franchiseId),
   ],
 );
 
@@ -525,6 +529,7 @@ export const franchises = sqliteTable(
     overview: text("overview"),
     posterPath: text("poster_path"),
     backdropPath: text("backdrop_path"),
+    numberOfParts: integer("number_of_parts").notNull().default(0),
     createdAt: numeric("created_at")
       .notNull()
       .default(sql`(unixepoch())`),
@@ -546,6 +551,9 @@ export const userFranchises = sqliteTable(
     franchiseId: integer("franchise_id")
       .notNull()
       .references(() => franchises.id, { onDelete: "cascade" }),
+    numberOfPartsCompleted: integer("number_of_parts_completed")
+      .notNull()
+      .default(0),
     createdAt: numeric("created_at")
       .notNull()
       .default(sql`(unixepoch())`),

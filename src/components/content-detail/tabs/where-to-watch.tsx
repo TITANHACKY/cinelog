@@ -14,6 +14,7 @@ type WhereToWatchProps = {
   availableCountries?: string[];
   imdbId?: string | null;
   tmdbId?: number;
+  mediaType?: "movie" | "series";
 };
 
 export function WhereToWatch({
@@ -21,6 +22,7 @@ export function WhereToWatch({
   availableCountries = [],
   imdbId,
   tmdbId,
+  mediaType = "movie",
 }: WhereToWatchProps) {
   const dispatch = useAppDispatch();
   const { countries } = useLocales();
@@ -74,7 +76,7 @@ export function WhereToWatch({
   const buy = currentCountryData?.buy ?? [];
 
   const mediaId = imdbId || (tmdbId ? `${tmdbId}` : null);
-  const detailPath = mediaId ? `detail/movie/${mediaId}` : "";
+  const detailPath = mediaId ? `detail/${mediaType}/${mediaId}` : "";
 
   const stremioDeepLink = detailPath
     ? `stremio:///${detailPath}`
@@ -279,7 +281,7 @@ function ProviderBadge({ provider }: { provider: WatchProviderItem }) {
       ) : (
         <Tv className="h-4 w-4 text-outline-muted" />
       )}
-      <span className="max-w-[120px] truncate">{provider.provider_name}</span>
+      <span className="max-w-30 truncate">{provider.provider_name}</span>
     </div>
   );
 }

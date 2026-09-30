@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { asBatch, getDb, type SqliteBatchQuery } from "@/db";
 import {
   genres,
@@ -11,10 +11,12 @@ import {
 import {
   catalogSeasonsFromTmdb,
   genreTmdbIds as tmdbGenreIds,
+  mapCollectionPartToCatalog,
   mapTmdbMovieToCatalog,
   mapTmdbSeriesToCatalog,
 } from "@/lib/tmdb/catalog-fields";
-import type { MoviePayload, TmdbSeries } from "@/lib/types";
+import { nowUnixSeconds } from "@/lib/media/display";
+import type { MoviePayload, TmdbCollectionPart, TmdbSeries } from "@/lib/types";
 
 export async function findCatalogMovieByTmdbId(tmdbId: number) {
   return getDb().select().from(movies).where(eq(movies.tmdbId, tmdbId)).get();
@@ -201,4 +203,81 @@ export async function listCatalogSeasons(catalogSeriesId: number) {
     .select()
     .from(seasons)
     .where(eq(seasons.seriesId, catalogSeriesId));
+}
+
+export async function upsertCatalogMovieFromCollectionPart(
+  tmdbId: number,
+  part: TmdbCollectionPart,
+) {
+  const db = getDb();
+  const fields = mapCollectionPartToCatalog(part);
+  const now = nowUnixSeconds();
+
+  await db
+    .insert(movies)
+    .values({
+      tmdbId,
+      ...fields,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: movies.tmdbId,
+      set: {
+        title: fields.title,
+        posterPath: fields.posterPath,
+        releaseDate: fields.releaseDate,
+        voteAverage: fields.voteAverage,
+        updatedAt: now,
+      },
+    });
+
+  const catalogMovie = await findCatalogMovieByTmdbId(tmdbId);
+  if (!catalogMovie) {
+    throw new Error(`Failed to upsert catalog movie for tmdb_id ${tmdbId}`);
+  }
+
+  return catalogMovie;
+}
+
+export async function linkMovieToFranchise(
+  movieDbId: number,
+  franchiseDbId: number,
+) {
+  await getDb()
+    .update(movies)
+    .set({
+      franchiseId: franchiseDbId,
+      updatedAt: nowUnixSeconds(),
+    })
+    .where(eq(movies.id, movieDbId));
+}
+
+export async function unlinkMoviesFromFranchise(
+  franchiseDbId: number,
+  movieDbIds?: number[],
+) {
+  const db = getDb();
+  const now = nowUnixSeconds();
+
+  if (movieDbIds !== undefined) {
+    if (movieDbIds.length === 0) {
+      return;
+    }
+
+    await db
+      .update(movies)
+      .set({ franchiseId: null, updatedAt: now })
+      .where(
+        and(
+          eq(movies.franchiseId, franchiseDbId),
+          inArray(movies.id, movieDbIds),
+        ),
+      );
+    return;
+  }
+
+  await db
+    .update(movies)
+    .set({ franchiseId: null, updatedAt: now })
+    .where(eq(movies.franchiseId, franchiseDbId));
 }

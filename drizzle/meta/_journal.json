@@ -85,6 +85,20 @@
       "when": 1790683556848,
       "tag": "0011_chubby_steel_serpent",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1790763424295,
+      "tag": "0012_chilly_night_thrasher",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1790766604494,
+      "tag": "0013_redundant_argent",
+      "breakpoints": true
     }
   ]
 }
