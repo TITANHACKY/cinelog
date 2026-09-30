@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import {
   Check,
   CheckCheck,
@@ -90,8 +90,6 @@ export function ProgressActions({
     mediaType: "series",
     mutationStatus,
   });
-  const [liveStatus, setLiveStatus] = useState("");
-
   const maxTrackableEpisodes =
     episodesAired > 0 ? Math.min(episodeCount, episodesAired) : episodeCount;
   const isComplete =
@@ -117,29 +115,20 @@ export function ProgressActions({
     lastMutation === "update-progress" &&
     pendingProgress?.episodeNumber === maxTrackableEpisodes;
 
-  useEffect(() => {
+  const liveStatus = useMemo(() => {
     if (maxTrackableEpisodes <= 0) {
-      setLiveStatus("No episodes available to track yet.");
-      return;
+      return "No episodes available to track yet.";
     }
 
     if (isComplete) {
-      setLiveStatus(
-        `Season ${seasonNumber} complete. ${episodesWatched} of ${maxTrackableEpisodes} episodes watched.`,
-      );
-      return;
+      return `Season ${seasonNumber} complete. ${episodesWatched} of ${maxTrackableEpisodes} episodes watched.`;
     }
 
     if (episodesWatched <= 0) {
-      setLiveStatus(
-        `${maxTrackableEpisodes} episode${maxTrackableEpisodes === 1 ? "" : "s"} available to watch.`,
-      );
-      return;
+      return `${maxTrackableEpisodes} episode${maxTrackableEpisodes === 1 ? "" : "s"} available to watch.`;
     }
 
-    setLiveStatus(
-      `${episodesWatched} of ${maxTrackableEpisodes} episodes watched. Next: episode ${nextEpisode}.`,
-    );
+    return `${episodesWatched} of ${maxTrackableEpisodes} episodes watched. Next: episode ${nextEpisode}.`;
   }, [
     episodesWatched,
     isComplete,

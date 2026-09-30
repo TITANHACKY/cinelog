@@ -1,6 +1,5 @@
 import { WATCH_STATUS } from "@/lib/constants";
 import { AppError } from "@/lib/http/errors";
-import { hasAiredOnOrBeforeToday } from "@/lib/media/air-date";
 import { nowUnixSeconds } from "@/lib/media/display";
 import {
   computeSeasonEpisodesAired,
