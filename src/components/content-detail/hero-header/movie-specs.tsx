@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { Clock, Film, Globe, Shield, User, Video } from "lucide-react";
+import { Clock, Film, Globe, MapPin, Shield, User, Video } from "lucide-react";
 import { toMovieStatusDisplay } from "@/lib/media/status";
+import { formatRuntime } from "@/lib/media/display";
 import { useLocales } from "@/hooks/locales/use-locales";
 import { useGetPreferencesQuery } from "@/store/api/user-api";
 import type { MovieDetails } from "@/lib/types";
@@ -12,11 +13,11 @@ type MovieSpecsProps = {
 };
 
 export function MovieSpecs({ movie }: MovieSpecsProps) {
-  const { formatLanguage } = useLocales();
+  const { formatLanguage, formatCountry } = useLocales();
   const { data: preferences } = useGetPreferencesQuery();
 
   const ageRating = movie.certification?.certification?.trim() || "NR";
-  const runtimeDisplay = movie.runtime ? `${movie.runtime}m` : "N/A";
+  const runtimeDisplay = formatRuntime(movie.runtime);
   const statusDisplay =
     toMovieStatusDisplay(movie.status) ?? movie.status?.trim() ?? null;
 
@@ -24,6 +25,36 @@ export function MovieSpecs({ movie }: MovieSpecsProps) {
   const originalLangName = originalLangCode
     ? formatLanguage(originalLangCode)
     : "N/A";
+
+  const originCountries = useMemo(() => {
+    const raw: unknown = movie.origin_country;
+    let codes: string[] = [];
+
+    if (Array.isArray(raw)) {
+      codes = raw.filter(
+        (c): c is string => typeof c === "string" && Boolean(c.trim()),
+      );
+    } else if (typeof raw === "string" && raw.trim()) {
+      codes = [raw.trim()];
+    }
+
+    if (codes.length === 0 && movie.production_companies) {
+      const fromCompanies = movie.production_companies
+        .map((c) => c.origin_country?.trim())
+        .filter((c): c is string => Boolean(c));
+      codes = Array.from(new Set(fromCompanies));
+    }
+
+    const names = codes
+      .map((code) => formatCountry(code) || code)
+      .filter(Boolean);
+
+    return Array.from(new Set(names));
+  }, [movie.origin_country, movie.production_companies, formatCountry]);
+
+  const originCountryDisplay = useMemo(() => {
+    return originCountries.join(", ");
+  }, [originCountries]);
 
   const userPreferredCodes = useMemo(() => {
     return preferences?.languages ?? [];
@@ -64,6 +95,14 @@ export function MovieSpecs({ movie }: MovieSpecsProps) {
     <div className="mt-3 flex flex-col gap-3 rounded-xl border border-outline-variant bg-surface-container/60 p-3 sm:p-4 backdrop-blur-xs">
       {/* Quick Specs Badges */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
+        {/* Movie Status */}
+        {statusDisplay && (
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-outline-alt bg-surface-container-high px-2.5 py-1 font-medium text-brand-tertiary-accent-alt">
+            <Film className="h-3.5 w-3.5 text-brand-tertiary-accent-alt" />
+            <span>{statusDisplay}</span>
+          </span>
+        )}
+
         {/* Age Rating */}
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-high px-2.5 py-1 font-semibold text-on-surface">
           <Shield className="h-3.5 w-3.5 text-outline-muted" />
@@ -75,6 +114,14 @@ export function MovieSpecs({ movie }: MovieSpecsProps) {
           <Clock className="h-3.5 w-3.5 text-outline-muted" />
           <span>{runtimeDisplay}</span>
         </span>
+
+        {/* Origin Country */}
+        {originCountryDisplay && (
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-high px-2.5 py-1 font-medium text-on-surface">
+            <MapPin className="h-3.5 w-3.5 text-outline-muted" />
+            <span>{originCountryDisplay}</span>
+          </span>
+        )}
 
         {/* Original Language (common) */}
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-brand-primary/30 bg-brand-primary/10 px-2.5 py-1 font-medium text-brand-primary">
@@ -91,14 +138,6 @@ export function MovieSpecs({ movie }: MovieSpecsProps) {
             <span>{langName}</span>
           </span>
         ))}
-
-        {/* Movie Status */}
-        {statusDisplay && (
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-high px-2.5 py-1 font-medium text-on-surface">
-            <Film className="h-3.5 w-3.5 text-outline-muted" />
-            <span>{statusDisplay}</span>
-          </span>
-        )}
       </div>
 
       {/* Credits & Production Grid */}

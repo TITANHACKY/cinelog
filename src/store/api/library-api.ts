@@ -369,10 +369,7 @@ export const libraryApi = baseApi.injectEndpoints({
           }
 
           dispatch(
-            libraryApi.util.invalidateTags([
-              ...libraryTagIds,
-              "Franchise",
-            ]),
+            libraryApi.util.invalidateTags([...libraryTagIds, "Franchise"]),
           );
         } catch (caught) {
           for (const undo of undos) undo();

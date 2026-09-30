@@ -10,10 +10,10 @@ export const MEDIA_CARD_CLASS =
   "group/card relative w-full min-w-0 gap-0 overflow-hidden rounded-[8px] border border-outline-variant bg-surface-container-low p-0 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.06)] transition-transform hover:-translate-y-0.5 hover:z-10";
 
 export const SEGMENTED_CONTROL_CLASS =
-  "flex w-fit min-w-0 max-w-full flex-wrap items-center gap-1 rounded-xl border border-outline-alt bg-surface-container-low p-1";
+  "inline-flex w-fit min-w-0 max-w-full items-center gap-1 rounded-xl border border-outline-alt/60 bg-surface-container-low p-1";
 
 export const SEGMENTED_CONTROL_STRETCH_CLASS =
-  "grid w-full min-w-0 grid-flow-col auto-cols-fr items-center gap-1 rounded-xl border border-outline-alt bg-surface-container-low p-1";
+  "grid w-full min-w-0 grid-flow-col auto-cols-fr lg:inline-flex lg:w-auto items-center gap-1 rounded-xl border border-outline-alt/60 bg-surface-container-low p-1";
 
 export const PWA_OFFLINE_TOAST_CLASS =
   "fixed bottom-20 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-status-error/40 bg-surface-container-high px-4 py-2 text-xs font-medium text-status-error shadow-lg backdrop-blur-md transition-all duration-200 lg:bottom-6";

@@ -153,8 +153,7 @@ export function FranchiseCard({
                 status: "Released",
                 original_language: part.original_language ?? null,
                 origin_country: null,
-                is_present_in_watchlist:
-                  part.is_present_in_watchlist ?? false,
+                is_present_in_watchlist: part.is_present_in_watchlist ?? false,
               };
 
               return (

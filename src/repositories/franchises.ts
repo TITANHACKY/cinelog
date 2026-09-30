@@ -1,4 +1,4 @@
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, sql, type SQLWrapper } from "drizzle-orm";
 import { asBatch, getDb } from "@/db";
 import { franchises, userFranchises } from "@/db/schema";
 import { nowUnixSeconds } from "@/lib/media/display";
@@ -103,6 +103,9 @@ export async function deleteUserFranchise(
     );
 }
 
+export type FranchiseSortBy = "name" | "followedAt";
+export type FranchiseSortOrder = "asc" | "desc";
+
 export type FollowedFranchiseRow = {
   id: number;
   tmdbId: number;
@@ -116,7 +119,19 @@ export type FollowedFranchiseRow = {
 export type GetUserFollowedFranchisesOptions = {
   limit?: number;
   offset?: number;
+  q?: string;
+  sortBy?: FranchiseSortBy;
+  sortOrder?: FranchiseSortOrder;
 };
+
+function escapeLike(value: string) {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
+function likeContains(column: SQLWrapper, value: string) {
+  const pattern = `%${escapeLike(value.toLowerCase())}%`;
+  return sql`lower(${column}) LIKE ${pattern} ESCAPE '\\'`;
+}
 
 export async function getUserFollowedFranchises(
   userId: number,
@@ -128,10 +143,30 @@ export async function getUserFollowedFranchises(
 }> {
   const db = getDb();
 
+  const conditions = [eq(userFranchises.userId, userId)];
+  const trimmedQ = options?.q?.trim();
+  if (trimmedQ) {
+    conditions.push(likeContains(franchises.name, trimmedQ));
+  }
+  const whereClause = and(...conditions);
+
   const countQuery = db
     .select({ value: count() })
     .from(userFranchises)
-    .where(eq(userFranchises.userId, userId));
+    .innerJoin(franchises, eq(userFranchises.franchiseId, franchises.id))
+    .where(whereClause);
+
+  const sortBy = options?.sortBy ?? "name";
+  const sortOrder = options?.sortOrder ?? "asc";
+
+  const primaryOrder =
+    sortBy === "name"
+      ? sortOrder === "desc"
+        ? desc(franchises.name)
+        : asc(franchises.name)
+      : sortOrder === "asc"
+        ? asc(userFranchises.createdAt)
+        : desc(userFranchises.createdAt);
 
   const itemsSelect = db
     .select({
@@ -145,15 +180,17 @@ export async function getUserFollowedFranchises(
     })
     .from(userFranchises)
     .innerJoin(franchises, eq(userFranchises.franchiseId, franchises.id))
-    .where(eq(userFranchises.userId, userId))
-    .orderBy(desc(userFranchises.createdAt));
+    .where(whereClause)
+    .orderBy(primaryOrder, desc(userFranchises.id));
 
   const itemsQuery =
     options?.limit !== undefined
       ? itemsSelect.limit(options.limit).offset(options.offset ?? 0)
       : itemsSelect;
 
-  const [countResult, items] = await db.batch(asBatch([countQuery, itemsQuery]));
+  const [countResult, items] = await db.batch(
+    asBatch([countQuery, itemsQuery]),
+  );
 
   const totalCount = Number(countResult[0]?.value ?? 0);
   const franchisesList = (items ?? []) as FollowedFranchiseRow[];

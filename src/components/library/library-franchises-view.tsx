@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Layers, Loader2 } from "lucide-react";
-import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Layers, Loader2, Search } from "lucide-react";
 import { FranchiseCard } from "@/components/library/franchise-card";
-import { LIBRARY_DESCRIPTION, MEDIA_TYPES } from "@/lib/constants/library";
-import { useGetFranchiseDetailsQuery } from "@/store/api/franchises-api";
+import { LibraryFranchisesFilterControls } from "@/components/library/library-franchises-filter-controls";
+import { LIBRARY_DESCRIPTION } from "@/lib/constants/library";
+import {
+  useGetFollowedFranchisesQuery,
+  useGetFranchiseDetailsQuery,
+} from "@/store/api/franchises-api";
 import { useGetDashboardQuery } from "@/store/api/library-api";
 import { Button } from "@/components/ui/button";
 import { MovieCard } from "@/components/ui/movie-card";
@@ -22,15 +25,22 @@ export function LibraryFranchisesView() {
     isLoading,
     loadingMore,
     loadMore,
+    searchQuery,
+    setSearchQuery,
+    clearSearch,
+    sortOption,
+    setSortOption,
+    isSearchActive,
   } = useLibraryFranchises();
   const { data: dashboard } = useGetDashboardQuery();
+  const { data: allFranchises } = useGetFollowedFranchisesQuery();
   const [selectedFranchiseId, setSelectedFranchiseId] = useState<number | null>(
     null,
   );
 
   const movieCount = dashboard?.counts?.movies ?? 0;
   const seriesCount = dashboard?.counts?.series ?? 0;
-  const franchiseCount = totalCount;
+  const franchiseCount = allFranchises?.totalCount ?? totalCount;
 
   const sentinelRef = useInfiniteScroll(
     loadMore,
@@ -52,40 +62,17 @@ export function LibraryFranchisesView() {
           </div>
         </header>
 
-        {/* Media Type Navigation Switcher */}
-        <div className="flex min-w-0 flex-wrap items-center gap-3">
-          <SegmentedControl
-            aria-label="Filter library by media type"
-            options={MEDIA_TYPES.map(({ icon: Icon, label, value, href }) => {
-              const count =
-                value === "movie"
-                  ? movieCount
-                  : value === "series"
-                    ? seriesCount
-                    : franchiseCount;
-
-              return {
-                value,
-                label,
-                href,
-                icon: <Icon className="size-3.5 shrink-0" />,
-                badge: (
-                  <span
-                    aria-label={`${count} ${label}`}
-                    className={`inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-md px-1.5 font-public-sans text-[10px] leading-none font-medium ${
-                      value === "franchises"
-                        ? "bg-white/25 text-white"
-                        : "bg-surface-container text-secondary"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                ),
-              };
-            })}
-            value="franchises"
-          />
-        </div>
+        {/* Filter Controls: Media Tabs, Search, and Sort */}
+        <LibraryFranchisesFilterControls
+          franchiseCount={franchiseCount}
+          movieCount={movieCount}
+          onClearSearch={clearSearch}
+          onSearchChange={setSearchQuery}
+          onSortChange={setSortOption}
+          searchQuery={searchQuery}
+          seriesCount={seriesCount}
+          sortOption={sortOption}
+        />
 
         {/* Content */}
         {isLoading ? (
@@ -93,25 +80,51 @@ export function LibraryFranchisesView() {
             <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
           </div>
         ) : franchises.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-outline-variant bg-surface-container/60 p-12 text-center backdrop-blur-xs">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-outline-variant bg-surface-container-high text-outline-muted">
-              <Layers className="h-7 w-7" />
+          isSearchActive ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-outline-variant bg-surface-container/60 p-12 text-center backdrop-blur-xs">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-outline-variant bg-surface-container-high text-outline-muted">
+                <Search className="h-7 w-7" />
+              </div>
+              <h2 className="font-heading text-lg font-bold text-on-surface">
+                No franchises found
+              </h2>
+              <p className="mt-2 max-w-md text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                We couldn&apos;t find any followed franchises matching &quot;
+                <span className="font-medium text-on-surface">
+                  {searchQuery}
+                </span>
+                &quot;. Try a different search term or clear the filter.
+              </p>
+              <Button
+                className="mt-6"
+                onClick={clearSearch}
+                type="button"
+                variant="primaryFilled"
+              >
+                <span>Clear search</span>
+              </Button>
             </div>
-            <h2 className="font-heading text-lg font-bold text-on-surface">
-              No followed franchises yet
-            </h2>
-            <p className="mt-2 max-w-md text-xs sm:text-sm text-on-surface-variant leading-relaxed">
-              When you view a movie that is part of a franchise (e.g. Harry
-              Potter, Marvel, Avatar), click &quot;Follow Franchise&quot; to track
-              the entire franchise and its movies right here.
-            </p>
-            <Link
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-primary px-5 py-2.5 text-xs font-semibold text-brand-on-primary hover:bg-brand-primary/90 transition"
-              href="/library/movies"
-            >
-              <span>Explore Movies</span>
-            </Link>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-outline-variant bg-surface-container/60 p-12 text-center backdrop-blur-xs">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-outline-variant bg-surface-container-high text-outline-muted">
+                <Layers className="h-7 w-7" />
+              </div>
+              <h2 className="font-heading text-lg font-bold text-on-surface">
+                No followed franchises yet
+              </h2>
+              <p className="mt-2 max-w-md text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+                When you view a movie that is part of a franchise (e.g. Harry
+                Potter, Marvel, Avatar), click &quot;Follow Franchise&quot; to
+                track the entire franchise and its movies right here.
+              </p>
+              <Link
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand-primary px-5 py-2.5 text-xs font-semibold text-brand-on-primary hover:bg-brand-primary/90 transition"
+                href="/library/movies"
+              >
+                <span>Explore Movies</span>
+              </Link>
+            </div>
+          )
         ) : (
           <>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -140,13 +153,13 @@ export function LibraryFranchisesView() {
           </>
         )}
 
-      {/* Franchise Modal / Drawer if a franchise is selected */}
-      {selectedFranchiseId && (
-        <FranchiseDetailModal
-          franchiseTmdbId={selectedFranchiseId}
-          onClose={() => setSelectedFranchiseId(null)}
-        />
-      )}
+        {/* Franchise Modal / Drawer if a franchise is selected */}
+        {selectedFranchiseId && (
+          <FranchiseDetailModal
+            franchiseTmdbId={selectedFranchiseId}
+            onClose={() => setSelectedFranchiseId(null)}
+          />
+        )}
       </div>
     </main>
   );

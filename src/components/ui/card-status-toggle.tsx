@@ -17,6 +17,8 @@ type CardStatusToggleProps = {
   expanded?: boolean;
   showMenuLabels?: boolean;
   className?: string;
+  triggerClassName?: string;
+  size?: "default" | "lg";
 };
 
 export function CardStatusToggle({
@@ -27,6 +29,8 @@ export function CardStatusToggle({
   expanded = false,
   showMenuLabels,
   className,
+  triggerClassName,
+  size = "default",
 }: CardStatusToggleProps) {
   const currentIndicator =
     WATCH_STATUS_INDICATOR[watchStatus] ?? WATCH_STATUS_INDICATOR[0];
@@ -52,6 +56,7 @@ export function CardStatusToggle({
       loading={loading}
       onSelect={onSelect}
       showMenuLabels={showMenuLabels}
+      size={size}
       options={Object.values(WATCH_STATUS).map((option) => ({
         value: option.value,
         label: option.display_value,
@@ -60,9 +65,12 @@ export function CardStatusToggle({
           WATCH_STATUS_INDICATOR_TEXT[WATCH_STATUS_INDICATOR[option.value]],
       }))}
       triggerAriaLabel="Set watch status"
-      triggerClassName={
-        expanded ? expandedClass : WATCH_STATUS_INDICATOR_TEXT[currentIndicator]
-      }
+      triggerClassName={cn(
+        expanded
+          ? expandedClass
+          : WATCH_STATUS_INDICATOR_TEXT[currentIndicator],
+        triggerClassName,
+      )}
       triggerLabel={currentOption.display_value}
       value={watchStatus}
     />

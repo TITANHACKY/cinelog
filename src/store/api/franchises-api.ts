@@ -42,6 +42,12 @@ export type FollowedFranchisesData = {
   hasMore: boolean;
 };
 
+export type FollowedFranchisesQueryArgs = {
+  q?: string;
+  sortBy?: "name" | "followedAt";
+  sortOrder?: "asc" | "desc";
+};
+
 // RTK's updateQueryData thunk is generic over the whole api state
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AppDispatch = (action: any) => any;
@@ -67,23 +73,27 @@ export function patchCachedFranchiseDetails(
     "getFranchiseDetails",
   )) {
     const patch = dispatch(
-      franchisesApi.util.updateQueryData("getFranchiseDetails", arg, (draft) => {
-        const part = draft.parts?.find((p) => p.id === change.tmdbId);
-        if (!part) return;
+      franchisesApi.util.updateQueryData(
+        "getFranchiseDetails",
+        arg,
+        (draft) => {
+          const part = draft.parts?.find((p) => p.id === change.tmdbId);
+          if (!part) return;
 
-        if (change.remove) {
-          part.is_present_in_watchlist = false;
-          part.watch_status = null;
-        } else if (change.add) {
-          part.is_present_in_watchlist = true;
-          if (part.watch_status === null || part.watch_status === undefined) {
-            part.watch_status = 0;
+          if (change.remove) {
+            part.is_present_in_watchlist = false;
+            part.watch_status = null;
+          } else if (change.add) {
+            part.is_present_in_watchlist = true;
+            if (part.watch_status === null || part.watch_status === undefined) {
+              part.watch_status = 0;
+            }
+          } else if (change.watch_status !== undefined) {
+            part.watch_status = change.watch_status;
+            part.is_present_in_watchlist = true;
           }
-        } else if (change.watch_status !== undefined) {
-          part.watch_status = change.watch_status;
-          part.is_present_in_watchlist = true;
-        }
-      }),
+        },
+      ),
     ) as { undo: () => void };
     undos.push(() => patch.undo());
   }
@@ -161,13 +171,12 @@ export const franchisesApi = baseApi.injectEndpoints({
             }
           }
 
-          const contentArgs =
-            contentDetailsApi.util.selectCachedArgsForQuery(
-              state as unknown as Parameters<
-                typeof contentDetailsApi.util.selectCachedArgsForQuery
-              >[0],
-              "getContentDetails",
-            );
+          const contentArgs = contentDetailsApi.util.selectCachedArgsForQuery(
+            state as unknown as Parameters<
+              typeof contentDetailsApi.util.selectCachedArgsForQuery
+            >[0],
+            "getContentDetails",
+          );
           for (const arg of contentArgs) {
             const patch = dispatch(
               contentDetailsApi.util.updateQueryData(
@@ -199,11 +208,7 @@ export const franchisesApi = baseApi.injectEndpoints({
       // Note: we intentionally do not invalidate `{ type: "Franchise", id: arg.id }` here
       // because the backend adds movies asynchronously in an after-block; an immediate refetch
       // would overwrite this optimistic update before the background insertion finishes.
-      invalidatesTags: [
-        "Franchises",
-        "Library",
-        "Dashboard",
-      ],
+      invalidatesTags: ["Franchises", "Library", "Dashboard"],
     }),
     unfollowFranchise: build.mutation<
       { success: boolean; is_following: boolean },
@@ -227,31 +232,37 @@ export const franchisesApi = baseApi.injectEndpoints({
         ) as { undo: () => void };
         undos.push(() => patchDetails.undo());
 
-        const patchFollowed = dispatch(
-          franchisesApi.util.updateQueryData(
-            "getFollowedFranchises",
-            undefined,
-            (draft) => {
-              const index = draft.franchises.findIndex((f) => f.tmdbId === id);
-              if (index !== -1) {
-                draft.franchises.splice(index, 1);
-                draft.totalCount = Math.max(0, draft.totalCount - 1);
-              }
-            },
-          ),
-        ) as { undo: () => void };
-        undos.push(() => patchFollowed.undo());
+        const state = getState() as RootState;
+        for (const arg of franchisesApi.util.selectCachedArgsForQuery(
+          state,
+          "getFollowedFranchises",
+        )) {
+          const patchFollowed = dispatch(
+            franchisesApi.util.updateQueryData(
+              "getFollowedFranchises",
+              arg,
+              (draft) => {
+                const index = draft.franchises.findIndex(
+                  (f) => f.tmdbId === id,
+                );
+                if (index !== -1) {
+                  draft.franchises.splice(index, 1);
+                  draft.totalCount = Math.max(0, draft.totalCount - 1);
+                }
+              },
+            ),
+          ) as { undo: () => void };
+          undos.push(() => patchFollowed.undo());
+        }
 
         try {
           const { contentDetailsApi } = await import("./content-details-api");
-          const state = getState() as RootState;
-          const contentArgs =
-            contentDetailsApi.util.selectCachedArgsForQuery(
-              state as unknown as Parameters<
-                typeof contentDetailsApi.util.selectCachedArgsForQuery
-              >[0],
-              "getContentDetails",
-            );
+          const contentArgs = contentDetailsApi.util.selectCachedArgsForQuery(
+            state as unknown as Parameters<
+              typeof contentDetailsApi.util.selectCachedArgsForQuery
+            >[0],
+            "getContentDetails",
+          );
           for (const arg of contentArgs) {
             const patch = dispatch(
               contentDetailsApi.util.updateQueryData(
@@ -280,21 +291,31 @@ export const franchisesApi = baseApi.injectEndpoints({
           for (const undo of undos) undo();
         }
       },
-      invalidatesTags: [
-        "Franchises",
-      ],
+      invalidatesTags: ["Franchises"],
     }),
-    getFollowedFranchises: build.query<FollowedFranchisesData, void>({
-      query: () => ({
-        url: `/api/library/franchises?limit=${FRANCHISES_PAGE_SIZE}&offset=0`,
-      }),
+    getFollowedFranchises: build.query<
+      FollowedFranchisesData,
+      FollowedFranchisesQueryArgs | void
+    >({
+      query: (args) => {
+        const params = new URLSearchParams();
+        params.set("limit", String(FRANCHISES_PAGE_SIZE));
+        params.set("offset", "0");
+        if (args?.q?.trim()) params.set("q", args.q.trim());
+        if (args?.sortBy) params.set("sortBy", args.sortBy);
+        if (args?.sortOrder) params.set("sortOrder", args.sortOrder);
+
+        return {
+          url: `/api/library/franchises?${params.toString()}`,
+        };
+      },
       transformResponse: (response: {
         franchises: FollowedFranchiseItem[];
         totalCount?: number;
         hasMore?: boolean;
       }) => ({
         franchises: response.franchises ?? [],
-        totalCount: response.totalCount ?? (response.franchises?.length ?? 0),
+        totalCount: response.totalCount ?? response.franchises?.length ?? 0,
         hasMore: Boolean(response.hasMore),
       }),
       providesTags: ["Franchises"],
@@ -305,9 +326,17 @@ export const franchisesApi = baseApi.injectEndpoints({
 export async function loadMoreFollowedFranchises(
   dispatch: AppDispatch,
   offset: number,
+  args?: FollowedFranchisesQueryArgs,
 ) {
+  const params = new URLSearchParams();
+  params.set("limit", String(FRANCHISES_PAGE_SIZE));
+  params.set("offset", String(offset));
+  if (args?.q?.trim()) params.set("q", args.q.trim());
+  if (args?.sortBy) params.set("sortBy", args.sortBy);
+  if (args?.sortOrder) params.set("sortOrder", args.sortOrder);
+
   const response = await apiFetch(
-    `/api/library/franchises?limit=${FRANCHISES_PAGE_SIZE}&offset=${offset}`,
+    `/api/library/franchises?${params.toString()}`,
   );
   const json = (await response.json()) as {
     franchises: FollowedFranchiseItem[];
@@ -320,7 +349,7 @@ export async function loadMoreFollowedFranchises(
   dispatch(
     franchisesApi.util.updateQueryData(
       "getFollowedFranchises",
-      undefined,
+      args,
       (draft) => {
         const existingIds = new Set(draft.franchises.map((f) => f.id));
         for (const item of json.franchises) {
