@@ -58,7 +58,7 @@ export function GlobalImpressionPrompt() {
   return (
     <Dialog open>
       <DialogContent
-        className="w-full sm:max-w-sm"
+        className="w-full sm:max-w-sm overflow-visible"
         dismissible={false}
         showCloseButton={false}
       >
@@ -68,7 +68,7 @@ export function GlobalImpressionPrompt() {
           </DialogTitle>
           <DialogDescription>What&apos;s your opinion?</DialogDescription>
         </DialogHeader>
-        <div className="flex min-w-0 flex-row gap-2">
+        <div className="relative flex min-w-0 flex-row gap-2 pt-2">
           {Object.values(IMPRESSION).map((impression) => {
             const config =
               IMPRESSION_CONFIG[

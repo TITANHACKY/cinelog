@@ -1,8 +1,11 @@
+import { Progress } from "@/components/ui/progress";
+
 type FranchiseProgressMetricsProps = {
   watchedCount: number;
   totalCount: number;
   percentage: number;
   label?: string;
+  inProgressColor?: string;
 };
 
 export function FranchiseProgressMetrics({
@@ -10,6 +13,7 @@ export function FranchiseProgressMetrics({
   totalCount,
   percentage,
   label = "Franchise Progress",
+  inProgressColor = "bg-brand-primary",
 }: FranchiseProgressMetricsProps) {
   if (totalCount <= 0) {
     return null;
@@ -24,19 +28,13 @@ export function FranchiseProgressMetrics({
         </span>
       </div>
 
-      <div
+      <Progress
         aria-label={`${label}: ${watchedCount} of ${totalCount} movies, ${percentage} percent`}
-        aria-valuemax={totalCount}
-        aria-valuemin={0}
-        aria-valuenow={watchedCount}
-        className="h-2.5 w-full overflow-hidden rounded-full bg-surface-container-high"
-        role="progressbar"
-      >
-        <div
-          className="h-full rounded-full bg-brand-primary transition-[width] duration-300"
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
+        className="h-2.5"
+        inProgressColor={inProgressColor}
+        max={totalCount}
+        value={watchedCount}
+      />
     </div>
   );
 }

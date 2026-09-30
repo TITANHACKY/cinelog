@@ -1,3 +1,4 @@
+import { Progress } from "@/components/ui/progress";
 import { useProgressMetrics } from "@/hooks/title-details/use-progress-metrics";
 import type { SeriesDetails } from "@/lib/types";
 
@@ -49,19 +50,13 @@ function ProgressRow({
         </span>
       </div>
 
-      <div
+      <Progress
         aria-label={`${label}: ${value} of ${total} episodes, ${percent} percent`}
-        aria-valuemax={total}
-        aria-valuemin={0}
-        aria-valuenow={value}
-        className="h-2.5 w-full overflow-hidden rounded-full bg-surface-container-high"
-        role="progressbar"
-      >
-        <div
-          className={`h-full rounded-full transition-[width] duration-300 ${colorClass}`}
-          style={{ width: `${percent}%` }}
-        />
-      </div>
+        className="h-2.5"
+        inProgressColor={colorClass}
+        max={total}
+        value={value}
+      />
     </div>
   );
 }
