@@ -6,7 +6,7 @@ const TMDB_DETAIL_REVALIDATE_SECONDS = 43_200;
 
 async function fetchTmdbMovieRaw(tmdbId: number) {
   const queryParams = new URLSearchParams({
-    append_to_response: "release_dates,credits",
+    append_to_response: "release_dates,credits,videos,watch/providers",
     language: "en-US",
   });
 
@@ -61,5 +61,24 @@ export async function cachedTmdbFetch<T>(
     async () => tmdbFetch<T>(path, { searchParams: sorted, failedMessage }),
     ["tmdb-list", path, sorted.toString()],
     { revalidate: revalidateSeconds },
+  )();
+}
+
+export async function getCachedTmdbCollection(collectionId: number) {
+  return unstable_cache(
+    async () => {
+      const queryParams = new URLSearchParams({
+        language: "en-US",
+      });
+      return tmdbFetch<import("@/lib/types").TmdbCollection>(
+        `/collection/${collectionId}`,
+        {
+          searchParams: queryParams,
+          failedMessage: "TMDB franchise request failed",
+        },
+      );
+    },
+    ["tmdb-collection", String(collectionId)],
+    { revalidate: TMDB_DETAIL_REVALIDATE_SECONDS },
   )();
 }

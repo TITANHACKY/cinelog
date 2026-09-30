@@ -1,6 +1,6 @@
 # CineLog
 
-CineLog is a Next.js application using the App Router, Redux Toolkit, Redux Saga, Zod, Drizzle ORM, and Turso.
+CineLog is a Next.js application using the App Router, Redux Toolkit, RTK Query, Zod, Drizzle ORM, and Turso.
 
 ## Requirements
 

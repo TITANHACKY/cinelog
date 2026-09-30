@@ -6,6 +6,9 @@ type ButtonVariant =
   | "primaryFilled"
   | "accentFilled"
   | "darkFilled"
+  | "progressEpisode"
+  | "progressSeason"
+  | "progressUndo"
   | "darkTonal"
   | "ghost"
   | "dark"
@@ -13,19 +16,25 @@ type ButtonVariant =
 
 type ButtonSize = "default" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
 
+const progressFilledBase =
+  "border border-outline-variant bg-surface-container-high hover:bg-surface-container-highest active:bg-surface-container-high";
+
 const variantClasses: Record<ButtonVariant, string> = {
   primaryFilled:
-    "bg-brand-primary-container text-white hover:bg-brand-primary-container/85 active:bg-brand-primary-container",
+    "border-transparent bg-brand-primary-container text-white hover:bg-brand-primary-container/85 active:bg-brand-primary-container",
   accentFilled:
-    "bg-brand-primary text-brand-on-primary hover:bg-brand-primary/85",
+    "border-transparent bg-brand-primary text-brand-on-primary hover:bg-brand-primary/85",
   darkFilled:
     "border border-outline-variant bg-surface-container-high text-on-surface hover:bg-surface-container-highest",
+  progressEpisode: `${progressFilledBase} text-status-info`,
+  progressSeason: `${progressFilledBase} text-brand-tertiary-accent-alt`,
+  progressUndo: `${progressFilledBase} text-on-surface`,
   darkTonal:
     "border border-current/30 bg-current/10 text-brand-primary hover:bg-current/20 hover:text-brand-primary",
   ghost:
     "border border-current/25 bg-current/10 text-secondary hover:bg-current/20 hover:text-on-surface",
   dark: "border border-outline-variant bg-surface-container text-on-surface hover:bg-surface-container-high",
-  link: "text-brand-primary underline-offset-4 hover:underline",
+  link: "border-transparent text-brand-primary underline-offset-4 hover:underline",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -37,7 +46,7 @@ const sizeClasses: Record<ButtonSize, string> = {
 };
 
 const buttonBaseClass =
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-brand-primary focus-visible:ring-3 focus-visible:ring-brand-primary/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-brand-primary focus-visible:ring-3 focus-visible:ring-brand-primary/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4";
 
 function getButtonClassName({
   className,

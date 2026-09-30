@@ -231,6 +231,20 @@ export const contentDetailsApi = baseApi.injectEndpoints({
       },
       async onQueryStarted(arg, { dispatch, getState, queryFulfilled }) {
         const { id, mediaType, mutation, value, progress } = arg;
+        let previousSeasonEpisodesWatched: number | undefined;
+        if (
+          mutation === "update-progress" &&
+          progress &&
+          mediaType === "series"
+        ) {
+          const cached = readCachedDetails(getState, mediaType, id);
+          if (cached && "seasons" in cached && Array.isArray(cached.seasons)) {
+            const season = cached.seasons.find(
+              (item) => item.season_number === progress.seasonNumber,
+            );
+            previousSeasonEpisodesWatched = season?.episodes_watched ?? 0;
+          }
+        }
         try {
           const { data } = await queryFulfilled;
           const tmdbId = Number(id);
@@ -241,7 +255,17 @@ export const contentDetailsApi = baseApi.injectEndpoints({
               id,
               replace: data,
             });
-            dispatch(libraryApi.util.invalidateTags([...libraryTagIds]));
+            if (mediaType === "movie") {
+              const { patchCachedFranchiseDetails } =
+                await import("./franchises-api");
+              patchCachedFranchiseDetails(dispatch, getState, {
+                tmdbId,
+                add: true,
+              });
+            }
+            dispatch(
+              libraryApi.util.invalidateTags([...libraryTagIds, "Franchise"]),
+            );
             patchDiscoverCaches(dispatch, getState, {
               mediaType,
               tmdbId,
@@ -268,7 +292,17 @@ export const contentDetailsApi = baseApi.injectEndpoints({
               tmdbId,
               remove: true,
             });
-            dispatch(libraryApi.util.invalidateTags([...libraryTagIds]));
+            if (mediaType === "movie") {
+              const { patchCachedFranchiseDetails } =
+                await import("./franchises-api");
+              patchCachedFranchiseDetails(dispatch, getState, {
+                tmdbId,
+                remove: true,
+              });
+            }
+            dispatch(
+              libraryApi.util.invalidateTags([...libraryTagIds, "Franchise"]),
+            );
             dispatch(
               showToast({
                 message: "Removed from your watchlist",
@@ -283,6 +317,15 @@ export const contentDetailsApi = baseApi.injectEndpoints({
             id,
             fields: data,
           });
+
+          if (mediaType === "movie" && typeof data.watch_status === "number") {
+            const { patchCachedFranchiseDetails } =
+              await import("./franchises-api");
+            patchCachedFranchiseDetails(dispatch, getState, {
+              tmdbId,
+              watch_status: data.watch_status,
+            });
+          }
 
           const seriesUpdate: SeriesProgressFields | undefined =
             mediaType === "series" && data.seasons
@@ -317,7 +360,9 @@ export const contentDetailsApi = baseApi.injectEndpoints({
             impression: data.impression,
             seriesUpdate,
           });
-          dispatch(libraryApi.util.invalidateTags([...libraryTagIds]));
+          dispatch(
+            libraryApi.util.invalidateTags([...libraryTagIds, "Franchise"]),
+          );
 
           const current = readCachedDetails(getState, mediaType, id);
           const title =
@@ -357,11 +402,17 @@ export const contentDetailsApi = baseApi.injectEndpoints({
             const isSeasonCompleted = season
               ? season.episodes_watched >= (season.episode_count ?? 0)
               : false;
+            const isUnmark =
+              previousSeasonEpisodesWatched !== undefined &&
+              progress.episodeNumber < previousSeasonEpisodesWatched;
+            const message = isUnmark
+              ? `Episode ${previousSeasonEpisodesWatched} unmarked`
+              : isSeasonCompleted
+                ? `Season ${progress.seasonNumber} completed!`
+                : `Episode ${progress.episodeNumber} marked as completed`;
             dispatch(
               showToast({
-                message: isSeasonCompleted
-                  ? `Season ${progress.seasonNumber} completed!`
-                  : `Episode ${progress.episodeNumber} marked as completed`,
+                message,
                 variant: "success",
               }),
             );

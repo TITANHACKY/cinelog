@@ -9,13 +9,18 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useLibraryBrowse } from "@/hooks/library/use-library-browse";
 import { LIBRARY_COLLECTION_ACTIVE_HINT, MEDIA_TYPES } from "@/lib/constants";
-import type { LibraryMediaType, SmartCollectionWithFilters } from "@/lib/types";
+import type {
+  LibraryMediaType,
+  LibraryNavTab,
+  SmartCollectionWithFilters,
+} from "@/lib/types";
 
-export type { LibraryMediaType };
+export type { LibraryMediaType, LibraryNavTab };
 
 type LibraryFilterControlsProps = {
   movieCount: number;
   seriesCount: number;
+  franchiseCount?: number;
   mediaType: LibraryMediaType;
   onMediaTypeChange?: (mediaType: LibraryMediaType) => void;
   libraryCollections: SmartCollectionWithFilters[];
@@ -24,13 +29,15 @@ type LibraryFilterControlsProps = {
 export function LibraryFilterControls({
   movieCount,
   seriesCount,
+  franchiseCount,
   mediaType,
   onMediaTypeChange,
   libraryCollections,
 }: LibraryFilterControlsProps) {
-  const counts: Record<LibraryMediaType, number> = {
+  const counts: Record<string, number> = {
     movie: movieCount,
     series: seriesCount,
+    franchises: franchiseCount ?? 0,
   };
   const browse = useLibraryBrowse(mediaType);
   const presetActive = browse.selectedCollectionId !== null;
@@ -45,12 +52,14 @@ export function LibraryFilterControls({
   ];
 
   const hasCollectionSelect = libraryCollections.length > 0;
-  const pairedControlClass = "flex min-w-0 flex-1 basis-0";
+  const pairedControlClass = hasCollectionSelect
+    ? "flex min-w-0 flex-1 basis-0 lg:flex-none lg:w-auto"
+    : "flex min-w-0 w-full lg:w-auto";
 
   const filtersButton = (
     <Button
       aria-label="Open library filters"
-      className="h-9 w-full px-3.5"
+      className="h-9 w-full lg:w-28 px-3.5"
       disabled={presetActive}
       onClick={browse.openDialog}
       type="button"
@@ -82,10 +91,14 @@ export function LibraryFilterControls({
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-3">
-      <SegmentedControl
+      <SegmentedControl<LibraryNavTab>
         aria-label="Filter library by media type"
-        className="min-w-0 basis-full lg:basis-0 lg:flex-1"
-        onChange={onMediaTypeChange}
+        className="min-w-0 basis-full lg:basis-auto lg:flex-none"
+        onChange={(val) => {
+          if (val === "movie" || val === "series") {
+            onMediaTypeChange?.(val);
+          }
+        }}
         options={MEDIA_TYPES.map(({ icon: Icon, label, value, href }) => ({
           value,
           label,
@@ -93,14 +106,14 @@ export function LibraryFilterControls({
           icon: <Icon className="size-3.5 shrink-0" />,
           badge: (
             <span
-              aria-label={`${counts[value]} ${value === "movie" ? "movies" : "series"}`}
-              className={`inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-md px-1.5 font-public-sans text-[10px] leading-none font-medium ${
+              aria-label={`${counts[value] ?? 0} ${value}`}
+              className={`inline-flex h-3.5 min-w-3.5 sm:h-4.5 sm:min-w-4.5 shrink-0 items-center justify-center rounded-md px-1 sm:px-1.5 font-public-sans text-[9px] sm:text-[10px] leading-none font-medium ${
                 mediaType === value
-                  ? "bg-white/25 text-white"
-                  : "bg-surface-container text-secondary"
+                  ? "bg-white/20 text-white"
+                  : "bg-surface-container-high text-secondary"
               }`}
             >
-              {counts[value]}
+              {counts[value] ?? 0}
             </span>
           ),
         }))}
@@ -122,7 +135,7 @@ export function LibraryFilterControls({
         value={browse.draftQ}
       />
 
-      <div className="flex min-w-0 basis-full items-center gap-2 lg:basis-0 lg:flex-1">
+      <div className="flex min-w-0 basis-full items-center gap-2 lg:basis-auto lg:flex-none">
         {filtersControl}
 
         {hasCollectionSelect ? (
@@ -138,7 +151,7 @@ export function LibraryFilterControls({
             }
             options={collectionOptions}
             placeholder="Browse manually"
-            triggerClassName="h-9 w-full justify-between gap-1.5 overflow-hidden"
+            triggerClassName="h-9 w-full lg:w-44 justify-between gap-1.5 overflow-hidden"
             value={presetActive ? String(browse.selectedCollectionId) : ""}
             wrapperClassName={pairedControlClass}
           />

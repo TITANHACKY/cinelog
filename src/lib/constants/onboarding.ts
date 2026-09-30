@@ -1,5 +1,5 @@
 export const GENRE_MAX = 10;
-export const LANGUAGE_MAX = 6;
+export const LANGUAGE_MAX = 10;
 
 export const MEDIA_LEAN_OPTIONS = [
   { value: 0, label: "Mostly movies", description: "Films are my thing" },

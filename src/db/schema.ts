@@ -521,6 +521,50 @@ export const userPreferredLanguages = sqliteTable(
   ],
 );
 
+export const franchises = sqliteTable(
+  "franchises",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    tmdbId: integer("tmdb_id").notNull(),
+    name: text("name").notNull(),
+    overview: text("overview"),
+    posterPath: text("poster_path"),
+    backdropPath: text("backdrop_path"),
+    createdAt: numeric("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: numeric("updated_at"),
+  },
+  (table) => [
+    uniqueIndex("franchises_tmdb_id_unique").on(table.tmdbId),
+    index("franchises_name_index").on(table.name),
+  ],
+);
+
+export const userFranchises = sqliteTable(
+  "user_franchises",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    franchiseId: integer("franchise_id")
+      .notNull()
+      .references(() => franchises.id, { onDelete: "cascade" }),
+    createdAt: numeric("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: numeric("updated_at"),
+  },
+  (table) => [
+    uniqueIndex("user_franchises_user_id_franchise_id_unique").on(
+      table.userId,
+      table.franchiseId,
+    ),
+    index("user_franchises_user_id_index").on(table.userId),
+  ],
+);
+
 export type Genre = typeof genres.$inferSelect;
 export type NewGenre = typeof genres.$inferInsert;
 export type Language = typeof languages.$inferSelect;
@@ -559,3 +603,7 @@ export type NewUserPreferredGenre = typeof userPreferredGenres.$inferInsert;
 export type UserPreferredLanguage = typeof userPreferredLanguages.$inferSelect;
 export type NewUserPreferredLanguage =
   typeof userPreferredLanguages.$inferInsert;
+export type Franchise = typeof franchises.$inferSelect;
+export type NewFranchise = typeof franchises.$inferInsert;
+export type UserFranchise = typeof userFranchises.$inferSelect;
+export type NewUserFranchise = typeof userFranchises.$inferInsert;

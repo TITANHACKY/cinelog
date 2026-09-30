@@ -1,10 +1,11 @@
-import { Clapperboard, TvMinimal, type LucideIcon } from "lucide-react";
+import { Clapperboard, Layers, TvMinimal, type LucideIcon } from "lucide-react";
 
 import { SMART_COLLECTIONS } from "@/lib/constants/api";
 import type {
   LibraryBrowseQuery,
   LibraryFilterField,
   LibraryMediaType,
+  LibraryNavTab,
   LibraryOperator,
   LibrarySortField,
 } from "@/lib/types/library";
@@ -12,7 +13,7 @@ import type {
 export const MEDIA_TYPES: {
   icon: LucideIcon;
   label: string;
-  value: LibraryMediaType;
+  value: LibraryNavTab;
   href: string;
 }[] = [
   {
@@ -27,7 +28,15 @@ export const MEDIA_TYPES: {
     value: "series",
     href: "/library/series",
   },
+  {
+    icon: Layers,
+    label: "Franchises",
+    value: "franchises",
+    href: "/library/franchises",
+  },
 ];
+
+export const FRANCHISES_PAGE_SIZE = 25;
 
 export const COLLECTION_MEDIA_TYPE: Record<LibraryMediaType, number> = {
   movie: 0,

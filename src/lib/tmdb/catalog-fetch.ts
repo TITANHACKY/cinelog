@@ -2,6 +2,7 @@ import { tmdbFetch } from "@/lib/tmdb/client";
 import type {
   TmdbConfigurationCountry,
   TmdbConfigurationLanguage,
+  TmdbCollection,
   TmdbGenreList,
   TmdbMovie,
   TmdbSeries,
@@ -67,5 +68,16 @@ export async function fetchTmdbSeriesForCatalog(tmdbId: number) {
   return tmdbFetch<TmdbSeries>(`/tv/${tmdbId}`, {
     searchParams: queryParams,
     failedMessage: "TMDB series request failed",
+  });
+}
+
+export async function fetchTmdbCollection(collectionId: number) {
+  const queryParams = new URLSearchParams({
+    language: "en-US",
+  });
+
+  return tmdbFetch<TmdbCollection>(`/collection/${collectionId}`, {
+    searchParams: queryParams,
+    failedMessage: "TMDB franchise request failed",
   });
 }

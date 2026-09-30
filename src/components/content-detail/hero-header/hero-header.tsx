@@ -2,12 +2,13 @@
 
 import { ActionBar } from "@/components/content-detail/hero-header/action-bar";
 import { GenrePills } from "@/components/content-detail/hero-header/genre-pills";
-import { MetaRow } from "@/components/content-detail/hero-header/meta-row";
 import { PosterPanel } from "@/components/content-detail/hero-header/poster-panel";
 import type { MovieDetails, SeriesDetails } from "@/lib/types";
 import { orFallback } from "@/lib/utils";
 import { useContentMutationState } from "@/hooks/title-details/use-content-mutation-state";
 import Image from "next/image";
+
+import { MovieSpecs } from "@/components/content-detail/hero-header/movie-specs";
 
 type HeroHeaderProps = {
   movie?: MovieDetails | null;
@@ -20,7 +21,12 @@ export function HeroHeader({ movie, series, type }: HeroHeaderProps) {
   const mediaId = movie?.id ?? series?.id;
   const entry = useContentMutationState(mediaType, mediaId);
   const title = orFallback(movie?.title || series?.name);
-  const tagline = movie?.tagline?.trim() || series?.tagline?.trim();
+  const releaseDate = movie?.release_date || series?.first_air_date;
+  const releaseYear =
+    releaseDate && releaseDate.length >= 4 ? releaseDate.slice(0, 4) : null;
+  const synopsis = movie?.overview?.trim();
+  const tagline = series?.tagline?.trim();
+  const descriptionText = mediaType === "movie" ? synopsis : tagline;
   const genres = movie?.genres ?? series?.genres;
   const imdbId = movie?.imdb_id ?? series?.imdb_id;
   const posterPath = movie?.poster_path ?? series?.poster_path;
@@ -54,20 +60,28 @@ export function HeroHeader({ movie, series, type }: HeroHeaderProps) {
 
         <div className="col-span-1 flex min-w-0 flex-col justify-end md:col-span-9">
           <div className="flex flex-col gap-3">
-            <MetaRow movie={movie} series={series} type={mediaType} />
+            {/* <MetaRow movie={movie} series={series} type={mediaType} /> */}
 
             <div className="space-y-2">
               <h1 className="font-heading text-2xl leading-tight text-on-surface sm:text-4xl md:text-[48px] md:leading-[0.96]">
                 {title}
+                {releaseYear ? (
+                  <span className="ml-2 font-normal text-on-surface-variant">
+                    ({releaseYear})
+                  </span>
+                ) : null}
               </h1>
-              {tagline && (
-                <p className="max-w-full wrap-break-words text-[16px] font-medium text-on-surface-variant md:max-w-230">
-                  {tagline}
+
+              {descriptionText && (
+                <p className="max-w-full wrap-break-words text-[15px] font-normal leading-relaxed text-on-surface-variant md:max-w-230">
+                  {descriptionText}
                 </p>
               )}
             </div>
 
             <GenrePills genres={genres} type={series?.type ?? mediaType} />
+
+            {mediaType === "movie" && movie && <MovieSpecs movie={movie} />}
           </div>
 
           <ActionBar

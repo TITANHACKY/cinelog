@@ -3,6 +3,8 @@ export type {
   RouteContext,
   SearchType,
   TmdbCastMember,
+  TmdbCollection,
+  TmdbCollectionPart,
   TmdbConfigurationCountry,
   TmdbConfigurationLanguage,
   TmdbContentRating,
@@ -20,6 +22,7 @@ export type {
   CollectionSortItem,
   CountryOption,
   CreditMember,
+  DepartmentCredits,
   SmartCollectionWithFilters,
   LanguageOption,
   LibraryCount,
@@ -29,8 +32,11 @@ export type {
   LibrarySeries,
   LibrarySeriesSeason,
   MovieDetails,
+  MovieFranchiseInfo,
   SeriesDetails,
   SeriesSeason,
+  WatchProviderCountry,
+  WatchProviderItem,
 } from "./common";
 
 export type {
@@ -39,6 +45,7 @@ export type {
   LibraryFilterField,
   LibraryGroupBy,
   LibraryMediaType,
+  LibraryNavTab,
   LibraryOperator,
   LibrarySortField,
 } from "./library";

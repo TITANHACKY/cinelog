@@ -39,6 +39,8 @@ export type LibraryChange = {
   watch_status?: number;
   impression?: number | null;
   remove?: boolean;
+  // Re-added from a card bookmark (library mutation `add`).
+  add?: boolean;
   seriesUpdate?: SeriesProgressFields;
 };
 
@@ -57,6 +59,7 @@ export type LibraryViewData = {
   groupPages: Record<string, LibraryGroupPage>;
   movieCount: number;
   seriesCount: number;
+  franchiseCount?: number;
   hasMore: boolean;
   collection: SmartCollectionWithFilters | null;
 };
@@ -141,6 +144,7 @@ export function libraryViewFromPayload(
     groupPages: buildGroupPages(items, groups, resolvedGroupBy ?? undefined),
     movieCount: payload.metadata.count.movies,
     seriesCount: payload.metadata.count.series,
+    franchiseCount: payload.metadata.count.franchises ?? 0,
     hasMore: payload.metadata.hasMore,
     collection,
   };
@@ -157,6 +161,7 @@ export function appendLibraryPage(
     items: appendUnique(current.items, pageItems),
     movieCount: payload.metadata.count.movies,
     seriesCount: payload.metadata.count.series,
+    franchiseCount: payload.metadata.count.franchises ?? current.franchiseCount,
     hasMore: payload.metadata.hasMore,
   };
 }
@@ -181,6 +186,7 @@ export function appendLibraryGroupPage(
         loadingMore: false,
       },
     },
+    franchiseCount: payload.metadata.count.franchises ?? current.franchiseCount,
   };
 }
 

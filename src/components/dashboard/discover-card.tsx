@@ -37,6 +37,7 @@ export function DiscoverCard({ item }: { item: DiscoverTitle }) {
     <>
       <CardRemoveButton
         disabled={card.isPending}
+        isInLibrary
         loading={card.isRemovePending}
         onClick={card.remove}
       />

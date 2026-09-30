@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ab2217ad-39cf-45a1-95f3-6edb450ecc7b",
+  "id": "ad69d3c0-f5a5-41a0-a1ec-605166927438",
   "prevId": "b83126e9-0b41-4671-869c-5c83b812aba7",
   "tables": {
     "countries": {
@@ -31,6 +31,88 @@
         }
       },
       "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "franchises": {
+      "name": "franchises",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tmdb_id": {
+          "name": "tmdb_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "overview": {
+          "name": "overview",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "poster_path": {
+          "name": "poster_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "backdrop_path": {
+          "name": "backdrop_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "franchises_tmdb_id_unique": {
+          "name": "franchises_tmdb_id_unique",
+          "columns": [
+            "tmdb_id"
+          ],
+          "isUnique": true
+        },
+        "franchises_name_index": {
+          "name": "franchises_name_index",
+          "columns": [
+            "name"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -926,6 +1008,95 @@
         }
       }
     },
+    "user_franchises": {
+      "name": "user_franchises",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "franchise_id": {
+          "name": "franchise_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "user_franchises_user_id_franchise_id_unique": {
+          "name": "user_franchises_user_id_franchise_id_unique",
+          "columns": [
+            "user_id",
+            "franchise_id"
+          ],
+          "isUnique": true
+        },
+        "user_franchises_user_id_index": {
+          "name": "user_franchises_user_id_index",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "user_franchises_user_id_users_id_fk": {
+          "name": "user_franchises_user_id_users_id_fk",
+          "tableFrom": "user_franchises",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "user_franchises_franchise_id_franchises_id_fk": {
+          "name": "user_franchises_franchise_id_franchises_id_fk",
+          "tableFrom": "user_franchises",
+          "tableTo": "franchises",
+          "columnsFrom": [
+            "franchise_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "user_movies": {
       "name": "user_movies",
       "columns": {
@@ -1139,14 +1310,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": false
-        },
-        "discover_rows_enabled": {
-          "name": "discover_rows_enabled",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": true
         },
         "created_at": {
           "name": "created_at",

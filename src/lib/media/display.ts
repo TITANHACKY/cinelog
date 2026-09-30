@@ -26,3 +26,17 @@ export function formatMediaMeta(
 
   return parts.join(" · ");
 }
+
+export function formatRuntime(minutes?: number | null) {
+  if (!minutes || minutes <= 0) return "N/A";
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours > 0 && remainingMinutes > 0) {
+    return `${hours}h ${remainingMinutes}m`;
+  }
+  if (hours > 0) {
+    return `${hours}h`;
+  }
+  return `${remainingMinutes}m`;
+}
