@@ -78,7 +78,7 @@ export function SearchFilterSelect({
 
   const buttonVariant =
     variant ??
-    (isOpen || value ? activeVariant ?? "primaryFilled" : "darkFilled");
+    (isOpen || value ? (activeVariant ?? "primaryFilled") : "darkFilled");
 
   return (
     <>

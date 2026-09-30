@@ -42,7 +42,7 @@ export function MovieTabs({ movie }: MovieTabsProps) {
 
   const handleTabClick = (
     tabKey: TabKey,
-    e: React.MouseEvent<HTMLButtonElement>
+    e: React.MouseEvent<HTMLButtonElement>,
   ) => {
     setActiveTab(tabKey);
     const container = navRef.current;
@@ -78,7 +78,7 @@ export function MovieTabs({ movie }: MovieTabsProps) {
       setActiveTab(nextTab.key);
       const container = navRef.current;
       const targetBtn = container?.querySelector<HTMLButtonElement>(
-        `button[data-tab="${nextTab.key}"]`
+        `button[data-tab="${nextTab.key}"]`,
       );
       targetBtn?.focus();
       if (container && targetBtn) {

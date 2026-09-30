@@ -13,7 +13,10 @@ export function ShareLinkButton() {
     const url = window.location.href;
     const title = document.title || "CineLog";
 
-    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.share === "function"
+    ) {
       try {
         await navigator.share({
           title,

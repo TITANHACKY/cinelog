@@ -67,7 +67,9 @@ export function SegmentedControl<T extends string>({
           <div className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 min-w-0">
             <div className="flex items-center justify-center gap-1 sm:gap-1.5 min-w-0">
               {option.icon && (
-                <span className="flex shrink-0 items-center">{option.icon}</span>
+                <span className="flex shrink-0 items-center">
+                  {option.icon}
+                </span>
               )}
               <span className="whitespace-nowrap text-xs sm:text-sm font-medium">
                 {option.label}

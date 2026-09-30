@@ -31,7 +31,9 @@ export function MovieSpecs({ movie }: MovieSpecsProps) {
     let codes: string[] = [];
 
     if (Array.isArray(raw)) {
-      codes = raw.filter((c): c is string => typeof c === "string" && Boolean(c.trim()));
+      codes = raw.filter(
+        (c): c is string => typeof c === "string" && Boolean(c.trim()),
+      );
     } else if (typeof raw === "string" && raw.trim()) {
       codes = [raw.trim()];
     }
@@ -100,7 +102,7 @@ export function MovieSpecs({ movie }: MovieSpecsProps) {
             <span>{statusDisplay}</span>
           </span>
         )}
-        
+
         {/* Age Rating */}
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-outline-variant bg-surface-container-high px-2.5 py-1 font-semibold text-on-surface">
           <Shield className="h-3.5 w-3.5 text-outline-muted" />

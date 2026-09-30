@@ -66,7 +66,9 @@ export function CardStatusToggle({
       }))}
       triggerAriaLabel="Set watch status"
       triggerClassName={cn(
-        expanded ? expandedClass : WATCH_STATUS_INDICATOR_TEXT[currentIndicator],
+        expanded
+          ? expandedClass
+          : WATCH_STATUS_INDICATOR_TEXT[currentIndicator],
         triggerClassName,
       )}
       triggerLabel={currentOption.display_value}
