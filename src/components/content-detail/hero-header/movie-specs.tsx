@@ -13,7 +13,6 @@ import {
 import { toMovieStatusDisplay } from "@/lib/media/status";
 import { formatRuntime } from "@/lib/media/display";
 import { useLocales } from "@/hooks/locales/use-locales";
-import { useGetPreferencesQuery } from "@/store/api/user-api";
 import type { MovieDetails } from "@/lib/types";
 
 type MovieSpecsProps = {
@@ -22,7 +21,6 @@ type MovieSpecsProps = {
 
 export function MovieSpecs({ movie }: MovieSpecsProps) {
   const { formatLanguage, formatCountry } = useLocales();
-  const { data: preferences } = useGetPreferencesQuery();
 
   const ageRating = movie.certification?.certification?.trim() || "NR";
   const runtimeDisplay = formatRuntime(movie.runtime);
@@ -63,33 +61,6 @@ export function MovieSpecs({ movie }: MovieSpecsProps) {
   const originCountryDisplay = useMemo(() => {
     return originCountries.join(", ");
   }, [originCountries]);
-
-  const userPreferredCodes = useMemo(() => {
-    return preferences?.languages ?? [];
-  }, [preferences?.languages]);
-
-  // Track available languages matching user preferences (excluding original language)
-  const matchedLanguages = useMemo(() => {
-    const available = movie.spoken_languages ?? [];
-    const userSet = new Set(userPreferredCodes);
-
-    return available
-      .filter(
-        (lang) =>
-          lang.iso_639_1 &&
-          lang.iso_639_1 !== originalLangCode &&
-          userSet.has(lang.iso_639_1),
-      )
-      .map(
-        (lang) =>
-          formatLanguage(lang.iso_639_1) || lang.english_name || lang.iso_639_1,
-      );
-  }, [
-    movie.spoken_languages,
-    originalLangCode,
-    userPreferredCodes,
-    formatLanguage,
-  ]);
 
   const director = movie.director?.name ?? "N/A";
   const creators =
@@ -136,16 +107,6 @@ export function MovieSpecs({ movie }: MovieSpecsProps) {
           <Languages className="h-3.5 w-3.5 shrink-0" />
           <span>{originalLangName} (Original)</span>
         </span>
-
-        {/* Matched User Preferred Languages */}
-        {matchedLanguages.map((langName) => (
-          <span
-            className="inline-flex items-center gap-1 rounded-lg border border-outline-variant bg-surface-container-highest px-2 py-0.5 text-[11px] font-medium text-secondary"
-            key={langName}
-          >
-            <span>{langName}</span>
-          </span>
-        ))}
       </div>
 
       {/* Credits & Production Grid */}
