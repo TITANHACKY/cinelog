@@ -6,6 +6,7 @@ import {
   insertUserFranchise,
   isUserFollowingFranchise,
   upsertFranchise,
+  type GetUserFollowedFranchisesOptions,
 } from "@/repositories/franchises";
 import type { TmdbCollection } from "@/lib/types";
 
@@ -102,7 +103,7 @@ export async function unfollowFranchise(collectionId: number, userId: number) {
 
 export async function getUserFollowedFranchises(
   userId: number,
-  options?: { limit?: number; offset?: number },
+  options?: GetUserFollowedFranchisesOptions,
 ) {
   const followed = await getRepoFollowedFranchises(userId, options);
   return followed;

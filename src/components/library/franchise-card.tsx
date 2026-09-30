@@ -10,6 +10,7 @@ import {
   type FollowedFranchiseItem,
 } from "@/store/api/franchises-api";
 import { showToast } from "@/store/slices/toastSlice";
+import { TRIGGER_CLASS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export type FranchiseCardData = {
@@ -135,7 +136,7 @@ export function FranchiseCard({
 
         <div className="mt-4 flex items-center gap-2 border-t border-outline-variant/60 pt-3">
           <Button
-            className="h-8 flex-1 gap-1.5 text-xs font-semibold"
+            className="h-8 flex-1 justify-center gap-1.5 rounded-[6px] border border-current/30 px-2.5 text-xs font-semibold"
             onClick={(e) => {
               e.stopPropagation();
               onSelect?.();
@@ -143,27 +144,28 @@ export function FranchiseCard({
             type="button"
             variant={buttonVariant}
           >
-            <ViewAllIcon className="h-3.5 w-3.5 shrink-0" />
+            <ViewAllIcon className="size-3.5 shrink-0" />
             <span>{viewAllLabel}</span>
           </Button>
 
           {showRemoveButton && (
-            <Button
+            <button
               aria-label={`Unfollow ${franchise.name}`}
-              className="h-8 w-8 shrink-0 rounded-lg text-secondary transition hover:border-status-error/40 hover:bg-status-error/10 hover:text-status-error"
+              className={cn(
+                TRIGGER_CLASS,
+                "shrink-0 border-status-error/40 bg-status-error/10 text-status-error transition-colors hover:border-status-error/60 hover:bg-status-error/20",
+              )}
               disabled={isRemoving}
               onClick={handleUnfollow}
-              size="icon"
               title="Unfollow franchise"
               type="button"
-              variant="darkFilled"
             >
               {isRemoving ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin text-status-error" />
               ) : (
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-4 w-4" />
               )}
-            </Button>
+            </button>
           )}
         </div>
       </div>

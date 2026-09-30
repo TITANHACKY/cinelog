@@ -11,6 +11,9 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const limitParam = url.searchParams.get("limit");
     const offsetParam = url.searchParams.get("offset");
+    const qParam = url.searchParams.get("q");
+    const sortByParam = url.searchParams.get("sortBy");
+    const sortOrderParam = url.searchParams.get("sortOrder");
 
     const limit =
       limitParam !== null
@@ -19,9 +22,16 @@ export async function GET(request: Request) {
     const offset =
       offsetParam !== null ? Math.max(0, Number(offsetParam) || 0) : 0;
 
+    const q = qParam ? qParam.trim() : undefined;
+    const sortBy = sortByParam === "followedAt" ? "followedAt" : "name";
+    const sortOrder = sortOrderParam === "desc" ? "desc" : "asc";
+
     const result = await getUserFollowedFranchises(session.userId, {
       limit,
       offset,
+      q,
+      sortBy,
+      sortOrder,
     });
     return ok(result);
   } catch (error) {
