@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Bookmark, Clapperboard, Film, Sparkles, Star } from "lucide-react";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface AuthSplitLayoutProps {
   children: ReactNode;
@@ -122,7 +121,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
         </footer>
       </div>
 
-      {/* Right Column - Centered Form with Theme Toggle at bottom right */}
+      {/* Right Column - Centered Form */}
       <div className="relative flex flex-col justify-between overflow-y-auto p-3 sm:p-6 lg:col-span-6 lg:h-full lg:max-h-screen lg:p-8 xl:col-span-5 xl:p-10">
         <div className="hidden lg:block h-2" aria-hidden="true" />
 
@@ -131,11 +130,6 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
           <div className="w-full max-w-md">
             <div className="rounded-xl sm:rounded-2xl border border-outline-variant bg-surface-container-low/90 p-4 sm:p-7 shadow-xl backdrop-blur-xl">
               {children}
-            </div>
-
-            {/* Theme toggle below the form, aligned to the right */}
-            <div className="mt-2.5 flex items-center justify-end">
-              <ThemeToggle />
             </div>
           </div>
         </main>

@@ -214,8 +214,20 @@ export async function addMovieToLibrary(tmdbId: number, userId: number) {
     throw error;
   }
 
+  const dbFranchise = await findFranchiseForMovieTmdbId(tmdbId);
+  const franchiseTmdbId =
+    dbFranchise?.tmdbId ?? movie.belongs_to_collection?.id;
+  const isFollowing = franchiseTmdbId
+    ? await isUserFollowingFranchise(userId, franchiseTmdbId)
+    : false;
+  const franchiseInfo = buildFranchiseInfo(
+    dbFranchise,
+    movie.belongs_to_collection,
+    isFollowing,
+  );
+
   return {
-    ...toMovieDetails(movie),
+    ...toMovieDetails(movie, undefined, franchiseInfo),
     is_present_in_watchlist: true,
     impression: null,
     watch_status: 0,

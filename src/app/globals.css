@@ -114,53 +114,53 @@
 :root {
   --radius: 0.55rem;
 
-  --surface: #edf1f7;
-  --surface-dim: #d5dce6;
-  --surface-bright: #f4f6fa;
-  --surface-container-lowest: #ffffff;
-  --surface-container-low: #ffffff;
-  --surface-container: #e3e8ef;
-  --surface-container-high: #d8e0ea;
-  --surface-container-highest: #ccd6e2;
-  --surface-variant: #d4dde8;
+  --surface: #dce5ee;
+  --surface-dim: #c6d2df;
+  --surface-bright: #eef2f5;
+  --surface-container-lowest: #f4f6f8;
+  --surface-container-low: #e7edf2;
+  --surface-container: #d2dde8;
+  --surface-container-high: #c5d2df;
+  --surface-container-highest: #b7c6d5;
+  --surface-variant: #cad6e2;
 
-  --text-on-surface: #0f172a;
-  --text-on-surface-variant: #334155;
-  --text-secondary: #475569;
-  --text-outline-muted: #64748b;
+  --text-on-surface: #17212f;
+  --text-on-surface-variant: #344256;
+  --text-secondary: #4b5b70;
+  --text-outline-muted: #58687d;
 
-  --outline: #94a3b8;
-  --outline-variant: #cbd5e1;
-  --outline-alt: rgb(15 23 42 / 12%);
-  --neutral: #475569;
+  --outline: #718197;
+  --outline-variant: #aebdcb;
+  --outline-alt: rgb(23 33 47 / 14%);
+  --neutral: #4b5b70;
 
-  --brand-primary: #094cb2;
+  --brand-primary: #124a9e;
   --brand-on-primary: #ffffff;
-  --brand-primary-container: #2563eb;
-  --brand-on-primary-container: #001946;
+  --brand-primary-container: #2f66c6;
+  --brand-on-primary-container: #ffffff;
 
-  --brand-tertiary: #854d0e;
-  --brand-tertiary-container: #d97706;
-  --brand-tertiary-accent: #b45309;
-  --brand-tertiary-accent-alt: #a16207;
+  --brand-tertiary: #8b4a0b;
+  --brand-tertiary-container: #cf780c;
+  --brand-tertiary-accent: #a95708;
+  --brand-tertiary-accent-alt: #96600c;
 
-  --status-success: #15803d;
+  --status-success: #126b36;
   --status-error: #b91c1c;
   --status-error-light: #fee2e2;
   --status-info: #0369a1;
 
-  --background: #edf1f7;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --border: rgb(15 23 42 / 12%);
-  --input: #e3e8ef;
-  --ring: #2563eb;
+  --background: #dce5ee;
+  --foreground: #17212f;
+  --card: #f1f4f7;
+  --card-foreground: #17212f;
+  --popover: #e7edf2;
+  --popover-foreground: #17212f;
+  --border: rgb(23 33 47 / 14%);
+  --input: #d2dde8;
+  --ring: #2f66c6;
   --destructive: #b91c1c;
-  --muted: #e3e8ef;
-  --muted-foreground: #475569;
+  --muted: #d2dde8;
+  --muted-foreground: #4b5b70;
 }
 
 /* Dark Mode (Alexandria Dark) */

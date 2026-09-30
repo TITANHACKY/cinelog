@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "@/hooks/use-theme";
 import { ButtonLink } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LogIn, Menu, UserPlus, X } from "lucide-react";
 
 export function LandingNav() {
@@ -74,7 +73,6 @@ export function LandingNav() {
 
         {/* Desktop Actions */}
         <div className="hidden items-center gap-2 md:flex lg:gap-3">
-          <ThemeToggle />
           <ButtonLink
             href="/login"
             variant="ghost"
@@ -95,7 +93,6 @@ export function LandingNav() {
 
         {/* Mobile Menu Toggle */}
         <div className="flex items-center gap-2 md:hidden">
-          <ThemeToggle />
           <button
             type="button"
             onClick={() => setMobileOpen(!mobileOpen)}
