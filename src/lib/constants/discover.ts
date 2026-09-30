@@ -1,6 +1,13 @@
 export const DISCOVER_MAX_PAGE = 10;
 export const DISCOVER_NEW_RELEASE_DAYS = 90;
 
+// Trending page 1: top-ups per language missing from real trending, the
+// minimum before a fallback fill, and what "recent" means.
+export const DISCOVER_TRENDING_TOP_UP = 4;
+export const DISCOVER_TRENDING_MIN = 6;
+export const DISCOVER_RECENT_MOVIE_DAYS = 365;
+export const DISCOVER_RECENT_SERIES_DAYS = 30;
+
 export const DISCOVER_TTL_SECONDS = {
   trending: 3 * 60 * 60,
   discover: 12 * 60 * 60,

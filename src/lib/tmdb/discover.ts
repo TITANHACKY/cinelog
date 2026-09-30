@@ -37,6 +37,9 @@ export type DiscoverTitlesParams = {
   // Exact release window (YYYY-MM-DD); takes precedence over the year bounds.
   gteDate?: string | null;
   lteDate?: string | null;
+  // Episode air-date window (series only): "currently airing".
+  airDateGte?: string | null;
+  airDateLte?: string | null;
   sortBy?: "popularity.desc" | "vote_average.desc";
   // Overrides the default vote floor that accompanies a rating filter.
   minVoteCount?: number | null;
@@ -93,6 +96,12 @@ function buildDiscoverSearch(params: DiscoverTitlesParams): URLSearchParams {
     (params.lteYear != null ? `${params.lteYear}-12-31` : null);
   if (gte) search.set(gteField, gte);
   if (lte) search.set(lteField, lte);
+  if (params.type === "tv" && params.airDateGte) {
+    search.set("air_date.gte", params.airDateGte);
+  }
+  if (params.type === "tv" && params.airDateLte) {
+    search.set("air_date.lte", params.airDateLte);
+  }
   return search;
 }
 
