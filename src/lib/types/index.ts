@@ -40,6 +40,7 @@ export type {
 } from "./common";
 
 export type {
+  FranchiseSortOption,
   LibraryBrowseQuery,
   LibraryDirection,
   LibraryFilterField,

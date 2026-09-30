@@ -15,8 +15,10 @@ import {
   useReorderCollectionsMutation,
   useUpdateCollectionMutation,
 } from "@/store/api/collections-api";
+import { clearLibraryBrowseSession } from "@/lib/media/library-browse-session";
 import { useUpdateProfileMutation } from "@/store/api/user-api";
 import { useAppDispatch, useAppSelector } from "@/store";
+import { libraryBrowseReset } from "@/store/slices/librarySlice";
 import { showToast } from "@/store/slices/toastSlice";
 
 export function useSmartCollections() {
@@ -150,6 +152,8 @@ export function useSmartCollections() {
     async (enabled: boolean) => {
       try {
         await updateProfile({ smartCollectionsEnabled: enabled }).unwrap();
+        clearLibraryBrowseSession();
+        dispatch(libraryBrowseReset());
         notify(
           enabled
             ? "Smart collections enabled."
@@ -163,7 +167,7 @@ export function useSmartCollections() {
         );
       }
     },
-    [notify, updateProfile],
+    [dispatch, notify, updateProfile],
   );
 
   return {

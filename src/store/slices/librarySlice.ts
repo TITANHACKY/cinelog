@@ -53,10 +53,21 @@ const librarySlice = createSlice({
     ) => {
       state.queries[action.payload.type].q = action.payload.q;
     },
+    libraryBrowseReset: (state) => {
+      state.queries = {
+        movie: DEFAULT_LIBRARY_BROWSE_QUERY,
+        series: DEFAULT_LIBRARY_BROWSE_QUERY,
+      };
+      state.selectedCollectionIds = {
+        movie: null,
+        series: null,
+      };
+    },
   },
 });
 
 export const {
+  libraryBrowseReset,
   libraryCollectionSelected,
   libraryQueryUpdated,
   librarySearchQueryUpdated,

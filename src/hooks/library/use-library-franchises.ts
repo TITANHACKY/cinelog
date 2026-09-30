@@ -1,6 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  DEFAULT_FRANCHISE_SORT_OPTION,
+  DEFAULT_LIBRARY_BROWSE_QUERY,
+} from "@/lib/constants";
+import {
+  readLibraryBrowseSession,
+  writeLibraryBrowseSession,
+} from "@/lib/media/library-browse-session";
+import type { FranchiseSortOption } from "@/lib/types";
 import {
   loadMoreFollowedFranchises,
   useGetFollowedFranchisesQuery,
@@ -8,15 +17,20 @@ import {
 } from "@/store/api/franchises-api";
 import { useAppDispatch } from "@/store";
 
-export type FranchiseSortOption =
-  "name-asc" | "name-desc" | "date-desc" | "date-asc";
+export type { FranchiseSortOption };
 
 export function useLibraryFranchises() {
   const dispatch = useAppDispatch();
   const [loadingMore, setLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [sortOption, setSortOption] = useState<FranchiseSortOption>("name-asc");
+  const [sortOption, setSortOption] = useState<FranchiseSortOption>(() => {
+    return (
+      readLibraryBrowseSession()?.franchises?.sortOption ??
+      DEFAULT_FRANCHISE_SORT_OPTION
+    );
+  });
+  const persistReady = useRef(false);
 
   // Debounce search query input (300ms)
   useEffect(() => {
@@ -28,6 +42,29 @@ export function useLibraryFranchises() {
       window.clearTimeout(handler);
     };
   }, [searchQuery]);
+
+  useEffect(() => {
+    persistReady.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!persistReady.current) {
+      return;
+    }
+
+    const existing = readLibraryBrowseSession();
+    writeLibraryBrowseSession({
+      movie: existing?.movie ?? {
+        query: DEFAULT_LIBRARY_BROWSE_QUERY,
+        selectedCollectionId: null,
+      },
+      series: existing?.series ?? {
+        query: DEFAULT_LIBRARY_BROWSE_QUERY,
+        selectedCollectionId: null,
+      },
+      franchises: { sortOption },
+    });
+  }, [sortOption]);
 
   const { sortBy, sortOrder } = useMemo<{
     sortBy: "name" | "followedAt";
