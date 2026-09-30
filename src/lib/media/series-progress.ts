@@ -62,8 +62,7 @@ export function computeTotalEpisodesAired(
     const seasonNumber = season.season_number ?? 0;
     const episodeCount = season.episode_count ?? 0;
     return (
-      total +
-      computeSeasonEpisodesAired(seasonNumber, episodeCount, context)
+      total + computeSeasonEpisodesAired(seasonNumber, episodeCount, context)
     );
   }, 0);
 }

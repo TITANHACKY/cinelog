@@ -52,6 +52,16 @@ import {
   normalizeTmdbCountries,
   normalizeTmdbLanguages,
 } from "./lib/locale-sync";
+import { fetchTmdbCollection } from "@/lib/tmdb/catalog-fetch";
+import {
+  applyFranchiseSyncMutations,
+  loadFranchiseSyncSnapshot,
+} from "@/repositories/franchise-sync";
+import {
+  diffFranchiseCatalog,
+  emptyFranchiseSyncMutations,
+  franchiseMutationWriteCount,
+} from "./lib/franchise-sync";
 import { TmdbRequestLimiter } from "./lib/tmdb-rate-limit";
 
 type SyncMode = "dry-run" | "execute";
@@ -306,6 +316,39 @@ async function main() {
   const tmdbMs = Date.now() - tmdbStarted;
   const reopenPlans = await previewUserSeriesReopens(mutations, snapshot);
   diffs.push(...userSeriesReopenDiffRows(reopenPlans));
+
+  const franchiseSnapshot = await loadFranchiseSyncSnapshot();
+  const franchiseMutations = emptyFranchiseSyncMutations();
+  let franchisesWithDiffs = 0;
+
+  await mapWithProgress(
+    franchiseSnapshot.franchises,
+    "franchises",
+    async (franchise) => {
+      const titleDiffs: DiffRow[] = [];
+      try {
+        const collection = await limiter.run(() =>
+          fetchTmdbCollection(franchise.tmdbId),
+        );
+        diffFranchiseCatalog({
+          franchise,
+          collection,
+          snapshot: franchiseSnapshot,
+          mutations: franchiseMutations,
+          diffs: titleDiffs,
+        });
+      } catch (error) {
+        errors.push(
+          errorFromUnknown("franchise", franchise.id, franchise.tmdbId, error),
+        );
+      }
+      diffs.push(...titleDiffs);
+      if (titleDiffs.length > 0) {
+        franchisesWithDiffs += 1;
+      }
+    },
+  );
+
   const progressWouldInsert = diffs.filter(
     (row) => row.entity === "user_season_progress",
   ).length;
@@ -315,6 +358,7 @@ async function main() {
     localeMutationWriteCount(languageMutations) +
     localeMutationWriteCount(countryMutations) +
     genreMutationWriteCount(genreMutations) +
+    franchiseMutationWriteCount(franchiseMutations) +
     progressWouldInsert +
     userSeriesWouldReopen;
 
@@ -335,12 +379,22 @@ async function main() {
   let written = 0;
   let progressInserted = 0;
   let userSeriesReopened = 0;
+  let franchiseWritten = 0;
 
   if (mode === "execute") {
     const dbStarted = Date.now();
-    const result = await applyCatalogSyncMutations(mutations);
+    const [result, franchiseWrite] = await Promise.all([
+      applyCatalogSyncMutations(mutations),
+      applyFranchiseSyncMutations(franchiseMutations),
+    ]);
     dbMs = Date.now() - dbStarted;
-    written = result.written + languageWritten + countryWritten + genreWritten;
+    franchiseWritten = franchiseWrite.written;
+    written =
+      result.written +
+      languageWritten +
+      countryWritten +
+      genreWritten +
+      franchiseWritten;
     progressInserted = result.progressInserted;
     userSeriesReopened = result.userSeriesReopened;
   }
@@ -368,6 +422,7 @@ async function main() {
     titles_with_diffs: {
       movies: moviesWithDiffs,
       series: seriesWithDiffs,
+      franchises: franchisesWithDiffs,
     },
     would_write: wouldWrite,
     written: mode === "execute" ? written : 0,
@@ -396,7 +451,12 @@ async function main() {
       series_genre_links: mutations.seriesGenreLinks.length,
       movie_genre_unlinks: mutations.movieGenreUnlinks.length,
       series_genre_unlinks: mutations.seriesGenreUnlinks.length,
+      franchise_metadata_updates: franchiseMutations.metadataUpdates.length,
+      franchise_movie_links: franchiseMutations.movieLinks.length,
+      franchise_movie_unlinks: franchiseMutations.movieUnlinks.length,
     },
+    franchises_scanned: franchiseSnapshot.franchises.length,
+    franchise_written: mode === "execute" ? franchiseWritten : 0,
     tmdb: limiter.stats,
     error_count: errors.length,
     reports: {

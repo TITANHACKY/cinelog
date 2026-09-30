@@ -1,3 +1,4 @@
+import { MOVIE_STATUS } from "@/lib/constants";
 import {
   normalizeMovieStatus,
   normalizeSeriesStatus,
@@ -6,6 +7,7 @@ import {
 } from "@/lib/media/status";
 import type {
   MoviePayload,
+  TmdbCollectionPart,
   TmdbMovie,
   TmdbReleaseDate,
   TmdbSeries,
@@ -148,6 +150,21 @@ export function catalogSeasonsFromTmdb(
       episodeCount: season.episode_count || 0,
       airDate: season.air_date || null,
     }));
+}
+
+export function mapCollectionPartToCatalog(
+  part: TmdbCollectionPart,
+): CatalogMovieFields {
+  return {
+    title: part.title || "Unknown",
+    posterPath: part.poster_path || null,
+    releaseDate: part.release_date || null,
+    voteAverage: roundVoteAverage(part.vote_average),
+    status: MOVIE_STATUS.released.value,
+    originalLanguage: part.original_language || null,
+    originCountry: null,
+    certificate: null,
+  };
 }
 
 export function mapTmdbMovieToCatalog(

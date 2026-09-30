@@ -74,8 +74,8 @@ export function SeasonSelect({
                       {season.label}
                     </span>
                     <span className="truncate text-[11px] text-outline-muted">
-                      {season.episodesWatched}/{season.episodesAired} watched
-                      · {season.episodesAired}/{season.episodeCount} released
+                      {season.episodesWatched}/{season.episodesAired} watched ·{" "}
+                      {season.episodesAired}/{season.episodeCount} released
                     </span>
                   </div>
                   {isSelected ? (

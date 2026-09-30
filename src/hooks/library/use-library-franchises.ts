@@ -67,16 +67,16 @@ export function useLibraryFranchises() {
   }, [sortOption]);
 
   const { sortBy, sortOrder } = useMemo<{
-    sortBy: "name" | "followedAt";
+    sortBy: "name" | "followed_at";
     sortOrder: "asc" | "desc";
   }>(() => {
     switch (sortOption) {
       case "name-desc":
         return { sortBy: "name", sortOrder: "desc" };
       case "date-desc":
-        return { sortBy: "followedAt", sortOrder: "desc" };
+        return { sortBy: "followed_at", sortOrder: "desc" };
       case "date-asc":
-        return { sortBy: "followedAt", sortOrder: "asc" };
+        return { sortBy: "followed_at", sortOrder: "asc" };
       case "name-asc":
       default:
         return { sortBy: "name", sortOrder: "asc" };
@@ -96,7 +96,7 @@ export function useLibraryFranchises() {
   const data = result.currentData ?? result.data;
 
   const loadMore = useCallback(async () => {
-    if (!data || !data.hasMore || loadingMore) return;
+    if (!data || !data.has_more || loadingMore) return;
     setLoadingMore(true);
     try {
       await loadMoreFollowedFranchises(
@@ -116,8 +116,8 @@ export function useLibraryFranchises() {
 
   return {
     franchises: data?.franchises ?? [],
-    totalCount: data?.totalCount ?? 0,
-    hasMore: data?.hasMore ?? false,
+    totalCount: data?.total_count ?? 0,
+    hasMore: data?.has_more ?? false,
     isLoading: !data && (result.isLoading || result.isFetching),
     isFetching: result.isFetching,
     isError: result.isError,

@@ -23,7 +23,10 @@ export async function GET(request: Request) {
       offsetParam !== null ? Math.max(0, Number(offsetParam) || 0) : 0;
 
     const q = qParam ? qParam.trim() : undefined;
-    const sortBy = sortByParam === "followedAt" ? "followedAt" : "name";
+    const sortBy =
+      sortByParam === "followed_at" || sortByParam === "followedAt"
+        ? "followedAt"
+        : "name";
     const sortOrder = sortOrderParam === "desc" ? "desc" : "asc";
 
     const result = await getUserFollowedFranchises(session.userId, {

@@ -152,9 +152,7 @@ function parseFranchisesSession(
 }
 
 function isDefaultFranchisesSession(session?: LibraryFranchisesSession) {
-  return (
-    !session || session.sortOption === DEFAULT_FRANCHISE_SORT_OPTION
-  );
+  return !session || session.sortOption === DEFAULT_FRANCHISE_SORT_OPTION;
 }
 
 function parseMediaSession(value: unknown): LibraryBrowseMediaSession | null {

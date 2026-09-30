@@ -63,7 +63,8 @@ export function SeriesSpecs({ series }: SeriesSpecsProps) {
 
   const originCountries = useMemo(() => {
     const codes = (series.origin_country ?? []).filter(
-      (code): code is string => typeof code === "string" && Boolean(code.trim()),
+      (code): code is string =>
+        typeof code === "string" && Boolean(code.trim()),
     );
 
     if (codes.length === 0 && series.production_companies) {
@@ -90,7 +91,10 @@ export function SeriesSpecs({ series }: SeriesSpecsProps) {
 
   const creators =
     series.created_by && series.created_by.length > 0
-      ? series.created_by.map((creator) => creator.name).filter(Boolean).join(", ")
+      ? series.created_by
+          .map((creator) => creator.name)
+          .filter(Boolean)
+          .join(", ")
       : "N/A";
   const leadStudio = series.lead_studio ?? "N/A";
   const network = series.network ?? "N/A";

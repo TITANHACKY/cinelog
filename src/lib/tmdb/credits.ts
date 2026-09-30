@@ -8,9 +8,7 @@ import type {
 
 type TmdbCredits = TmdbMovie["credits"] | TmdbSeries["credits"];
 
-export function extractDepartments(
-  credits: TmdbCredits,
-): DepartmentCredits[] {
+export function extractDepartments(credits: TmdbCredits): DepartmentCredits[] {
   const departmentsMap = new Map<string, CreditMember[]>();
   const creditsObj = credits && !Array.isArray(credits) ? credits : undefined;
 

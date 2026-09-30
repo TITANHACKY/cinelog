@@ -28,10 +28,7 @@ export function useProgressMetrics(
       id: selectedSeason.id ?? seasonNumber ?? "",
       label: selectedSeason.name ?? `Season ${seasonNumber}`,
       total: seasonTotal,
-      value: Math.min(
-        selectedSeason.episodes_watched ?? 0,
-        seasonTotal,
-      ),
+      value: Math.min(selectedSeason.episodes_watched ?? 0, seasonTotal),
     });
   }
 

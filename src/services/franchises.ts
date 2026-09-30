@@ -1,91 +1,149 @@
-import { getCachedTmdbCollection, getCachedTmdbMovie } from "@/lib/tmdb/cache";
-import { findUserMovieData, insertUserMovie } from "@/repositories/movies";
+import { getCachedTmdbCollection } from "@/lib/tmdb/cache";
+import {
+  mapFollowedFranchiseToApi,
+  mapFranchiseDetailsToApi,
+  mapTmdbCollectionPartToSource,
+} from "@/lib/media/franchise-mapper";
+import { toFranchiseProgressApiFromCounts } from "@/lib/media/franchise-progress";
+import {
+  countUserCompletedFranchiseParts,
+  findUserFranchiseProgress,
+} from "@/repositories/franchise-progress";
 import {
   deleteUserFranchise,
+  findFranchiseByTmdbId,
+  findFranchiseMovies,
   getUserFollowedFranchises as getRepoFollowedFranchises,
   insertUserFranchise,
   isUserFollowingFranchise,
-  upsertFranchise,
   type GetUserFollowedFranchisesOptions,
 } from "@/repositories/franchises";
+import {
+  ensureUserMovie,
+  getUserMovieStatusesForTmdbIds,
+} from "@/repositories/movies";
+import { syncFranchiseCollectionFromTmdb } from "@/repositories/franchise-sync";
 import type { TmdbCollection } from "@/lib/types";
 
-export async function getFranchiseDetails(
-  collectionId: number,
-  userId?: number,
+function sortPartsByReleaseDate<T extends { release_date?: string | null }>(
+  parts: T[],
 ) {
-  const collection: TmdbCollection =
-    await getCachedTmdbCollection(collectionId);
-
-  const isFollowing = userId
-    ? await isUserFollowingFranchise(userId, collectionId)
-    : false;
-
-  const sortedParts = [...(collection.parts ?? [])].sort((a, b) => {
+  return [...parts].sort((a, b) => {
     if (!a.release_date) return 1;
     if (!b.release_date) return -1;
     return a.release_date.localeCompare(b.release_date);
   });
+}
 
-  const partsWithLibraryStatus = await Promise.all(
-    sortedParts.map(async (part) => {
-      const userMovie = userId
-        ? await findUserMovieData(part.id, userId)
-        : undefined;
+async function buildPartsFromDb(franchiseDbId: number, userId?: number) {
+  const catalogMovies = await findFranchiseMovies(franchiseDbId);
+  const tmdbIds = catalogMovies.map((movie) => movie.tmdbId);
+  const userStatuses = userId
+    ? await getUserMovieStatusesForTmdbIds(userId, tmdbIds)
+    : new Map();
 
+  return sortPartsByReleaseDate(
+    catalogMovies.map((movie) => {
+      const userStatus = userStatuses.get(movie.tmdbId);
       return {
-        ...part,
-        is_present_in_watchlist: Boolean(userMovie),
-        watch_status: userMovie?.watchStatus ?? null,
+        id: movie.tmdbId,
+        title: movie.title,
+        overview: null,
+        poster_path: movie.posterPath,
+        backdrop_path: null,
+        release_date: movie.releaseDate,
+        vote_average: movie.voteAverage,
+        vote_count: null,
+        original_language: movie.originalLanguage,
+        is_present_in_watchlist: Boolean(userStatus),
+        watch_status: userStatus?.watchStatus ?? null,
       };
     }),
   );
-
-  return {
-    id: collection.id,
-    name: collection.name,
-    overview: collection.overview || null,
-    poster_path: collection.poster_path || null,
-    backdrop_path: collection.backdrop_path || null,
-    is_following: isFollowing,
-    parts: partsWithLibraryStatus,
-  };
 }
 
-async function afterBlockAddFranchiseMovies(
-  collection: TmdbCollection,
-  userId: number,
-) {
-  await Promise.allSettled(
-    (collection.parts ?? []).map(async (part) => {
-      try {
-        const existing = await findUserMovieData(part.id, userId);
-        if (!existing) {
-          const fullMovie = await getCachedTmdbMovie(part.id);
-          await insertUserMovie(part.id, userId, fullMovie);
-        }
-      } catch {
-        // Continue inserting remaining movies if one fails
-      }
-    }),
+async function buildPartsFromTmdb(collection: TmdbCollection, userId?: number) {
+  const sortedParts = sortPartsByReleaseDate(collection.parts ?? []);
+  const tmdbIds = sortedParts.map((part) => part.id);
+  const userStatuses = userId
+    ? await getUserMovieStatusesForTmdbIds(userId, tmdbIds)
+    : new Map();
+
+  return sortedParts.map((part) =>
+    mapTmdbCollectionPartToSource(part, userStatuses.get(part.id)),
   );
 }
 
-export async function followFranchise(collectionId: number, userId: number) {
-  const collection = await getCachedTmdbCollection(collectionId);
+export async function getFranchiseDetails(
+  collectionTmdbId: number,
+  userId?: number,
+) {
+  const franchise = await findFranchiseByTmdbId(collectionTmdbId);
+  const isFollowing = userId
+    ? await isUserFollowingFranchise(userId, collectionTmdbId)
+    : false;
 
-  const franchise = await upsertFranchise({
-    tmdbId: collection.id,
+  if (franchise) {
+    const parts = await buildPartsFromDb(franchise.id, userId);
+    const storedProgress =
+      userId && isFollowing
+        ? await findUserFranchiseProgress(userId, franchise.id)
+        : null;
+
+    return mapFranchiseDetailsToApi({
+      id: franchise.tmdbId,
+      name: franchise.name,
+      overview: franchise.overview,
+      poster_path: franchise.posterPath,
+      backdrop_path: franchise.backdropPath,
+      is_following: isFollowing,
+      parts,
+      progress: storedProgress
+        ? toFranchiseProgressApiFromCounts(
+            storedProgress.numberOfPartsCompleted,
+            storedProgress.numberOfParts,
+          )
+        : undefined,
+    });
+  }
+
+  const collection = await getCachedTmdbCollection(collectionTmdbId);
+  const parts = await buildPartsFromTmdb(collection, userId);
+
+  return mapFranchiseDetailsToApi({
+    id: collection.id,
     name: collection.name,
-    overview: collection.overview,
-    posterPath: collection.poster_path,
-    backdropPath: collection.backdrop_path,
+    overview: collection.overview ?? null,
+    poster_path: collection.poster_path ?? null,
+    backdrop_path: collection.backdrop_path ?? null,
+    is_following: isFollowing,
+    parts,
   });
+}
 
-  await insertUserFranchise(userId, franchise.id);
+export async function followFranchise(
+  collectionTmdbId: number,
+  userId: number,
+) {
+  const collection = await getCachedTmdbCollection(collectionTmdbId);
 
-  // after_block(): Add all movies under this franchise to the user's library
-  void afterBlockAddFranchiseMovies(collection, userId);
+  await syncFranchiseCollectionFromTmdb(collection);
+
+  const franchise = await findFranchiseByTmdbId(collection.id);
+  if (!franchise) {
+    throw new Error(`Failed to upsert franchise for tmdb_id ${collection.id}`);
+  }
+
+  for (const part of collection.parts ?? []) {
+    await ensureUserMovie(part.id, userId);
+  }
+
+  const completedCount = await countUserCompletedFranchiseParts(
+    userId,
+    franchise.id,
+  );
+
+  await insertUserFranchise(userId, franchise.id, completedCount);
 
   return {
     success: true,
@@ -93,8 +151,11 @@ export async function followFranchise(collectionId: number, userId: number) {
   };
 }
 
-export async function unfollowFranchise(collectionId: number, userId: number) {
-  await deleteUserFranchise(userId, collectionId);
+export async function unfollowFranchise(
+  collectionTmdbId: number,
+  userId: number,
+) {
+  await deleteUserFranchise(userId, collectionTmdbId);
   return {
     success: true,
     is_following: false,
@@ -106,5 +167,25 @@ export async function getUserFollowedFranchises(
   options?: GetUserFollowedFranchisesOptions,
 ) {
   const followed = await getRepoFollowedFranchises(userId, options);
-  return followed;
+
+  const franchisesWithProgress = followed.franchises.map((row) =>
+    mapFollowedFranchiseToApi({
+      tmdbId: row.tmdbId,
+      name: row.name,
+      overview: row.overview,
+      posterPath: row.posterPath,
+      backdropPath: row.backdropPath,
+      followedAt: row.followedAt,
+      progress: toFranchiseProgressApiFromCounts(
+        row.numberOfPartsCompleted,
+        row.numberOfParts,
+      ),
+    }),
+  );
+
+  return {
+    franchises: franchisesWithProgress,
+    total_count: followed.totalCount,
+    has_more: followed.hasMore,
+  };
 }

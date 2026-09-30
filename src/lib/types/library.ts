@@ -2,11 +2,7 @@ import { SMART_COLLECTIONS } from "@/lib/constants/api";
 
 type LibraryMediaType = "movie" | "series";
 type LibraryNavTab = "movie" | "series" | "franchises";
-type FranchiseSortOption =
-  | "name-asc"
-  | "name-desc"
-  | "date-desc"
-  | "date-asc";
+type FranchiseSortOption = "name-asc" | "name-desc" | "date-desc" | "date-asc";
 
 type LibraryFilterField = keyof typeof SMART_COLLECTIONS.filter_field;
 type LibrarySortField = keyof typeof SMART_COLLECTIONS.sort_field;

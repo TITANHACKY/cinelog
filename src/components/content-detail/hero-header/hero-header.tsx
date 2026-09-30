@@ -81,7 +81,9 @@ export function HeroHeader({ movie, series, type }: HeroHeaderProps) {
             <GenrePills genres={genres} type={series?.type ?? mediaType} />
 
             {mediaType === "movie" && movie && <MovieSpecs movie={movie} />}
-            {mediaType === "series" && series && <SeriesSpecs series={series} />}
+            {mediaType === "series" && series && (
+              <SeriesSpecs series={series} />
+            )}
           </div>
 
           <ActionBar

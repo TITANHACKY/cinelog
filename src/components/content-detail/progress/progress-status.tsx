@@ -31,10 +31,7 @@ type ProgressStatusProps = {
   size?: "default" | "lg";
 };
 
-export function getPositionSummary(
-  watched: number,
-  aired: number,
-): string {
+export function getPositionSummary(watched: number, aired: number): string {
   if (aired <= 0) return "No episodes released yet";
   if (watched <= 0) {
     return `${aired} episode${aired === 1 ? "" : "s"} available`;

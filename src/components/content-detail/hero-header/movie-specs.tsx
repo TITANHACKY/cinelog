@@ -1,7 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
-import { Clock, Film, Languages, MapPin, Shield, User, Video } from "lucide-react";
+import {
+  Clock,
+  Film,
+  Languages,
+  MapPin,
+  Shield,
+  User,
+  Video,
+} from "lucide-react";
 import { toMovieStatusDisplay } from "@/lib/media/status";
 import { formatRuntime } from "@/lib/media/display";
 import { useLocales } from "@/hooks/locales/use-locales";

@@ -110,7 +110,10 @@ function toSeriesDetails(seriesRecord: TmdbSeries, library: UserSeriesLibrary) {
           : (progressBySeasonNumber.get(season.season_number) ?? 0),
     };
   });
-  const totalEpisodesAired = computeTotalEpisodesAired(seasons, episodeAirContext);
+  const totalEpisodesAired = computeTotalEpisodesAired(
+    seasons,
+    episodeAirContext,
+  );
   const certification = pickSeriesCertification(seriesRecord);
   const trailer = extractTrailer(seriesRecord.videos);
   const departments = extractDepartments(seriesRecord.credits);

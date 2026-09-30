@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, CheckCheck, ChevronLeft, Loader2, Minus, Plus } from "lucide-react";
+import {
+  Check,
+  CheckCheck,
+  ChevronLeft,
+  Loader2,
+  Minus,
+  Plus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { SeasonOption } from "@/hooks/title-details/use-progress-seasons";
@@ -153,7 +160,9 @@ export function ProgressActions({
   const showUnreleasedTooltip = isWatchable === false;
   const primaryMarkLabel = getPrimaryMarkLabel(nextEpisode, isComplete);
   const undoLabel =
-    episodesWatched > 0 ? `Undo episode ${episodesWatched}` : "Undo last episode";
+    episodesWatched > 0
+      ? `Undo episode ${episodesWatched}`
+      : "Undo last episode";
 
   const continueSeasonButton =
     isComplete && nextSeasonNumber !== undefined && onSeasonChange ? (
@@ -167,25 +176,24 @@ export function ProgressActions({
       </Button>
     ) : null;
 
-  const seasonCompleteButton =
-    !isComplete ? (
-      <Button
-        className={secondaryActionClassName}
-        disabled={isForwardDisabled}
-        onClick={() => updateProgress(maxTrackableEpisodes, isForwardDisabled)}
-        type="button"
-        variant="progressSeason"
-      >
-        {isSeasonMutating ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <CheckCheck className="h-4 w-4" />
-        )}
-        <span>
-          {isSeasonMutating ? "Marking season..." : "Mark season complete"}
-        </span>
-      </Button>
-    ) : null;
+  const seasonCompleteButton = !isComplete ? (
+    <Button
+      className={secondaryActionClassName}
+      disabled={isForwardDisabled}
+      onClick={() => updateProgress(maxTrackableEpisodes, isForwardDisabled)}
+      type="button"
+      variant="progressSeason"
+    >
+      {isSeasonMutating ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <CheckCheck className="h-4 w-4" />
+      )}
+      <span>
+        {isSeasonMutating ? "Marking season..." : "Mark season complete"}
+      </span>
+    </Button>
+  ) : null;
 
   const undoButton = (
     <Button
@@ -218,9 +226,7 @@ export function ProgressActions({
       ) : (
         <Check className="h-4 w-4" />
       )}
-      <span>
-        {isEpisodeMutating ? "Updating..." : primaryMarkLabel}
-      </span>
+      <span>{isEpisodeMutating ? "Updating..." : primaryMarkLabel}</span>
     </Button>
   );
 
