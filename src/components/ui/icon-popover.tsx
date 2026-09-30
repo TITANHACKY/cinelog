@@ -26,6 +26,7 @@ type IconPopoverProps<T> = {
   expanded?: boolean;
   showMenuLabels?: boolean;
   className?: string;
+  size?: "default" | "lg";
 };
 
 export function IconPopover<T>({
@@ -42,6 +43,7 @@ export function IconPopover<T>({
   expanded = false,
   showMenuLabels,
   className,
+  size = "default",
 }: IconPopoverProps<T>) {
   const { isOpen, containerRef, toggle, close } = usePopover(
     disabled || loading,
@@ -105,8 +107,12 @@ export function IconPopover<T>({
         aria-label={triggerAriaLabel}
         className={cn(
           expanded
-            ? "flex h-8 w-full min-w-0 items-center justify-center gap-1.5 rounded-[6px] px-2.5 text-xs font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50"
-            : TRIGGER_CLASS,
+            ? size === "lg"
+              ? "flex h-10 w-full min-w-0 items-center justify-center gap-2 rounded-lg px-3 text-xs sm:text-sm font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50"
+              : "flex h-8 w-full min-w-0 items-center justify-center gap-1.5 rounded-[6px] px-2.5 text-xs font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50"
+            : size === "lg"
+              ? "flex h-10 w-10 items-center justify-center rounded-lg border border-current/30 bg-current/10 transition-colors hover:bg-current/20 disabled:pointer-events-none disabled:opacity-50"
+              : TRIGGER_CLASS,
           triggerClassName,
         )}
         disabled={disabled || loading}
@@ -117,11 +123,15 @@ export function IconPopover<T>({
           <Loader2
             className={cn(
               "animate-spin text-current",
-              expanded ? "size-3.5" : "h-4 w-4",
+              size === "lg" ? "size-4" : expanded ? "size-3.5" : "h-4 w-4",
             )}
           />
         ) : CurrentIcon ? (
-          <CurrentIcon className={cn(expanded ? "size-3.5" : "h-4 w-4")} />
+          <CurrentIcon
+            className={cn(
+              size === "lg" ? "size-4" : expanded ? "size-3.5" : "h-4 w-4",
+            )}
+          />
         ) : null}
         {expanded && triggerLabel ? (
           <span className="truncate">{triggerLabel}</span>

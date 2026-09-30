@@ -6,6 +6,7 @@ import { InfoTab } from "@/components/content-detail/tabs/info-tab";
 import { CastCrewTab } from "@/components/content-detail/tabs/cast-crew-tab";
 import { RecommendationTab } from "@/components/content-detail/tabs/recommendation-tab";
 import { FranchiseCard } from "@/components/content-detail/tabs/franchise-card";
+import { useGetFranchiseDetailsQuery } from "@/store/api/franchises-api";
 import type { MovieDetails } from "@/lib/types";
 
 type TabKey = "info" | "franchise" | "cast-crew" | "recommendation";
@@ -19,6 +20,13 @@ export function MovieTabs({ movie }: MovieTabsProps) {
   const navRef = useRef<HTMLDivElement>(null);
 
   const hasFranchise = Boolean(movie.franchise);
+
+  // Preload franchise details immediately when movie data is available
+  // so switching to the franchise tab is instant.
+  useGetFranchiseDetailsQuery(
+    { id: movie.franchise?.id ?? 0 },
+    { skip: !movie.franchise?.id },
+  );
 
   const tabs: { key: TabKey; label: string; icon: typeof Info }[] = [
     { key: "info", label: "Info", icon: Info },

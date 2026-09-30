@@ -26,6 +26,7 @@ type ProgressStatusProps = {
   seasons?: SeasonOption[];
   selectedSeason?: number;
   onSeasonChange?: (seasonNumber: number) => void;
+  size?: "default" | "lg";
 };
 
 export function ProgressStatus({
@@ -40,6 +41,7 @@ export function ProgressStatus({
   seasons = [],
   selectedSeason,
   onSeasonChange,
+  size = "lg",
 }: ProgressStatusProps) {
   const { episodeCount } = useProgressStatus(series);
   const { requestMutation, isMutating } = useContentMutation({
@@ -67,6 +69,7 @@ export function ProgressStatus({
       className="w-full"
       disabled={isDisabled}
       expanded
+      size={size}
       loading={isStatusMutating}
       onSelect={(nextWatchStatus) => {
         requestMutation("update-watch-status", {
@@ -122,7 +125,7 @@ export function ProgressStatus({
 
 function ProgressMetadata({ label, value }: { label: string; value: string }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-high px-3 py-2 text-[11px] font-semibold tracking-[0.12em] text-secondary uppercase">
+    <div className="inline-flex h-10 items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-high px-3 py-2 text-[11px] font-semibold tracking-[0.12em] text-secondary uppercase">
       <span className="text-outline-muted">{label}</span>
       <span className="text-on-surface">{value}</span>
     </div>

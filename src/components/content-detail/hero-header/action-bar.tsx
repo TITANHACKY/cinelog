@@ -2,7 +2,7 @@
 
 import { Bookmark, BookmarkOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CopyLinkButton } from "@/components/content-detail/hero-header/copy-link-button";
+import { ShareLinkButton } from "@/components/content-detail/hero-header/share-link-button";
 import { ReactionButton } from "@/components/content-detail/hero-header/reaction-button";
 import { ProgressStatus } from "@/components/content-detail/progress/progress-status";
 import { useContentMutation } from "@/hooks/title-details/use-content-mutation";
@@ -89,10 +89,6 @@ export function ActionBar({
                 : "Add to Library"}
         </Button>
 
-        <CopyLinkButton />
-
-        <div className="mx-1 hidden h-6 w-px bg-outline-variant sm:block" />
-
         {type === "movie" && (
           <ProgressStatus
             disabled={!isPresentInWatchlist || !canUpdateWatchActivity}
@@ -104,6 +100,8 @@ export function ActionBar({
             watchStatus={watchStatus}
           />
         )}
+
+        <div className="mx-1 hidden h-6 w-px bg-outline-variant sm:block" />
 
         <div className="inline-flex items-center gap-1 rounded-xl border border-outline-variant bg-surface-container-high p-1">
           {Object.values(IMPRESSION).map((imp) => {
@@ -139,6 +137,7 @@ export function ActionBar({
             );
           })}
         </div>
+        <ShareLinkButton />
       </div>
     </div>
   );

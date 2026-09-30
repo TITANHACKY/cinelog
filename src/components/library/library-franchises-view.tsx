@@ -56,6 +56,7 @@ export function LibraryFranchisesView() {
         <div className="flex min-w-0 flex-wrap items-center gap-3">
           <SegmentedControl
             aria-label="Filter library by media type"
+            className="min-w-0 basis-full lg:basis-auto lg:flex-none"
             options={MEDIA_TYPES.map(({ icon: Icon, label, value, href }) => {
               const count =
                 value === "movie"
@@ -72,10 +73,10 @@ export function LibraryFranchisesView() {
                 badge: (
                   <span
                     aria-label={`${count} ${label}`}
-                    className={`inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-md px-1.5 font-public-sans text-[10px] leading-none font-medium ${
+                    className={`inline-flex h-3.5 min-w-3.5 sm:h-4.5 sm:min-w-4.5 shrink-0 items-center justify-center rounded-md px-1 sm:px-1.5 font-public-sans text-[9px] sm:text-[10px] leading-none font-medium ${
                       value === "franchises"
-                        ? "bg-white/25 text-white"
-                        : "bg-surface-container text-secondary"
+                        ? "bg-white/20 text-white"
+                        : "bg-surface-container-high text-secondary"
                     }`}
                   >
                     {count}
@@ -83,6 +84,7 @@ export function LibraryFranchisesView() {
                 ),
               };
             })}
+            stretch
             value="franchises"
           />
         </div>
