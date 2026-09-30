@@ -313,7 +313,16 @@ export async function findDiscoverLibraryEntries(
   userId: number,
   movieTmdbIds: number[],
   seriesTmdbIds: number[],
-): Promise<Map<string, { watchStatus: number; originCountry: string | null }>> {
+): Promise<
+  Map<
+    string,
+    {
+      watchStatus: number;
+      impression: number | null;
+      originCountry: string | null;
+    }
+  >
+> {
   const db = getDb();
   const [movieRows, seriesRows] = await Promise.all([
     movieTmdbIds.length === 0
@@ -322,6 +331,7 @@ export async function findDiscoverLibraryEntries(
           .select({
             tmdbId: movies.tmdbId,
             watchStatus: userMovies.watchStatus,
+            impression: userMovies.impression,
             originCountry: movies.originCountry,
           })
           .from(userMovies)
@@ -338,6 +348,7 @@ export async function findDiscoverLibraryEntries(
           .select({
             tmdbId: series.tmdbId,
             watchStatus: userSeries.watchStatus,
+            impression: userSeries.impression,
             originCountry: series.originCountry,
           })
           .from(userSeries)
@@ -352,17 +363,23 @@ export async function findDiscoverLibraryEntries(
 
   const entries = new Map<
     string,
-    { watchStatus: number; originCountry: string | null }
+    {
+      watchStatus: number;
+      impression: number | null;
+      originCountry: string | null;
+    }
   >();
   for (const row of movieRows) {
     entries.set(`0-${row.tmdbId}`, {
       watchStatus: row.watchStatus,
+      impression: row.impression,
       originCountry: row.originCountry,
     });
   }
   for (const row of seriesRows) {
     entries.set(`1-${row.tmdbId}`, {
       watchStatus: row.watchStatus,
+      impression: row.impression,
       originCountry: row.originCountry,
     });
   }

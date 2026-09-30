@@ -1,6 +1,7 @@
 import {
   COMMON_LANGUAGES,
   DISCOVER_MAX_PAGE,
+  DISCOVER_TRENDING_MIN,
   DISCOVER_TTL_SECONDS,
 } from "@/lib/constants";
 import {
@@ -11,14 +12,22 @@ import {
   type RowSpec,
   type SeedDetails,
 } from "@/lib/discover/rows";
+import {
+  composeTrendingFirstPage,
+  filterByLanguages,
+  missingLanguages,
+  recentParams,
+} from "@/lib/discover/trending";
 import { AppError } from "@/lib/http/errors";
 import { getYearString } from "@/lib/media/display";
 import { getCachedTmdbMovie, getCachedTmdbSeries } from "@/lib/tmdb/cache";
 import {
   discoverTitlesPage,
+  type TmdbDiscoverPage,
   type TmdbDiscoverResult,
 } from "@/lib/tmdb/discover";
 import { fetchTitleKeywords } from "@/lib/tmdb/keywords";
+import { fetchTrendingPage } from "@/lib/tmdb/trending";
 import {
   findDiscoverLibraryEntries,
   findDiscoverSeed,
@@ -62,8 +71,12 @@ function toDiscoverTitle(
 }
 
 // Runs after the TMDB cache, so statuses are always current. Library rows
-// also supply the origin country TMDB omits for movies.
-async function attachWatchStatus(userId: number, titles: DiscoverTitle[]) {
+// also supply the origin country TMDB omits for movies. Titles the user has
+// Completed or Disliked are dropped: Discover shows what's new to them.
+async function attachLibraryState(
+  userId: number,
+  titles: DiscoverTitle[],
+): Promise<{ items: DiscoverTitle[]; hidden: number }> {
   const idsFor = (mediaType: 0 | 1) => [
     ...new Set(
       titles
@@ -76,11 +89,118 @@ async function attachWatchStatus(userId: number, titles: DiscoverTitle[]) {
     idsFor(0),
     idsFor(1),
   );
+  const items: DiscoverTitle[] = [];
   for (const title of titles) {
     const entry = entries.get(titleKey(title));
+    if (entry && (entry.watchStatus === 2 || entry.impression === 0)) continue;
     title.watchStatus = entry?.watchStatus ?? null;
     title.originCountry = title.originCountry ?? entry?.originCountry ?? null;
+    items.push(title);
   }
+  return { items, hidden: titles.length - items.length };
+}
+
+function toTitles(
+  data: TmdbDiscoverPage,
+  media: DiscoverMedia,
+  skipTmdbId?: number,
+): DiscoverTitle[] {
+  const seen = new Set<string>();
+  const titles: DiscoverTitle[] = [];
+  for (const result of data.results) {
+    const title = toDiscoverTitle(result, media);
+    if (!title || seen.has(titleKey(title))) continue;
+    if (skipTmdbId !== undefined && title.tmdbId === skipTmdbId) continue;
+    seen.add(titleKey(title));
+    titles.push(title);
+  }
+  return titles;
+}
+
+type RowStats = { topUp: number; fallback: number; topUpFailed: number };
+
+// Trending: page 1 composes real trending + language top-ups + fallback;
+// later pages are filtered real trending.
+async function trendingPage(
+  media: DiscoverMedia,
+  languages: string[],
+  page: number,
+): Promise<{
+  titles: DiscoverTitle[];
+  raw: number;
+  totalPages: number;
+  stats: RowStats;
+}> {
+  const tmdbMedia = media === "movie" ? "movie" : "tv";
+  const data = await fetchTrendingPage(
+    tmdbMedia,
+    page,
+    DISCOVER_TTL_SECONDS.trending,
+  );
+  const trending = toTitles(data, media);
+  const stats: RowStats = { topUp: 0, fallback: 0, topUpFailed: 0 };
+  if (page > 1) {
+    return {
+      titles: filterByLanguages(trending, languages),
+      raw: data.results.length,
+      totalPages: data.totalPages,
+      stats,
+    };
+  }
+
+  const missing = missingLanguages(
+    filterByLanguages(trending, languages),
+    languages,
+  );
+  const settled = await Promise.allSettled(
+    missing.map((language) =>
+      discoverTitlesPage(
+        recentParams(media, language),
+        DISCOVER_TTL_SECONDS.discover,
+      ),
+    ),
+  );
+  const topUps: Record<string, DiscoverTitle[]> = {};
+  settled.forEach((result, index) => {
+    if (result.status === "fulfilled")
+      topUps[missing[index]] = toTitles(result.value, media);
+    else stats.topUpFailed += 1;
+  });
+
+  const draft = composeTrendingFirstPage({
+    trending,
+    languages,
+    topUps,
+    fallback: [],
+  });
+  let fallback: DiscoverTitle[] = [];
+  if (draft.items.length < DISCOVER_TRENDING_MIN) {
+    try {
+      fallback = toTitles(
+        await discoverTitlesPage(
+          recentParams(media, languages.join("|")),
+          DISCOVER_TTL_SECONDS.discover,
+        ),
+        media,
+      );
+    } catch {
+      stats.topUpFailed += 1;
+    }
+  }
+  const composed = composeTrendingFirstPage({
+    trending,
+    languages,
+    topUps,
+    fallback,
+  });
+  stats.topUp = composed.stats.topUp;
+  stats.fallback = composed.stats.fallback;
+  return {
+    titles: composed.items,
+    raw: data.results.length,
+    totalPages: data.totalPages,
+    stats,
+  };
 }
 
 function languageLabel(code: string): string {
@@ -157,28 +277,55 @@ export async function getDiscoverRowPage(
     throw new AppError("Invalid discover row", 400);
   }
 
-  const seed = spec.kind === "because" ? await loadSeedDetails(spec) : null;
-  const data = await discoverTitlesPage(
-    { ...buildRowParams(spec, prefs, seed), page },
-    spec.kind === "trending"
-      ? DISCOVER_TTL_SECONDS.trending
-      : DISCOVER_TTL_SECONDS.discover,
-  );
+  const started = Date.now();
+  let raw = 0;
+  let totalPages = 1;
+  let titles: DiscoverTitle[];
+  let stats: RowStats = { topUp: 0, fallback: 0, topUpFailed: 0 };
+  let dedup = 0;
+  let dedupSkipped = false;
 
-  const seen = new Set<string>();
-  const items: DiscoverTitle[] = [];
-  for (const result of data.results) {
-    const title = toDiscoverTitle(result, spec.media);
-    if (!title || seen.has(titleKey(title))) continue;
-    if (spec.kind === "because" && title.tmdbId === spec.tmdbId) continue;
-    seen.add(titleKey(title));
-    items.push(title);
+  if (spec.kind === "trending") {
+    const result = await trendingPage(spec.media, prefs.languages, page);
+    ({ titles, raw, totalPages, stats } = result);
+  } else {
+    const seed = spec.kind === "because" ? await loadSeedDetails(spec) : null;
+    const data = await discoverTitlesPage(
+      { ...buildRowParams(spec, prefs, seed), page },
+      DISCOVER_TTL_SECONDS.discover,
+    );
+    raw = data.results.length;
+    totalPages = data.totalPages;
+    titles = toTitles(
+      data,
+      spec.media,
+      spec.kind === "because" ? spec.tmdbId : undefined,
+    );
+
+    if (spec.kind === "new") {
+      // Never repeat what Trending page 1 shows for the same media type.
+      try {
+        const trending = await trendingPage(spec.media, prefs.languages, 1);
+        const shown = new Set(trending.titles.map(titleKey));
+        const before = titles.length;
+        titles = titles.filter((title) => !shown.has(titleKey(title)));
+        dedup = before - titles.length;
+      } catch {
+        dedupSkipped = true;
+      }
+    }
   }
 
-  await attachWatchStatus(userId, items);
+  const { items, hidden } = await attachLibraryState(userId, titles);
+  console.info(
+    `[discover] ${key} p${page} tmdb=${raw} kept=${items.length} topUp=${stats.topUp} fallback=${stats.fallback} hidden=${hidden} dedup=${dedup}` +
+      (stats.topUpFailed ? ` topUpFailed=${stats.topUpFailed}` : "") +
+      (dedupSkipped ? " dedupSkipped" : "") +
+      ` ${Date.now() - started}ms`,
+  );
   return {
     items,
     page,
-    hasMore: page < Math.min(data.totalPages, DISCOVER_MAX_PAGE),
+    hasMore: page < Math.min(totalPages, DISCOVER_MAX_PAGE),
   };
 }
