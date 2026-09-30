@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Film, Layers, Loader2, Trash2, type LucideIcon } from "lucide-react";
 import { Button, type ButtonVariant } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useAppDispatch } from "@/store";
 import {
   useUnfollowFranchiseMutation,
@@ -115,11 +116,20 @@ export function FranchiseCard({
             </p>
           )}
           {franchise.progress.total_count > 0 && (
-            <p className="mt-2 text-xs font-semibold tabular-nums text-on-surface-variant">
-              {franchise.progress.watched_count}/
-              {franchise.progress.total_count} watched (
-              {franchise.progress.percentage}%)
-            </p>
+            <div className="mt-2 space-y-1.5">
+              <p className="text-xs font-semibold tabular-nums text-on-surface-variant">
+                {franchise.progress.watched_count}/
+                {franchise.progress.total_count} watched (
+                {franchise.progress.percentage}%)
+              </p>
+              <Progress
+                aria-label={`${franchise.name} progress: ${franchise.progress.watched_count} of ${franchise.progress.total_count} movies watched`}
+                className="h-1.5"
+                inProgressColor="bg-brand-primary"
+                max={franchise.progress.total_count}
+                value={franchise.progress.watched_count}
+              />
+            </div>
           )}
         </div>
 
