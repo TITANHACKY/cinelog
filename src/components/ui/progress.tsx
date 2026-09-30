@@ -2,12 +2,7 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 export type ProgressColorVariant =
-  | "primary"
-  | "accentAlt"
-  | "info"
-  | "success"
-  | "warning"
-  | "error";
+  "primary" | "accentAlt" | "info" | "success" | "warning" | "error";
 
 const variantColorMap: Record<ProgressColorVariant, string> = {
   primary: "bg-brand-primary",
@@ -113,4 +108,3 @@ function Progress({
 }
 
 export { Progress };
-

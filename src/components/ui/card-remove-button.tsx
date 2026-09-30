@@ -64,7 +64,9 @@ export function CardRemoveButton({
       className={cn(
         TRIGGER_CLASS,
         "relative shrink-0 overflow-visible transition-all duration-200 active:scale-90",
-        isInLibrary ? "text-secondary hover:text-on-surface" : "text-brand-primary",
+        isInLibrary
+          ? "text-secondary hover:text-on-surface"
+          : "text-brand-primary",
         isAnimating && "anim-reaction-squash",
         className,
       )}

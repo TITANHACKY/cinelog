@@ -65,7 +65,9 @@ export function ActionBar({
 
   const [libraryAnimKey, setLibraryAnimKey] = useState(0);
   const [isLibraryAnimating, setIsLibraryAnimating] = useState(false);
-  const [libraryAnimType, setLibraryAnimType] = useState<"add" | "remove">("add");
+  const [libraryAnimType, setLibraryAnimType] = useState<"add" | "remove">(
+    "add",
+  );
   const prevWatchlistRef = useRef<boolean | undefined>(isPresentInWatchlist);
 
   useEffect(() => {
