@@ -3,11 +3,21 @@ import { AppError } from "@/lib/http/errors";
 import { hasAiredOnOrBeforeToday } from "@/lib/media/air-date";
 import { nowUnixSeconds } from "@/lib/media/display";
 import {
+  computeSeasonEpisodesAired,
+  computeTotalEpisodesAired,
+} from "@/lib/media/series-progress";
+import {
   canUpdateSeriesWatchActivity,
   toSeriesStatusDisplay,
 } from "@/lib/media/status";
 import { getCachedTmdbSeries } from "@/lib/tmdb/cache";
-import { pickCastAndDirectors } from "@/lib/tmdb/credits";
+import { pickSeriesCertification } from "@/lib/tmdb/catalog-fields";
+import {
+  extractAllCast,
+  extractDepartments,
+  pickCastAndDirectors,
+} from "@/lib/tmdb/credits";
+import { extractTrailer } from "@/lib/tmdb/videos";
 import type { TmdbSeries } from "@/lib/types";
 import type { SeriesPatchInput } from "@/lib/validations/library";
 import {
@@ -78,6 +88,37 @@ function toSeriesDetails(seriesRecord: TmdbSeries, library: UserSeriesLibrary) {
     ]),
   );
   const libraryFields = toSeriesLibraryFields(library);
+  const episodeAirContext = {
+    lastEpisode: seriesRecord.last_episode_to_air,
+    nextEpisode: seriesRecord.next_episode_to_air,
+  };
+  const seasons = (seriesRecord.seasons ?? []).map((season) => {
+    const seasonNumber = season.season_number ?? 0;
+    const episodeCount = season.episode_count ?? 0;
+    const episodesAired = computeSeasonEpisodesAired(
+      seasonNumber,
+      episodeCount,
+      episodeAirContext,
+    );
+
+    return {
+      ...season,
+      episodes_aired: episodesAired,
+      episodes_watched:
+        season.season_number === undefined
+          ? 0
+          : (progressBySeasonNumber.get(season.season_number) ?? 0),
+    };
+  });
+  const totalEpisodesAired = computeTotalEpisodesAired(seasons, episodeAirContext);
+  const certification = pickSeriesCertification(seriesRecord);
+  const trailer = extractTrailer(seriesRecord.videos);
+  const departments = extractDepartments(seriesRecord.credits);
+  const allCast = extractAllCast(seriesRecord.credits);
+  const watchProviders = seriesRecord["watch/providers"]?.results ?? {};
+  const availableCountries = Object.keys(watchProviders);
+  const leadStudio = seriesRecord.production_companies?.[0]?.name ?? null;
+  const network = seriesRecord.networks?.[0]?.name ?? null;
 
   return {
     backdrop_path: seriesRecord.backdrop_path,
@@ -87,30 +128,39 @@ function toSeriesDetails(seriesRecord: TmdbSeries, library: UserSeriesLibrary) {
     id: seriesRecord.id,
     last_air_date: seriesRecord.last_air_date,
     name: seriesRecord.name,
-    networks: seriesRecord.networks ?? [],
     number_of_episodes: seriesRecord.number_of_episodes,
     number_of_seasons: seriesRecord.number_of_seasons,
     overview: seriesRecord.overview,
     poster_path: seriesRecord.poster_path,
     production_companies: seriesRecord.production_companies ?? [],
-    seasons: (seriesRecord.seasons ?? []).map((season) => ({
-      ...season,
-      episodes_watched:
-        season.season_number === undefined
-          ? 0
-          : (progressBySeasonNumber.get(season.season_number) ?? 0),
-    })),
+    seasons,
     status: toSeriesStatusDisplay(seriesRecord.status),
-    tagline: seriesRecord.tagline,
     type: seriesRecord.type,
     vote_average: seriesRecord.vote_average,
     original_language: seriesRecord.original_language,
     origin_country: seriesRecord.origin_country ?? [],
     imdb_id: seriesRecord.imdb_id ?? seriesRecord.external_ids?.imdb_id,
-    content_ratings:
-      seriesRecord.content_ratings?.results?.find(
-        (rating) => rating.iso_3166_1 === "IN",
-      ) ?? {},
+    certification: certification
+      ? {
+          certification: certification.certification,
+          iso_3166_1: certification.iso_3166_1,
+        }
+      : null,
+    lead_studio: leadStudio,
+    network,
+    trailer,
+    watch_providers: watchProviders,
+    available_countries: availableCountries,
+    spoken_languages: (seriesRecord.spoken_languages ?? []).map((language) => ({
+      iso_639_1: language.iso_639_1 ?? "",
+      english_name: language.english_name ?? "",
+      name: language.name ?? "",
+    })),
+    departments,
+    all_cast: allCast,
+    next_episode_to_air: seriesRecord.next_episode_to_air ?? null,
+    last_episode_to_air: seriesRecord.last_episode_to_air ?? null,
+    total_episodes_aired: totalEpisodesAired,
     credits: pickCastAndDirectors(seriesRecord.credits),
     is_present_in_watchlist: libraryFields.is_present_in_watchlist,
     impression: libraryFields.impression,
@@ -265,13 +315,28 @@ export async function updateSeriesInLibrary(
       throw new AppError("Season not found in library", 404);
     }
 
-    if (!hasAiredOnOrBeforeToday(targetSeason.airDate)) {
+    const seriesRecord = await getCachedTmdbSeries(tmdbId);
+    const episodesAired = computeSeasonEpisodesAired(
+      targetSeason.seasonNumber,
+      targetSeason.episodeCount,
+      {
+        lastEpisode: seriesRecord.last_episode_to_air,
+        nextEpisode: seriesRecord.next_episode_to_air,
+      },
+    );
+
+    if (episodesAired <= 0) {
       throw new AppError("Cannot mark a season that has not aired yet", 400);
+    }
+
+    if (body.mark_episode_to_watched > episodesAired) {
+      throw new AppError("Cannot mark episodes that have not aired yet", 400);
     }
 
     const epsWatched = Math.min(
       body.mark_episode_to_watched,
       targetSeason.episodeCount,
+      episodesAired,
     );
     const seasonCompletedAt =
       epsWatched === targetSeason.episodeCount && epsWatched > 0 ? now : null;

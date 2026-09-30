@@ -34,7 +34,9 @@ export function useMetaRow({ movie, series, type }: MetaRowInput): MetaRowData {
         ? `${movie.runtime} min`
         : "N/A"
       : `${seasonCount} ${seasonCount === 1 ? "Season" : "Seasons"} (${episodeCount} ${episodeCount === 1 ? "Episode" : "Episodes"})`,
-    rating: orFallback(movieRating || series?.content_ratings?.rating),
+    rating: orFallback(
+      movieRating || series?.certification?.certification,
+    ),
     status: orFallback(movie?.status || series?.status),
     year,
   };

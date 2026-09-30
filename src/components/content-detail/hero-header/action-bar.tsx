@@ -7,6 +7,7 @@ import { ReactionButton } from "@/components/content-detail/hero-header/reaction
 import { ProgressStatus } from "@/components/content-detail/progress/progress-status";
 import { useContentMutation } from "@/hooks/title-details/use-content-mutation";
 import { IMPRESSION, IMPRESSION_CONFIG } from "@/lib/constants";
+import { isSeriesWatchable } from "@/lib/media/series-progress";
 import { isMovieWatchable } from "@/lib/media/status";
 import type { MovieDetails, SeriesDetails } from "@/lib/types";
 import type {
@@ -51,10 +52,14 @@ export function ActionBar({
   const isRemovingWatchlist = isMutating && lastMutation === "remove-watchlist";
   const movieDetails =
     type === "movie" ? (content as MovieDetails | undefined) : undefined;
+  const seriesDetails =
+    type === "series" ? (content as SeriesDetails | undefined) : undefined;
   const isWatchable =
     type === "movie"
       ? isMovieWatchable(movieDetails?.status, movieDetails?.release_date)
-      : undefined;
+      : type === "series"
+        ? isSeriesWatchable(seriesDetails?.status, seriesDetails?.seasons ?? [])
+        : undefined;
 
   return (
     <div className="mt-6 border-t border-outline-variant pt-4">
@@ -89,14 +94,14 @@ export function ActionBar({
                 : "Add to Library"}
         </Button>
 
-        {type === "movie" && (
+        {(type === "movie" || type === "series") && (
           <ProgressStatus
             disabled={!isPresentInWatchlist || !canUpdateWatchActivity}
             id={id}
             isWatchable={isWatchable}
             lastMutation={lastMutation}
             mutationStatus={mutationStatus}
-            type="movie"
+            type={type}
             watchStatus={watchStatus}
           />
         )}

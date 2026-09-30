@@ -34,6 +34,7 @@ export type {
   MovieDetails,
   MovieFranchiseInfo,
   SeriesDetails,
+  SeriesEpisodeToAir,
   SeriesSeason,
   WatchProviderCountry,
   WatchProviderItem,

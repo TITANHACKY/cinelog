@@ -96,18 +96,29 @@ export function pickMovieCertificate(
   return pickMovieCertification(movie as TmdbMovie)?.certification || null;
 }
 
-export function pickSeriesCertificate(body: TmdbSeries): string | null {
-  if (!body.content_ratings?.results) {
-    return null;
+export function pickSeriesCertification(
+  series: TmdbSeries,
+): { certification: string; iso_3166_1: string } | null {
+  const ratingResults = series.content_ratings?.results ?? [];
+  const originCountries = Array.isArray(series.origin_country)
+    ? series.origin_country
+    : [];
+
+  for (const countryCode of originCountries) {
+    const ratingEntry = ratingResults.find(
+      (rating) => rating.iso_3166_1 === countryCode,
+    );
+    const rating = ratingEntry?.rating?.trim();
+    if (rating) {
+      return { certification: rating, iso_3166_1: countryCode };
+    }
   }
 
-  const ratingCountry =
-    body.content_ratings.results.find((rating) => rating.iso_3166_1 === "IN") ??
-    body.content_ratings.results.find(
-      (rating) => rating.iso_3166_1 === body.origin_country?.[0],
-    );
+  return null;
+}
 
-  return ratingCountry?.rating ?? null;
+export function pickSeriesCertificate(body: TmdbSeries): string | null {
+  return pickSeriesCertification(body)?.certification ?? null;
 }
 
 export function genreTmdbIds(genres?: Array<{ id?: number }> | null): number[] {

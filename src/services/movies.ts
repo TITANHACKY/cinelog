@@ -7,7 +7,12 @@ import {
 } from "@/lib/media/status";
 import { getCachedTmdbMovie } from "@/lib/tmdb/cache";
 import { pickMovieCertification } from "@/lib/tmdb/catalog-fields";
-import type { CreditMember, DepartmentCredits, TmdbMovie } from "@/lib/types";
+import {
+  extractAllCast,
+  extractDepartments,
+} from "@/lib/tmdb/credits";
+import { extractTrailer } from "@/lib/tmdb/videos";
+import type { TmdbMovie } from "@/lib/types";
 import type { MoviePatchInput } from "@/lib/validations/library";
 import type { NewUserMovie } from "@/db/schema";
 import {
@@ -41,30 +46,6 @@ function toMovieLibraryFields(
 }
 
 import { isUserFollowingFranchise } from "@/repositories/franchises";
-
-function extractTrailer(movie: TmdbMovie) {
-  const videos = movie.videos?.results ?? [];
-  const officialTrailer = videos.find(
-    (v) =>
-      v.site === "YouTube" &&
-      v.type === "Trailer" &&
-      v.official === true &&
-      Boolean(v.key),
-  );
-  const anyTrailer = videos.find(
-    (v) => v.site === "YouTube" && v.type === "Trailer" && Boolean(v.key),
-  );
-  const teaser = videos.find(
-    (v) => v.site === "YouTube" && v.type === "Teaser" && Boolean(v.key),
-  );
-  const chosen = officialTrailer ?? anyTrailer ?? teaser;
-  if (!chosen?.key) return null;
-  return {
-    key: chosen.key,
-    name: chosen.name || "Official Trailer",
-    site: chosen.site || "YouTube",
-  };
-}
 
 function extractDirectorAndCreators(movie: TmdbMovie) {
   let director: {
@@ -101,81 +82,18 @@ function extractDirectorAndCreators(movie: TmdbMovie) {
   return { director, creators };
 }
 
-function extractDepartments(movie: TmdbMovie): DepartmentCredits[] {
-  const departmentsMap = new Map<string, CreditMember[]>();
-
-  if (movie.credits && !Array.isArray(movie.credits)) {
-    const castMembers: CreditMember[] = (movie.credits.cast ?? [])
-      .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
-      .map((c) => ({
-        id: c.id,
-        name: c.name,
-        character: c.character,
-        profile_path: c.profile_path,
-        order: c.order,
-        department: "Acting",
-      }));
-
-    if (castMembers.length > 0) {
-      departmentsMap.set("Acting", castMembers);
-    }
-
-    for (const member of movie.credits.crew ?? []) {
-      const dept = member.department || member.known_for_department || "Crew";
-      if (!departmentsMap.has(dept)) {
-        departmentsMap.set(dept, []);
-      }
-      departmentsMap.get(dept)!.push({
-        id: member.id,
-        name: member.name,
-        profile_path: member.profile_path,
-        job: member.job,
-        department: dept,
-      });
-    }
-  }
-
-  const result: DepartmentCredits[] = [];
-  if (departmentsMap.has("Acting")) {
-    result.push({
-      department: "Acting",
-      members: departmentsMap.get("Acting")!,
-    });
-    departmentsMap.delete("Acting");
-  }
-
-  for (const [dept, members] of departmentsMap.entries()) {
-    result.push({ department: dept, members });
-  }
-
-  return result;
-}
-
 function toMovieDetails(
   movie: TmdbMovie,
   userMovie?: UserMovieLibraryRow,
   isFollowingFranchise = false,
 ) {
   const { director, creators } = extractDirectorAndCreators(movie);
-  const trailer = extractTrailer(movie);
-  const departments = extractDepartments(movie);
+  const trailer = extractTrailer(movie.videos);
+  const departments = extractDepartments(movie.credits);
   const watchProviders = movie["watch/providers"]?.results ?? {};
   const availableCountries = Object.keys(watchProviders);
 
-  const allCast = (
-    movie.credits && !Array.isArray(movie.credits)
-      ? (movie.credits.cast ?? [])
-      : []
-  )
-    .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
-    .map((c) => ({
-      id: c.id,
-      name: c.name,
-      character: c.character,
-      profile_path: c.profile_path,
-      order: c.order,
-      department: "Acting",
-    }));
+  const allCast = extractAllCast(movie.credits);
 
   const franchise = movie.belongs_to_collection
     ? {

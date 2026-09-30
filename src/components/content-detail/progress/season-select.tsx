@@ -25,18 +25,18 @@ export function SeasonSelect({
   );
 
   return (
-    <div className="relative inline-block" ref={containerRef}>
+    <div className="relative inline-block shrink-0" ref={containerRef}>
       <button
-        className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-high px-3 py-2 text-[11px] font-semibold tracking-[0.12em] text-secondary uppercase transition-colors hover:bg-surface-container-highest disabled:pointer-events-none disabled:opacity-50"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-outline-variant bg-surface-container-high px-3 py-2 text-sm font-semibold text-on-surface transition-colors hover:bg-surface-container-highest disabled:pointer-events-none disabled:opacity-50"
         disabled={isDisabled}
         onClick={toggle}
         type="button"
       >
-        <span className="text-outline-muted">SEASON</span>
-        <span className="tracking-normal text-on-surface">
-          {current?.seasonNumber ?? "—"}
-        </span>
+        <span>Season {current?.seasonNumber ?? "—"}</span>
         <ChevronDown
+          aria-hidden="true"
           className={cn(
             "h-4 w-4 text-outline-muted transition-transform duration-200",
             isOpen && "rotate-180",
@@ -45,12 +45,16 @@ export function SeasonSelect({
       </button>
 
       {isOpen ? (
-        <div className="absolute top-full left-0 z-50 mt-2 max-h-72 w-full min-w-40 overflow-hidden rounded-xl border border-outline-alt bg-surface-container shadow-[0_8px_24px_rgb(0_0_0/25%)]">
+        <div
+          className="absolute top-full left-0 z-50 mt-2 max-h-72 w-full min-w-48 overflow-hidden rounded-xl border border-outline-alt bg-surface-container shadow-[0_8px_24px_rgb(0_0_0/25%)]"
+          role="listbox"
+        >
           <div className="movie-lists-scrollbar flex max-h-72 flex-col overflow-y-auto py-1.5">
             {seasons.map((season) => {
               const isSelected = season.seasonNumber === selectedSeason;
               return (
                 <button
+                  aria-selected={isSelected}
                   className={cn(
                     "flex w-full items-center justify-between gap-1.5 px-2.5 py-2 text-left text-on-surface transition-colors hover:bg-surface-container-high",
                     isSelected && "bg-surface-container-high",
@@ -62,6 +66,7 @@ export function SeasonSelect({
                       onSelect(season.seasonNumber);
                     }
                   }}
+                  role="option"
                   type="button"
                 >
                   <div className="flex min-w-0 flex-col">
@@ -69,11 +74,15 @@ export function SeasonSelect({
                       {season.label}
                     </span>
                     <span className="truncate text-[11px] text-outline-muted">
-                      {season.episodeCount} Episodes
+                      {season.episodesWatched}/{season.episodesAired} watched
+                      · {season.episodesAired}/{season.episodeCount} released
                     </span>
                   </div>
                   {isSelected ? (
-                    <Check className="h-3.5 w-3.5 shrink-0 text-brand-primary" />
+                    <Check
+                      aria-hidden="true"
+                      className="h-3.5 w-3.5 shrink-0 text-brand-primary"
+                    />
                   ) : null}
                 </button>
               );

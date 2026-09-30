@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Clock, Film, Globe, MapPin, Shield, User, Video } from "lucide-react";
+import { Clock, Film, Languages, MapPin, Shield, User, Video } from "lucide-react";
 import { toMovieStatusDisplay } from "@/lib/media/status";
 import { formatRuntime } from "@/lib/media/display";
 import { useLocales } from "@/hooks/locales/use-locales";
@@ -125,7 +125,7 @@ export function MovieSpecs({ movie }: MovieSpecsProps) {
 
         {/* Original Language (common) */}
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-brand-primary/30 bg-brand-primary/10 px-2.5 py-1 font-medium text-brand-primary">
-          <Globe className="h-3.5 w-3.5" />
+          <Languages className="h-3.5 w-3.5 shrink-0" />
           <span>{originalLangName} (Original)</span>
         </span>
 

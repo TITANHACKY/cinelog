@@ -1,11 +1,72 @@
 import { hasAiredOnOrBeforeToday, todayIsoDate } from "@/lib/media/air-date";
 import { canUpdateSeriesWatchActivity } from "@/lib/media/status";
-import type { LibrarySeriesSeason } from "@/lib/types";
+import type { LibrarySeriesSeason, SeriesEpisodeToAir } from "@/lib/types";
 
 type NextEpisode = {
   seasonNumber: number;
   episodeNumber: number;
 };
+
+type EpisodeAirContext = {
+  lastEpisode?: SeriesEpisodeToAir | null;
+  nextEpisode?: SeriesEpisodeToAir | null;
+};
+
+export function computeSeasonEpisodesAired(
+  seasonNumber: number,
+  episodeCount: number,
+  { lastEpisode, nextEpisode }: EpisodeAirContext = {},
+): number {
+  if (seasonNumber <= 0 || episodeCount <= 0) {
+    return 0;
+  }
+
+  const lastSeason = lastEpisode?.season_number;
+  const lastEpisodeNumber = lastEpisode?.episode_number;
+
+  if (lastSeason !== undefined && seasonNumber < lastSeason) {
+    return episodeCount;
+  }
+
+  if (
+    lastSeason !== undefined &&
+    lastEpisodeNumber !== undefined &&
+    seasonNumber === lastSeason
+  ) {
+    return Math.min(lastEpisodeNumber, episodeCount);
+  }
+
+  const nextSeason = nextEpisode?.season_number;
+  const nextEpisodeNumber = nextEpisode?.episode_number;
+
+  if (
+    nextSeason !== undefined &&
+    nextEpisodeNumber !== undefined &&
+    seasonNumber === nextSeason &&
+    nextEpisodeNumber > 1
+  ) {
+    return Math.min(nextEpisodeNumber - 1, episodeCount);
+  }
+
+  return 0;
+}
+
+export function computeTotalEpisodesAired(
+  seasons: Array<{
+    season_number?: number;
+    episode_count?: number;
+  }>,
+  context: EpisodeAirContext = {},
+): number {
+  return seasons.reduce((total, season) => {
+    const seasonNumber = season.season_number ?? 0;
+    const episodeCount = season.episode_count ?? 0;
+    return (
+      total +
+      computeSeasonEpisodesAired(seasonNumber, episodeCount, context)
+    );
+  }, 0);
+}
 
 export type SeriesProgress = {
   completedSeasons: number;
@@ -68,16 +129,22 @@ export function hasAiredSeriesEpisodes(
   seasons: Array<{
     season_number?: number;
     episode_count?: number;
+    episodes_aired?: number;
     air_date?: string | null;
   }>,
   today = todayIsoDate(),
 ): boolean {
-  return seasons.some(
-    (season) =>
-      (season.season_number ?? 0) > 0 &&
-      (season.episode_count ?? 0) > 0 &&
-      hasAiredOnOrBeforeToday(season.air_date, today),
-  );
+  return seasons.some((season) => {
+    if ((season.season_number ?? 0) <= 0 || (season.episode_count ?? 0) <= 0) {
+      return false;
+    }
+
+    if (season.episodes_aired !== undefined) {
+      return season.episodes_aired > 0;
+    }
+
+    return hasAiredOnOrBeforeToday(season.air_date, today);
+  });
 }
 
 export function isSeriesWatchable(
