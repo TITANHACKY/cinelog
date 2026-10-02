@@ -1,6 +1,15 @@
-import { and, asc, count, desc, eq, sql, type SQLWrapper } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  inArray,
+  sql,
+  type SQLWrapper,
+} from "drizzle-orm";
 import { asBatch, getDb } from "@/db";
-import { franchises, userFranchises } from "@/db/schema";
+import { franchises, movies, userFranchises } from "@/db/schema";
 import { nowUnixSeconds } from "@/lib/media/display";
 
 export type UpsertFranchiseInput = {
@@ -9,6 +18,7 @@ export type UpsertFranchiseInput = {
   overview?: string | null;
   posterPath?: string | null;
   backdropPath?: string | null;
+  numberOfParts?: number;
 };
 
 export async function findFranchiseByTmdbId(tmdbId: number) {
@@ -19,9 +29,62 @@ export async function findFranchiseByTmdbId(tmdbId: number) {
     .get();
 }
 
+export async function findFranchiseForMovieTmdbId(tmdbId: number) {
+  return getDb()
+    .select({
+      id: franchises.id,
+      tmdbId: franchises.tmdbId,
+      name: franchises.name,
+      overview: franchises.overview,
+      posterPath: franchises.posterPath,
+      backdropPath: franchises.backdropPath,
+    })
+    .from(movies)
+    .innerJoin(franchises, eq(movies.franchiseId, franchises.id))
+    .where(eq(movies.tmdbId, tmdbId))
+    .get();
+}
+
+export async function findFranchiseMovies(franchiseDbId: number) {
+  return getDb()
+    .select({
+      id: movies.id,
+      tmdbId: movies.tmdbId,
+      title: movies.title,
+      posterPath: movies.posterPath,
+      releaseDate: movies.releaseDate,
+      voteAverage: movies.voteAverage,
+      originalLanguage: movies.originalLanguage,
+    })
+    .from(movies)
+    .where(eq(movies.franchiseId, franchiseDbId))
+    .orderBy(asc(movies.releaseDate), asc(movies.id));
+}
+
+export async function listAllFranchises() {
+  return getDb().select().from(franchises).orderBy(asc(franchises.name));
+}
+
+export async function listMoviesByFranchiseIds(franchiseDbIds: number[]) {
+  if (franchiseDbIds.length === 0) {
+    return [];
+  }
+
+  return getDb()
+    .select({
+      id: movies.id,
+      tmdbId: movies.tmdbId,
+      franchiseId: movies.franchiseId,
+    })
+    .from(movies)
+    .where(inArray(movies.franchiseId, franchiseDbIds));
+}
+
 export async function upsertFranchise(data: UpsertFranchiseInput) {
   const db = getDb();
   const now = nowUnixSeconds();
+
+  const numberOfParts = data.numberOfParts ?? 0;
 
   await db
     .insert(franchises)
@@ -31,6 +94,7 @@ export async function upsertFranchise(data: UpsertFranchiseInput) {
       overview: data.overview ?? null,
       posterPath: data.posterPath ?? null,
       backdropPath: data.backdropPath ?? null,
+      numberOfParts,
       updatedAt: now,
     })
     .onConflictDoUpdate({
@@ -40,6 +104,9 @@ export async function upsertFranchise(data: UpsertFranchiseInput) {
         overview: data.overview ?? null,
         posterPath: data.posterPath ?? null,
         backdropPath: data.backdropPath ?? null,
+        ...(data.numberOfParts !== undefined
+          ? { numberOfParts: data.numberOfParts }
+          : {}),
         updatedAt: now,
       },
     });
@@ -71,7 +138,11 @@ export async function isUserFollowingFranchise(
   return Boolean(row);
 }
 
-export async function insertUserFranchise(userId: number, franchiseId: number) {
+export async function insertUserFranchise(
+  userId: number,
+  franchiseId: number,
+  numberOfPartsCompleted = 0,
+) {
   const db = getDb();
   const now = nowUnixSeconds();
 
@@ -80,6 +151,7 @@ export async function insertUserFranchise(userId: number, franchiseId: number) {
     .values({
       userId,
       franchiseId,
+      numberOfPartsCompleted,
       updatedAt: now,
     })
     .onConflictDoNothing();
@@ -113,6 +185,8 @@ export type FollowedFranchiseRow = {
   overview: string | null;
   posterPath: string | null;
   backdropPath: string | null;
+  numberOfParts: number;
+  numberOfPartsCompleted: number;
   followedAt: string | null;
 };
 
@@ -176,6 +250,8 @@ export async function getUserFollowedFranchises(
       overview: franchises.overview,
       posterPath: franchises.posterPath,
       backdropPath: franchises.backdropPath,
+      numberOfParts: franchises.numberOfParts,
+      numberOfPartsCompleted: userFranchises.numberOfPartsCompleted,
       followedAt: userFranchises.createdAt,
     })
     .from(userFranchises)

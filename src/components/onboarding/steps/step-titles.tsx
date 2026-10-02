@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
 import { MediaCard } from "@/components/ui/media-card";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
@@ -10,6 +11,107 @@ import type { MediaLean, TitleCandidate } from "@/lib/types";
 
 const MEDIA_SEGMENT = { 0: "movie", 1: "series" } as const;
 const MEDIA_LABEL = { 0: "Movie", 1: "Series" } as const;
+
+function StepTitleActionButton({
+  candidate,
+  isAdded,
+  isPending,
+  hasError,
+  onAdd,
+}: {
+  candidate: TitleCandidate;
+  isAdded: boolean;
+  isPending: boolean;
+  hasError: boolean;
+  onAdd: () => void;
+}) {
+  const [animKey, setAnimKey] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const prevAddedRef = useRef<boolean | undefined>(isAdded);
+
+  useEffect(() => {
+    if (
+      prevAddedRef.current !== undefined &&
+      prevAddedRef.current !== isAdded &&
+      isAdded
+    ) {
+      setAnimKey((k) => k + 1);
+      setIsAnimating(true);
+    }
+    prevAddedRef.current = isAdded;
+  }, [isAdded]);
+
+  useEffect(() => {
+    if (!isAnimating) return;
+    const timer = setTimeout(() => {
+      setIsAnimating(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [isAnimating, animKey]);
+
+  const handleClick = () => {
+    if (!isPending && !isAdded) {
+      setAnimKey((k) => k + 1);
+      setIsAnimating(true);
+      onAdd();
+    }
+  };
+
+  if (isAdded) {
+    return (
+      <span
+        className={cn(
+          TRIGGER_CLASS,
+          "relative overflow-visible text-status-success transition-all duration-200",
+          isAnimating && "anim-reaction-squash",
+        )}
+        aria-label={`${candidate.title} is on your library`}
+        title="On your library"
+      >
+        {isAnimating && (
+          <span
+            key={`onboarding-sparks-${animKey}`}
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-full mb-1 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center select-none"
+          >
+            <span className="anim-reaction-float-1 absolute text-status-success drop-shadow-[0_0_6px_rgba(34,197,94,0.8)]">
+              <BookmarkCheck className="size-3.5 fill-status-success" />
+            </span>
+            <span className="anim-reaction-float-2 absolute text-emerald-400 drop-shadow-[0_0_6px_rgba(52,211,153,0.8)]">
+              <BookmarkCheck className="size-4.5 fill-emerald-400" />
+            </span>
+            <span className="anim-reaction-float-3 absolute text-green-300 drop-shadow-[0_0_6px_rgba(134,239,172,0.8)]">
+              <BookmarkCheck className="size-3 fill-green-300" />
+            </span>
+          </span>
+        )}
+        <BookmarkCheck className="h-4 w-4" />
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={isPending}
+      aria-label={`Add ${candidate.title} to your library`}
+      title={hasError ? "Retry adding to library" : "Add to library"}
+      className={cn(
+        TRIGGER_CLASS,
+        "relative overflow-visible transition-all duration-200 active:scale-90",
+        hasError ? "text-status-error" : "text-brand-primary",
+        isAnimating && "anim-reaction-squash",
+      )}
+    >
+      {isPending ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Bookmark className="h-4 w-4" />
+      )}
+    </button>
+  );
+}
 
 export function StepTitles({
   genreIds,
@@ -57,35 +159,14 @@ export function StepTitles({
     const isPending = pendingKeys.has(key);
     const hasError = errorKey === key;
 
-    if (isAdded) {
-      return (
-        <span
-          className={cn(TRIGGER_CLASS, "text-status-success")}
-          aria-label={`${candidate.title} is on your library`}
-          title="On your library"
-        >
-          <BookmarkCheck className="h-4 w-4" />
-        </span>
-      );
-    }
     return (
-      <button
-        type="button"
-        onClick={() => handleAdd(candidate)}
-        disabled={isPending}
-        aria-label={`Add ${candidate.title} to your library`}
-        title={hasError ? "Retry adding to library" : "Add to library"}
-        className={cn(
-          TRIGGER_CLASS,
-          hasError ? "text-status-error" : "text-brand-primary",
-        )}
-      >
-        {isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Bookmark className="h-4 w-4" />
-        )}
-      </button>
+      <StepTitleActionButton
+        candidate={candidate}
+        hasError={hasError}
+        isAdded={isAdded}
+        isPending={isPending}
+        onAdd={() => handleAdd(candidate)}
+      />
     );
   }
 

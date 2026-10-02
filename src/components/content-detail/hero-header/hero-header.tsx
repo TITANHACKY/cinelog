@@ -9,6 +9,7 @@ import { useContentMutationState } from "@/hooks/title-details/use-content-mutat
 import Image from "next/image";
 
 import { MovieSpecs } from "@/components/content-detail/hero-header/movie-specs";
+import { SeriesSpecs } from "@/components/content-detail/hero-header/series-specs";
 
 type HeroHeaderProps = {
   movie?: MovieDetails | null;
@@ -24,9 +25,7 @@ export function HeroHeader({ movie, series, type }: HeroHeaderProps) {
   const releaseDate = movie?.release_date || series?.first_air_date;
   const releaseYear =
     releaseDate && releaseDate.length >= 4 ? releaseDate.slice(0, 4) : null;
-  const synopsis = movie?.overview?.trim();
-  const tagline = series?.tagline?.trim();
-  const descriptionText = mediaType === "movie" ? synopsis : tagline;
+  const descriptionText = (movie?.overview ?? series?.overview)?.trim();
   const genres = movie?.genres ?? series?.genres;
   const imdbId = movie?.imdb_id ?? series?.imdb_id;
   const posterPath = movie?.poster_path ?? series?.poster_path;
@@ -82,6 +81,9 @@ export function HeroHeader({ movie, series, type }: HeroHeaderProps) {
             <GenrePills genres={genres} type={series?.type ?? mediaType} />
 
             {mediaType === "movie" && movie && <MovieSpecs movie={movie} />}
+            {mediaType === "series" && series && (
+              <SeriesSpecs series={series} />
+            )}
           </div>
 
           <ActionBar

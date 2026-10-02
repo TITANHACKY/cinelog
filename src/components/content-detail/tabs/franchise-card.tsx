@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Check, Layers, Loader2, Plus } from "lucide-react";
+import { FranchiseProgressMetrics } from "@/components/content-detail/progress/franchise-progress-metrics";
 import { Button } from "@/components/ui/button";
 import { MovieCard } from "@/components/ui/movie-card";
 import { cn } from "@/lib/utils";
@@ -122,6 +123,18 @@ export function FranchiseCard({
           </div>
         </div>
       </div>
+
+      {franchiseDetails?.progress &&
+        franchiseDetails.progress.total_count > 0 && (
+          <div className="border-t border-outline-variant/60 px-4 py-4 sm:px-6">
+            <FranchiseProgressMetrics
+              label="Franchise Progress"
+              percentage={franchiseDetails.progress.percentage}
+              totalCount={franchiseDetails.progress.total_count}
+              watchedCount={franchiseDetails.progress.watched_count}
+            />
+          </div>
+        )}
 
       {/* Franchise Movies Grid */}
       <div className="border-t border-outline-variant/60 p-4 sm:p-6 bg-surface-container-low/30">

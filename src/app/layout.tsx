@@ -55,7 +55,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8f9fc" },
+    { media: "(prefers-color-scheme: light)", color: "#dce5ee" },
     { media: "(prefers-color-scheme: dark)", color: "#121314" },
   ],
   width: "device-width",
@@ -75,15 +75,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           dangerouslySetInnerHTML={{
             __html: `(function() {
   try {
-    var stored = localStorage.getItem('cinelog-theme');
-    var theme = stored || 'dark';
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    }
+    var theme = 'dark';
+    var themeColor = '#121314';
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
+    var themeColorMeta = document.querySelector('meta[name="theme-color"][media*="dark"]');
+    if (themeColorMeta) themeColorMeta.setAttribute('content', themeColor);
   } catch (e) {}
 })();`,
           }}

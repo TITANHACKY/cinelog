@@ -20,22 +20,31 @@ export function useProgressMetrics(
   );
 
   if (selectedSeason) {
+    const seasonTotal =
+      selectedSeason.episodes_aired ?? selectedSeason.episode_count ?? 0;
+
     metrics.push({
       colorClass: "bg-brand-tertiary-accent-alt",
       id: selectedSeason.id ?? seasonNumber ?? "",
       label: selectedSeason.name ?? `Season ${seasonNumber}`,
-      total: selectedSeason.episode_count ?? 0,
-      value: selectedSeason.episodes_watched ?? 0,
+      total: seasonTotal,
+      value: Math.min(selectedSeason.episodes_watched ?? 0, seasonTotal),
     });
   }
 
   if (series) {
+    const overallTotal =
+      series.total_episodes_aired ?? series.number_of_episodes ?? 0;
+
     metrics.push({
       colorClass: "bg-brand-primary",
       id: "overall",
       label: "Series Overall Progress",
-      total: series.number_of_episodes ?? 0,
-      value: series.total_number_of_episodes_watched ?? 0,
+      total: overallTotal,
+      value: Math.min(
+        series.total_number_of_episodes_watched ?? 0,
+        overallTotal,
+      ),
     });
   }
 

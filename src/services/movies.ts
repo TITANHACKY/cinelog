@@ -7,7 +7,9 @@ import {
 } from "@/lib/media/status";
 import { getCachedTmdbMovie } from "@/lib/tmdb/cache";
 import { pickMovieCertification } from "@/lib/tmdb/catalog-fields";
-import type { CreditMember, DepartmentCredits, TmdbMovie } from "@/lib/types";
+import { extractAllCast, extractDepartments } from "@/lib/tmdb/credits";
+import { extractTrailer } from "@/lib/tmdb/videos";
+import type { TmdbMovie } from "@/lib/types";
 import type { MoviePatchInput } from "@/lib/validations/library";
 import type { NewUserMovie } from "@/db/schema";
 import {
@@ -40,31 +42,20 @@ function toMovieLibraryFields(
   };
 }
 
-import { isUserFollowingFranchise } from "@/repositories/franchises";
+import {
+  findFranchiseForMovieTmdbId,
+  isUserFollowingFranchise,
+} from "@/repositories/franchises";
+import { applyFranchiseWatchStatusTransition } from "@/repositories/franchise-progress";
 
-function extractTrailer(movie: TmdbMovie) {
-  const videos = movie.videos?.results ?? [];
-  const officialTrailer = videos.find(
-    (v) =>
-      v.site === "YouTube" &&
-      v.type === "Trailer" &&
-      v.official === true &&
-      Boolean(v.key),
-  );
-  const anyTrailer = videos.find(
-    (v) => v.site === "YouTube" && v.type === "Trailer" && Boolean(v.key),
-  );
-  const teaser = videos.find(
-    (v) => v.site === "YouTube" && v.type === "Teaser" && Boolean(v.key),
-  );
-  const chosen = officialTrailer ?? anyTrailer ?? teaser;
-  if (!chosen?.key) return null;
-  return {
-    key: chosen.key,
-    name: chosen.name || "Official Trailer",
-    site: chosen.site || "YouTube",
-  };
-}
+type FranchiseInfo = {
+  id: number;
+  name: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  overview?: string | null;
+  is_following?: boolean;
+};
 
 function extractDirectorAndCreators(movie: TmdbMovie) {
   let director: {
@@ -101,92 +92,20 @@ function extractDirectorAndCreators(movie: TmdbMovie) {
   return { director, creators };
 }
 
-function extractDepartments(movie: TmdbMovie): DepartmentCredits[] {
-  const departmentsMap = new Map<string, CreditMember[]>();
-
-  if (movie.credits && !Array.isArray(movie.credits)) {
-    const castMembers: CreditMember[] = (movie.credits.cast ?? [])
-      .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
-      .map((c) => ({
-        id: c.id,
-        name: c.name,
-        character: c.character,
-        profile_path: c.profile_path,
-        order: c.order,
-        department: "Acting",
-      }));
-
-    if (castMembers.length > 0) {
-      departmentsMap.set("Acting", castMembers);
-    }
-
-    for (const member of movie.credits.crew ?? []) {
-      const dept = member.department || member.known_for_department || "Crew";
-      if (!departmentsMap.has(dept)) {
-        departmentsMap.set(dept, []);
-      }
-      departmentsMap.get(dept)!.push({
-        id: member.id,
-        name: member.name,
-        profile_path: member.profile_path,
-        job: member.job,
-        department: dept,
-      });
-    }
-  }
-
-  const result: DepartmentCredits[] = [];
-  if (departmentsMap.has("Acting")) {
-    result.push({
-      department: "Acting",
-      members: departmentsMap.get("Acting")!,
-    });
-    departmentsMap.delete("Acting");
-  }
-
-  for (const [dept, members] of departmentsMap.entries()) {
-    result.push({ department: dept, members });
-  }
-
-  return result;
-}
-
 function toMovieDetails(
   movie: TmdbMovie,
   userMovie?: UserMovieLibraryRow,
-  isFollowingFranchise = false,
+  franchiseInfo?: FranchiseInfo | null,
 ) {
   const { director, creators } = extractDirectorAndCreators(movie);
-  const trailer = extractTrailer(movie);
-  const departments = extractDepartments(movie);
+  const trailer = extractTrailer(movie.videos);
+  const departments = extractDepartments(movie.credits);
   const watchProviders = movie["watch/providers"]?.results ?? {};
   const availableCountries = Object.keys(watchProviders);
 
-  const allCast = (
-    movie.credits && !Array.isArray(movie.credits)
-      ? (movie.credits.cast ?? [])
-      : []
-  )
-    .sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
-    .map((c) => ({
-      id: c.id,
-      name: c.name,
-      character: c.character,
-      profile_path: c.profile_path,
-      order: c.order,
-      department: "Acting",
-    }));
+  const allCast = extractAllCast(movie.credits);
 
-  const franchise = movie.belongs_to_collection
-    ? {
-        id: movie.belongs_to_collection.id,
-        name: movie.belongs_to_collection.name,
-        poster_path: movie.belongs_to_collection.poster_path,
-        backdrop_path: movie.belongs_to_collection.backdrop_path,
-        overview: movie.belongs_to_collection.overview ?? null,
-        is_following: isFollowingFranchise,
-      }
-    : null;
+  const franchise = franchiseInfo ?? null;
 
   const leadStudio = movie.production_companies?.[0]?.name ?? null;
   const network =
@@ -230,18 +149,57 @@ function toMovieDetails(
   };
 }
 
+function buildFranchiseInfo(
+  dbFranchise: Awaited<ReturnType<typeof findFranchiseForMovieTmdbId>>,
+  tmdbCollection: TmdbMovie["belongs_to_collection"],
+  isFollowing: boolean,
+): FranchiseInfo | null {
+  if (dbFranchise) {
+    return {
+      id: dbFranchise.tmdbId,
+      name: dbFranchise.name,
+      poster_path: dbFranchise.posterPath,
+      backdrop_path: dbFranchise.backdropPath,
+      overview: dbFranchise.overview,
+      is_following: isFollowing,
+    };
+  }
+
+  if (tmdbCollection) {
+    return {
+      id: tmdbCollection.id,
+      name: tmdbCollection.name,
+      poster_path: tmdbCollection.poster_path,
+      backdrop_path: tmdbCollection.backdrop_path,
+      overview: tmdbCollection.overview ?? null,
+      is_following: isFollowing,
+    };
+  }
+
+  return null;
+}
+
 export async function getMovieDetails(tmdbId: number, userId?: number) {
   const movie = await getCachedTmdbMovie(tmdbId);
   const userMovie = userId
     ? await findUserMovieData(tmdbId, userId)
     : undefined;
 
-  const isFollowingFranchise =
-    userId && movie.belongs_to_collection?.id
-      ? await isUserFollowingFranchise(userId, movie.belongs_to_collection.id)
+  const dbFranchise = await findFranchiseForMovieTmdbId(tmdbId);
+  const franchiseTmdbId =
+    dbFranchise?.tmdbId ?? movie.belongs_to_collection?.id;
+  const isFollowing =
+    userId && franchiseTmdbId
+      ? await isUserFollowingFranchise(userId, franchiseTmdbId)
       : false;
 
-  return toMovieDetails(movie, userMovie, isFollowingFranchise);
+  const franchiseInfo = buildFranchiseInfo(
+    dbFranchise,
+    movie.belongs_to_collection,
+    isFollowing,
+  );
+
+  return toMovieDetails(movie, userMovie, franchiseInfo);
 }
 
 export async function addMovieToLibrary(tmdbId: number, userId: number) {
@@ -256,8 +214,20 @@ export async function addMovieToLibrary(tmdbId: number, userId: number) {
     throw error;
   }
 
+  const dbFranchise = await findFranchiseForMovieTmdbId(tmdbId);
+  const franchiseTmdbId =
+    dbFranchise?.tmdbId ?? movie.belongs_to_collection?.id;
+  const isFollowing = franchiseTmdbId
+    ? await isUserFollowingFranchise(userId, franchiseTmdbId)
+    : false;
+  const franchiseInfo = buildFranchiseInfo(
+    dbFranchise,
+    movie.belongs_to_collection,
+    isFollowing,
+  );
+
   return {
-    ...toMovieDetails(movie),
+    ...toMovieDetails(movie, undefined, franchiseInfo),
     is_present_in_watchlist: true,
     impression: null,
     watch_status: 0,
@@ -265,10 +235,25 @@ export async function addMovieToLibrary(tmdbId: number, userId: number) {
 }
 
 export async function removeMovieFromLibrary(tmdbId: number, userId: number) {
+  const existingMovie = await findUserMovie(tmdbId, userId);
+
+  if (!existingMovie) {
+    throw new AppError("Movie not found in library", 404);
+  }
+
   const deleted = await deleteUserMovie(tmdbId, userId);
 
   if (deleted.length === 0) {
     throw new AppError("Movie not found in library", 404);
+  }
+
+  if (existingMovie.watchStatus === WATCH_STATUS[2].value) {
+    await applyFranchiseWatchStatusTransition(
+      userId,
+      tmdbId,
+      existingMovie.watchStatus,
+      WATCH_STATUS[0].value,
+    );
   }
 }
 
@@ -315,6 +300,8 @@ export async function updateMovieInLibrary(
     updateData.impression = body.impression;
   }
 
+  const previousWatchStatus = existingMovie.watchStatus;
+
   const updatedMovie = await updateUserMovieByTmdbId(
     tmdbId,
     userId,
@@ -323,6 +310,15 @@ export async function updateMovieInLibrary(
 
   if (!updatedMovie) {
     throw new AppError("Movie not found in library", 404);
+  }
+
+  if (body.watch_status !== undefined) {
+    await applyFranchiseWatchStatusTransition(
+      userId,
+      tmdbId,
+      previousWatchStatus,
+      updatedMovie.watchStatus,
+    );
   }
 
   return toMovieLibraryFields({

@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useTheme } from "@/hooks/use-theme";
 import { useLogoutMutation } from "@/store/api/auth-api";
 import { useAppSelector } from "@/store";
@@ -39,9 +38,8 @@ export function Navbar() {
         </Link>
       </div>
 
-      {/* Desktop: Right-aligned ThemeToggle and User Actions */}
+      {/* Desktop: Right-aligned User Actions */}
       <div className="ml-auto hidden items-center gap-4 lg:flex">
-        <ThemeToggle />
         {isAuthenticated && user && (
           <div className="flex items-center gap-3">
             <Button

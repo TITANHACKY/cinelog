@@ -46,6 +46,7 @@ yarn-error.log*
 
 # vercel
 .vercel
+.cursor
 
 # typescript
 *.tsbuildinfo
@@ -59,3 +60,6 @@ next-env.d.ts
 
 # planning artifacts
 /docs/superpowers
+
+# Agents
+.agents/

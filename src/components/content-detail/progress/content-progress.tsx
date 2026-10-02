@@ -46,6 +46,8 @@ export function ContentProgress({
             seasons={seasons}
             selectedSeason={selectedSeason}
             onSeasonChange={setSelectedSeason}
+            showWatchStatus={false}
+            showSeasonControls
           />
           <div className="mt-5 h-px w-full bg-outline-variant" />
           <div className="mt-5">
@@ -55,17 +57,34 @@ export function ContentProgress({
       ) : null}
 
       <div className={type === "series" ? "mt-6" : ""}>
+        {type === "series" ? (
+          <h3 className="mb-3 text-xs font-semibold tracking-wide text-secondary uppercase">
+            Track progress
+          </h3>
+        ) : null}
         <ProgressActions
-          disabled={isWatchActivityDisabled || !selectedSeasonDetails?.hasAired}
+          disabled={
+            isWatchActivityDisabled ||
+            !selectedSeasonDetails?.hasAired ||
+            (selectedSeasonDetails?.episodesAired ?? 0) <= 0
+          }
           episodeCount={selectedSeasonDetails?.episodeCount}
+          episodesAired={selectedSeasonDetails?.episodesAired}
           episodesWatched={selectedSeasonDetails?.episodesWatched}
           id={mediaId}
           isWatchable={isWatchable && Boolean(selectedSeasonDetails?.hasAired)}
           lastMutation={entry?.lastMutation}
           mutationStatus={entry?.mutationStatus}
+          onSeasonChange={setSelectedSeason}
           pendingProgress={entry?.pendingProgress}
           seasonNumber={selectedSeason}
+          seasons={seasons}
         />
+        {isWatchActivityDisabled && type === "series" ? (
+          <p className="mt-3 text-center text-xs text-secondary sm:text-left">
+            Add this series to your library to track episode progress.
+          </p>
+        ) : null}
       </div>
     </section>
   );

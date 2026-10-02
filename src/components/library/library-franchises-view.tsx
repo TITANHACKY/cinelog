@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Layers, Loader2, Search } from "lucide-react";
+import { Layers, Loader2, Search, X } from "lucide-react";
 import { FranchiseCard } from "@/components/library/franchise-card";
 import { LibraryFranchisesFilterControls } from "@/components/library/library-franchises-filter-controls";
 import { LIBRARY_DESCRIPTION } from "@/lib/constants/library";
@@ -11,6 +11,7 @@ import {
   useGetFranchiseDetailsQuery,
 } from "@/store/api/franchises-api";
 import { useGetDashboardQuery } from "@/store/api/library-api";
+import { FranchiseProgressMetrics } from "@/components/content-detail/progress/franchise-progress-metrics";
 import { Button } from "@/components/ui/button";
 import { MovieCard } from "@/components/ui/movie-card";
 import { useLibraryFranchises } from "@/hooks/library/use-library-franchises";
@@ -40,7 +41,7 @@ export function LibraryFranchisesView() {
 
   const movieCount = dashboard?.counts?.movies ?? 0;
   const seriesCount = dashboard?.counts?.series ?? 0;
-  const franchiseCount = allFranchises?.totalCount ?? totalCount;
+  const franchiseCount = allFranchises?.total_count ?? totalCount;
 
   const sentinelRef = useInfiniteScroll(
     loadMore,
@@ -132,7 +133,7 @@ export function LibraryFranchisesView() {
                 <FranchiseCard
                   franchise={franchise}
                   key={franchise.id}
-                  onSelect={() => setSelectedFranchiseId(franchise.tmdbId)}
+                  onSelect={() => setSelectedFranchiseId(franchise.id)}
                 />
               ))}
             </div>
@@ -176,6 +177,17 @@ function FranchiseDetailModal({
     id: franchiseTmdbId,
   });
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
     <div
       aria-modal="true"
@@ -187,23 +199,26 @@ function FranchiseDetailModal({
       }}
       role="dialog"
     >
-      <div className="relative flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-outline-variant bg-surface-container shadow-2xl">
+      <div className="relative flex max-h-[88dvh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-outline-variant bg-surface-container shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-outline-variant p-4 sm:p-5">
-          <div className="flex items-center gap-2.5">
-            <Layers className="h-5 w-5 text-brand-primary" />
-            <h2 className="font-heading text-lg font-bold text-on-surface truncate">
+        <div className="flex items-start justify-between gap-3 border-b border-outline-variant p-4 sm:p-5">
+          <div className="flex min-w-0 flex-1 items-start gap-2.5">
+            <Layers className="size-5 shrink-0 text-brand-primary mt-0.5" />
+            <h2 className="min-w-0 flex-1 font-heading text-lg font-bold text-on-surface wrap-break-words">
               {franchise?.name ?? "Franchise Details"}
             </h2>
           </div>
 
           <Button
-            className="h-8 rounded-lg px-3 text-xs font-semibold"
+            aria-label="Close dialog"
+            className="shrink-0"
             onClick={onClose}
+            size="icon-sm"
             type="button"
-            variant="darkFilled"
+            variant="ghost"
           >
-            Close
+            <X className="size-4" />
+            <span className="sr-only">Close</span>
           </Button>
         </div>
 
@@ -223,6 +238,15 @@ function FranchiseDetailModal({
                 <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
                   {franchise.overview}
                 </p>
+              )}
+
+              {franchise.progress.total_count > 0 && (
+                <FranchiseProgressMetrics
+                  label="Franchise Progress"
+                  percentage={franchise.progress.percentage}
+                  totalCount={franchise.progress.total_count}
+                  watchedCount={franchise.progress.watched_count}
+                />
               )}
 
               <div className="grid grid-cols-2 justify-items-stretch gap-3 sm:grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] sm:gap-x-4 sm:gap-y-6">

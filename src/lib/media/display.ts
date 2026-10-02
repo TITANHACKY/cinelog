@@ -27,6 +27,22 @@ export function formatMediaMeta(
   return parts.join(" · ");
 }
 
+export function formatAirDate(date?: string | null) {
+  if (!date) return null;
+
+  const isoDate = date.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return date;
+
+  const parsed = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+
+  return parsed.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export function formatRuntime(minutes?: number | null) {
   if (!minutes || minutes <= 0) return "N/A";
   const hours = Math.floor(minutes / 60);

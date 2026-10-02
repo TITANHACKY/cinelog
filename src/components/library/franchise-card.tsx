@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Film, Layers, Loader2, Trash2, type LucideIcon } from "lucide-react";
 import { Button, type ButtonVariant } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useAppDispatch } from "@/store";
 import {
   useUnfollowFranchiseMutation,
@@ -13,19 +14,8 @@ import { showToast } from "@/store/slices/toastSlice";
 import { TRIGGER_CLASS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-export type FranchiseCardData = {
-  id?: number;
-  tmdbId?: number;
-  name: string;
-  overview?: string | null;
-  posterPath?: string | null;
-  poster_path?: string | null;
-  backdropPath?: string | null;
-  backdrop_path?: string | null;
-};
-
 export type FranchiseCardProps = {
-  franchise: FollowedFranchiseItem | FranchiseCardData;
+  franchise: FollowedFranchiseItem;
   onSelect?: () => void;
   onRemove?: () => void | Promise<void>;
   showRemoveButton?: boolean;
@@ -52,12 +42,7 @@ export function FranchiseCard({
 
   const isRemoving = isMutationLoading || isRemovingLocal;
 
-  const franchiseId = franchise.tmdbId ?? franchise.id;
-  const imagePath =
-    franchise.backdropPath ||
-    ("backdrop_path" in franchise ? franchise.backdrop_path : null) ||
-    franchise.posterPath ||
-    ("poster_path" in franchise ? franchise.poster_path : null);
+  const imagePath = franchise.backdrop_path || franchise.poster_path;
 
   async function handleUnfollow(e: React.MouseEvent) {
     e.stopPropagation();
@@ -73,10 +58,8 @@ export function FranchiseCard({
       return;
     }
 
-    if (!franchiseId) return;
-
     try {
-      await unfollowFranchise({ id: franchiseId }).unwrap();
+      await unfollowFranchise({ id: franchise.id }).unwrap();
       dispatch(
         showToast({
           message: `Unfollowed ${franchise.name}`,
@@ -131,6 +114,22 @@ export function FranchiseCard({
             <p className="mt-1 line-clamp-2 text-xs text-on-surface-variant leading-relaxed">
               {franchise.overview}
             </p>
+          )}
+          {franchise.progress.total_count > 0 && (
+            <div className="mt-2 space-y-1.5">
+              <p className="text-xs font-semibold tabular-nums text-on-surface-variant">
+                {franchise.progress.watched_count}/
+                {franchise.progress.total_count} watched (
+                {franchise.progress.percentage}%)
+              </p>
+              <Progress
+                aria-label={`${franchise.name} progress: ${franchise.progress.watched_count} of ${franchise.progress.total_count} movies watched`}
+                className="h-1.5"
+                inProgressColor="bg-brand-primary"
+                max={franchise.progress.total_count}
+                value={franchise.progress.watched_count}
+              />
+            </div>
           )}
         </div>
 

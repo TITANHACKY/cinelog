@@ -5,27 +5,42 @@ import { useCallback, useSyncExternalStore } from "react";
 export type Theme = "light" | "dark";
 
 const STORAGE_KEY = "cinelog-theme";
+const THEME_COLORS = {
+  light: "#dce5ee",
+  dark: "#121314",
+} as const;
 
 function getThemeSnapshot(): Theme {
-  if (typeof window === "undefined") return "dark";
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-    if (stored === "light" || stored === "dark") return stored;
-    return document.documentElement.classList.contains("dark")
-      ? "dark"
-      : "light";
-  } catch {
-    return "dark";
-  }
+  return "dark";
 }
 
 function getServerSnapshot(): Theme {
   return "dark";
 }
 
+function updateThemeColor(theme: Theme) {
+  const color = THEME_COLORS[theme];
+  document
+    .querySelector<HTMLMetaElement>(
+      `meta[name="theme-color"][media*="${theme}"]`,
+    )
+    ?.setAttribute("content", color);
+}
+
+function applyThemeToDocument(theme: Theme) {
+  const root = document.documentElement;
+  root.classList.toggle("dark", theme === "dark");
+  root.classList.toggle("light", theme === "light");
+  updateThemeColor(theme);
+}
+
 function subscribe(callback: () => void) {
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
+  const handleStorage = () => {
+    applyThemeToDocument("dark");
+    callback();
+  };
+  window.addEventListener("storage", handleStorage);
+  return () => window.removeEventListener("storage", handleStorage);
 }
 
 export function useTheme() {
@@ -38,14 +53,7 @@ export function useTheme() {
   const applyTheme = useCallback((newTheme: Theme) => {
     try {
       localStorage.setItem(STORAGE_KEY, newTheme);
-      const root = document.documentElement;
-      if (newTheme === "dark") {
-        root.classList.add("dark");
-        root.classList.remove("light");
-      } else {
-        root.classList.remove("dark");
-        root.classList.add("light");
-      }
+      applyThemeToDocument(newTheme);
       window.dispatchEvent(new Event("storage"));
     } catch {
       // Ignored if localStorage is restricted

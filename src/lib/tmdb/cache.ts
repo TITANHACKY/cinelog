@@ -18,7 +18,8 @@ async function fetchTmdbMovieRaw(tmdbId: number) {
 
 async function fetchTmdbSeriesRaw(tmdbId: number) {
   const queryParams = new URLSearchParams({
-    append_to_response: "external_ids,content_ratings,credits",
+    append_to_response:
+      "external_ids,content_ratings,credits,videos,watch/providers",
     language: "en-US",
   });
 

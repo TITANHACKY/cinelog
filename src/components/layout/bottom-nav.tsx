@@ -16,8 +16,6 @@ import {
   X,
 } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { useTheme } from "@/hooks/use-theme";
 import { useLogoutMutation } from "@/store/api/auth-api";
 import { useAppSelector } from "@/store";
 import { SETTINGS_ROOT_ITEM } from "@/lib/constants/settings";
@@ -33,7 +31,6 @@ export function BottomNav() {
   const pathname = usePathname();
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-  const { theme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const SettingsIcon = SETTINGS_ROOT_ITEM.icon;
@@ -143,19 +140,6 @@ export function BottomNav() {
             </div>
 
             <div className="mt-4 space-y-4">
-              <div className="flex items-center justify-between rounded-xl border border-outline-variant bg-surface-container-low p-3.5">
-                <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-on-surface">
-                    Appearance Theme
-                  </span>
-                  <span className="text-[11px] text-secondary">
-                    {theme === "dark" ? "Dark Theme" : "Light Theme"}
-                  </span>
-                </div>
-
-                <ThemeToggle />
-              </div>
-
               <Link
                 href={SETTINGS_ROOT_ITEM.href}
                 onClick={() => setIsMenuOpen(false)}

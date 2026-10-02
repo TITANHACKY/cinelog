@@ -2,6 +2,7 @@ import { Clapperboard, Layers, TvMinimal, type LucideIcon } from "lucide-react";
 
 import { SMART_COLLECTIONS } from "@/lib/constants/api";
 import type {
+  FranchiseSortOption,
   LibraryBrowseQuery,
   LibraryFilterField,
   LibraryMediaType,
@@ -37,6 +38,18 @@ export const MEDIA_TYPES: {
 ];
 
 export const FRANCHISES_PAGE_SIZE = 25;
+
+export const DEFAULT_FRANCHISE_SORT_OPTION: FranchiseSortOption = "name-asc";
+
+export const FRANCHISE_SORT_OPTIONS: {
+  value: FranchiseSortOption;
+  label: string;
+}[] = [
+  { value: "name-asc", label: "Name (A → Z)" },
+  { value: "name-desc", label: "Name (Z → A)" },
+  { value: "date-desc", label: "Recently Followed" },
+  { value: "date-asc", label: "Oldest Followed" },
+];
 
 export const COLLECTION_MEDIA_TYPE: Record<LibraryMediaType, number> = {
   movie: 0,

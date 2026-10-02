@@ -168,6 +168,22 @@ type TmdbContentRating = {
   [key: string]: unknown;
 };
 
+type TmdbEpisodeToAir = {
+  air_date?: string;
+  episode_number?: number;
+  id?: number;
+  name?: string;
+  overview?: string;
+  season_number?: number;
+};
+
+type TmdbNetwork = {
+  id?: number;
+  name?: string;
+  logo_path?: string | null;
+  origin_country?: string;
+};
+
 type TmdbSeries = {
   backdrop_path?: string | null;
   created_by?: Array<{
@@ -180,7 +196,16 @@ type TmdbSeries = {
   id?: number;
   last_air_date?: string;
   name?: string;
-  networks?: unknown[] | null;
+  networks?: TmdbNetwork[] | null;
+  next_episode_to_air?: TmdbEpisodeToAir | null;
+  last_episode_to_air?: TmdbEpisodeToAir | null;
+  spoken_languages?: Array<{
+    iso_639_1?: string;
+    english_name?: string;
+    name?: string;
+  }>;
+  videos?: TmdbMovie["videos"];
+  "watch/providers"?: TmdbMovie["watch/providers"];
   number_of_episodes?: number;
   number_of_seasons?: number;
   overview?: string;

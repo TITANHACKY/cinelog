@@ -4,16 +4,8 @@ import { Search, X } from "lucide-react";
 import { SearchFilterSelect } from "@/components/search-popup/search-filter-select";
 import { SearchField } from "@/components/ui/search-field";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { MEDIA_TYPES } from "@/lib/constants";
-import type { FranchiseSortOption } from "@/hooks/library/use-library-franchises";
-import type { LibraryNavTab } from "@/lib/types";
-
-export const FRANCHISE_SORT_OPTIONS = [
-  { value: "name-asc", label: "Name (A → Z)" },
-  { value: "name-desc", label: "Name (Z → A)" },
-  { value: "date-desc", label: "Recently Followed" },
-  { value: "date-asc", label: "Oldest Followed" },
-];
+import { FRANCHISE_SORT_OPTIONS, MEDIA_TYPES } from "@/lib/constants";
+import type { FranchiseSortOption, LibraryNavTab } from "@/lib/types";
 
 type LibraryFranchisesFilterControlsProps = {
   movieCount: number;
